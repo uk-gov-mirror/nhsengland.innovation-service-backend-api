@@ -17,6 +17,7 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
   status: Joi.string()
     .valid(...Object.values(InnovationStatusEnum))
     .required(),
+  archiveReason: Joi.string().allow(null).required(),
   groupedStatus: Joi.string()
     .valid(...Object.values(InnovationGroupedStatusEnum))
     .required(),
@@ -81,6 +82,7 @@ export type ResponseDTO = {
   description: null | string;
   version: string;
   status: InnovationStatusEnum;
+  archiveReason: null | string;
   groupedStatus: InnovationGroupedStatusEnum;
   hasBeenAssessed: boolean;
   statusUpdatedAt: Date;
