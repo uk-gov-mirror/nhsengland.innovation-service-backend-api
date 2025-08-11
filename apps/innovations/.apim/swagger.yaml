@@ -1606,12 +1606,14 @@ paths:
                 - EMERGING_INFECTIOUS_DISEASES
                 - DATA_ANALYTICS_AND_RESEARCH
                 - DIGITALISING_SYSTEM
+                - HOSPITAL_TO_COMMUNITY
                 - IMPROVING_SYSTEM_FLOW
                 - PREVENTIVE_CARE
                 - SUPPORTING_PEOPLE_HEALTH
                 - PATIENT_SAFETY
                 - WORKFORCE_RESOURCE_OPTIMISATION
                 - NET_ZERO_GREENER_INNOVATION
+                - NONE
       responses:
         "200":
           description: Success
@@ -2491,6 +2493,9 @@ paths:
                       - IN_PROGRESS
                       - WITHDRAWN
                       - ARCHIVED
+                  archiveReason:
+                    type: string
+                    nullable: true
                   groupedStatus:
                     type: string
                     enum:
@@ -2666,6 +2671,7 @@ paths:
                   - description
                   - version
                   - status
+                  - archiveReason
                   - groupedStatus
                   - hasBeenAssessed
                   - statusUpdatedAt
@@ -6649,12 +6655,14 @@ paths:
                 - EMERGING_INFECTIOUS_DISEASES
                 - DATA_ANALYTICS_AND_RESEARCH
                 - DIGITALISING_SYSTEM
+                - HOSPITAL_TO_COMMUNITY
                 - IMPROVING_SYSTEM_FLOW
                 - PREVENTIVE_CARE
                 - SUPPORTING_PEOPLE_HEALTH
                 - PATIENT_SAFETY
                 - WORKFORCE_RESOURCE_OPTIMISATION
                 - NET_ZERO_GREENER_INNOVATION
+                - NONE
       responses:
         "204":
           description: Success
