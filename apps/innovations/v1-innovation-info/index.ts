@@ -46,6 +46,7 @@ class V1InnovationInfo {
         description: result.description,
         version: result.version,
         status: result.status,
+        archiveReason: result.archiveReason,
         groupedStatus: result.groupedStatus,
         hasBeenAssessed: result.hasBeenAssessed,
         statusUpdatedAt: result.statusUpdatedAt,

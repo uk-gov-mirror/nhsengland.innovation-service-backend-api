@@ -1126,6 +1126,7 @@ export class InnovationsService extends BaseService {
     version: string;
     status: InnovationStatusEnum;
     groupedStatus: InnovationGroupedStatusEnum;
+    archiveReason: null | string;
     hasBeenAssessed: boolean;
     statusUpdatedAt: Date;
     submittedAt: null | Date;
@@ -1170,6 +1171,7 @@ export class InnovationsService extends BaseService {
         'innovation.uniqueId',
         'innovation.name',
         'innovation.status',
+        'innovation.archiveReason',
         'innovation.statusUpdatedAt',
         'innovation.hasBeenAssessed',
         'innovation.lastAssessmentRequestAt',
@@ -1322,6 +1324,7 @@ export class InnovationsService extends BaseService {
       description: documentData.description,
       version: documentData.version,
       status: innovation.status,
+      archiveReason: innovation.archiveReason,
       groupedStatus: innovation.innovationGroupedStatus.groupedStatus,
       hasBeenAssessed: innovation.hasBeenAssessed,
       statusUpdatedAt: innovation.statusUpdatedAt,
