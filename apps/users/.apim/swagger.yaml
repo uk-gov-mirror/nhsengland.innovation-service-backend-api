@@ -1968,24 +1968,18 @@ paths:
                     items:
                       type: object
                       properties:
-                        needsAssessorUserId:
-                          type: string
                         assignedInnovation:
                           type: string
                         needsAssessmentVersion:
                           type: string
                         innovationId:
                           type: string
-                        assessmentId:
-                          type: string
                         needsAssessorUserName:
                           type: string
                       required:
-                        - needsAssessorUserId
                         - assignedInnovation
                         - needsAssessmentVersion
                         - innovationId
-                        - assessmentId
                         - needsAssessorUserName
                       additionalProperties: false
                 required:

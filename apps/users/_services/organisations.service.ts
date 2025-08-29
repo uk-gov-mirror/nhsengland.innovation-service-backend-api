@@ -326,8 +326,7 @@ export class OrganisationsService extends BaseService {
         'i.name AS assignedInnovation',
         'ia.major_version',
         'ia.minor_version',
-        'i.id AS innovationId',
-        'ia.id AS assessmentId'
+        'i.id AS innovationId'
       ])
       .where('ur.role = :role', { role: ServiceRoleEnum.ASSESSMENT })
       .andWhere('ur.is_active = :active', { active: 1 })
@@ -335,7 +334,7 @@ export class OrganisationsService extends BaseService {
       .andWhere('ia.deleted_at IS NULL')
       .andWhere('i.deleted_at IS NULL')
       .andWhere('iaou.organisation_unit_id = :orgUnitId', { orgUnitId: unitId })
-      .getRawMany<NeedsAssement>();
+      .getRawMany();
 
     const usersInfoMap = await this.domainService.users.getUsersMap(
       {
@@ -346,7 +345,8 @@ export class OrganisationsService extends BaseService {
 
     const data: Awaited<ReturnType<OrganisationsService['getNeedsAccessorAndInnovations']>>['data'] = results.map(
       r => ({
-        ...r,
+        assignedInnovation: r.assignedInnovation,
+        innovationId: r.innovationId,
         needsAssessorUserName: usersInfoMap.getDisplayName(r.needsAssessorUserId.toLowerCase()),
         needsAssessmentVersion: `${r.major_version}.${r.minor_version}`
       })
