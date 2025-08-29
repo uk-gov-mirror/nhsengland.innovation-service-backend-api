@@ -2,6 +2,7 @@ import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import {
+  InnovationAssessmentEntity,
   InnovationSupportEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
@@ -27,6 +28,7 @@ import type { DomainService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import { DomainContextType, isAccessorDomainContextType } from '@users/shared/types';
 import { BaseService } from './base.service';
+import { NeedsAssement } from '../_types/users.types';
 
 @injectable()
 export class OrganisationsService extends BaseService {
@@ -284,5 +286,72 @@ export class OrganisationsService extends BaseService {
     }
 
     return { count: data.length, data: data.sort((a, b) => a.accessor.name.localeCompare(b.accessor.name)) };
+  }
+
+  async getNeedsAccessorAndInnovations(
+    domainContext: DomainContextType,
+    unitId: string,
+    entityManager?: EntityManager
+  ): Promise<{
+    count: number;
+    data: Array<NeedsAssement>;
+  }> {
+    if (!isAccessorDomainContextType(domainContext)) throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
+    if (domainContext.organisation.organisationUnit.id !== unitId)
+      throw new ForbiddenError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG);
+
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const latestAssessmentSubQuery = em
+      .createQueryBuilder()
+      .subQuery()
+      .select('sub.innovation_id', 'innovation_id')
+      .addSelect('MAX(sub.created_at)', 'maxCreatedAt')
+      .from('innovation_assessment', 'sub')
+      .groupBy('sub.innovation_id')
+      .getQuery();
+
+    const results = await em
+      .createQueryBuilder(InnovationAssessmentEntity, 'ia')
+      .innerJoin('innovation', 'i', 'ia.innovation_id = i.id')
+      .innerJoin('user_role', 'ur', 'ia.assign_to_id = ur.user_id')
+      .innerJoin('innovation_assessment_organisation_unit', 'iaou', 'iaou.innovation_assessment_id = ia.id')
+      .innerJoin(
+        latestAssessmentSubQuery,
+        'latest',
+        'ia.innovation_id = latest.innovation_id AND ia.created_at = latest.maxCreatedAt'
+      )
+      .select([
+        'ur.user_id AS needsAssessorUserId',
+        'i.name AS assignedInnovation',
+        'ia.major_version',
+        'ia.minor_version',
+        'i.id AS innovationId',
+        'ia.id AS assessmentId'
+      ])
+      .where('ur.role = :role', { role: ServiceRoleEnum.ASSESSMENT })
+      .andWhere('ur.is_active = :active', { active: 1 })
+      .andWhere('ia.assign_to_id IS NOT NULL')
+      .andWhere('ia.deleted_at IS NULL')
+      .andWhere('i.deleted_at IS NULL')
+      .andWhere('iaou.organisation_unit_id = :orgUnitId', { orgUnitId: unitId })
+      .getRawMany<NeedsAssement>();
+
+    const usersInfoMap = await this.domainService.users.getUsersMap(
+      {
+        identityIds: Array.from(new Set(results.map(u => u.needsAssessorUserId)))
+      },
+      em
+    );
+
+    const data: Awaited<ReturnType<OrganisationsService['getNeedsAccessorAndInnovations']>>['data'] = results.map(
+      r => ({
+        ...r,
+        needsAssessorUserName: usersInfoMap.getDisplayName(r.needsAssessorUserId.toLowerCase()),
+        needsAssessmentVersion: `${r.major_version}.${r.minor_version}`
+      })
+    );
+
+    return { count: data.length, data: data };
   }
 }

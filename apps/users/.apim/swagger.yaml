@@ -1936,6 +1936,71 @@ paths:
           description: The user is not authorized to get this information.
         "500":
           description: An error occurred while getting this information.
+  /v1/organisations/{organisationId}/units/{organisationUnitId}/needs-accessors:
+    get:
+      description: Get an unit needs accessors and their associated innovations
+      operationId: v1-organisation-unit-needs-accessors
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: organisationUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        needsAssessorUserId:
+                          type: string
+                        assignedInnovation:
+                          type: string
+                        needsAssessmentVersion:
+                          type: string
+                        innovationId:
+                          type: string
+                        assessmentId:
+                          type: string
+                        needsAssessorUserName:
+                          type: string
+                      required:
+                        - needsAssessorUserId
+                        - assignedInnovation
+                        - needsAssessmentVersion
+                        - innovationId
+                        - assessmentId
+                        - needsAssessorUserName
+                      additionalProperties: false
+                required:
+                  - count
+                additionalProperties: false
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   /v1/organisations:
     get:
       description: Retrieves organisations list
