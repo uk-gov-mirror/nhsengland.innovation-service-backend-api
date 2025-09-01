@@ -15,7 +15,7 @@ import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 import { ServiceRoleEnum } from '@users/shared/enums';
 
-class V1OrganisationUnitAccessors {
+class V1OrganisationUnitNeedAccessors {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
@@ -44,7 +44,7 @@ class V1OrganisationUnitAccessors {
 }
 
 export default openApi(
-  V1OrganisationUnitAccessors.httpTrigger as AzureFunction,
+  V1OrganisationUnitNeedAccessors.httpTrigger as AzureFunction,
   '/v1/organisations/{organisationId}/units/{organisationUnitId}/needs-accessors',
   {
     get: {
