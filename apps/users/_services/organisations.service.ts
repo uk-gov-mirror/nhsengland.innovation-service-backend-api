@@ -10,6 +10,7 @@ import {
   UserRoleEntity
 } from '@users/shared/entities';
 import {
+  InnovationStatusEnum,
   InnovationSupportStatusEnum,
   OrganisationTypeEnum,
   ServiceRoleEnum,
@@ -302,25 +303,10 @@ export class OrganisationsService extends BaseService {
 
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const latestAssessmentSubQuery = em
-      .createQueryBuilder()
-      .subQuery()
-      .select('sub.innovation_id', 'innovation_id')
-      .addSelect('MAX(sub.created_at)', 'maxCreatedAt')
-      .from('innovation_assessment', 'sub')
-      .groupBy('sub.innovation_id')
-      .getQuery();
-
     const results = await em
       .createQueryBuilder(InnovationAssessmentEntity, 'ia')
-      .innerJoin('innovation', 'i', 'ia.innovation_id = i.id')
+      .innerJoin('innovation', 'i', 'ia.id = i.currentAssessment')
       .innerJoin('user_role', 'ur', 'ia.assign_to_id = ur.user_id')
-      .innerJoin('innovation_assessment_organisation_unit', 'iaou', 'iaou.innovation_assessment_id = ia.id')
-      .innerJoin(
-        latestAssessmentSubQuery,
-        'latest',
-        'ia.innovation_id = latest.innovation_id AND ia.created_at = latest.maxCreatedAt'
-      )
       .select([
         'ur.user_id AS needsAssessorUserId',
         'i.name AS assignedInnovation',
@@ -329,11 +315,8 @@ export class OrganisationsService extends BaseService {
         'i.id AS innovationId'
       ])
       .where('ur.role = :role', { role: ServiceRoleEnum.ASSESSMENT })
-      .andWhere('ur.is_active = :active', { active: 1 })
       .andWhere('ia.assign_to_id IS NOT NULL')
-      .andWhere('ia.deleted_at IS NULL')
-      .andWhere('i.deleted_at IS NULL')
-      .andWhere('iaou.organisation_unit_id = :orgUnitId', { orgUnitId: unitId })
+      .andWhere('i.status = :status', { status: InnovationStatusEnum.NEEDS_ASSESSMENT })
       .getRawMany();
 
     const usersInfoMap = await this.domainService.users.getUsersMap(
