@@ -12,7 +12,6 @@ import { container } from '../_config';
 import type { OrganisationsService } from '../_services/organisations.service';
 import SYMBOLS from '../_services/symbols';
 import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { ParamsSchema } from './validation.schemas';
 
 class V1NeedsAssessors {
   @JwtDecoder()
@@ -38,7 +37,7 @@ export default openApi(V1NeedsAssessors.httpTrigger as AzureFunction, '/v1/needs
   get: {
     description: 'Get needs assessors and their associated innovations',
     operationId: 'v1-needs-assessors',
-    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    parameters: [],
     responses: {
       200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
         description: 'Success'
