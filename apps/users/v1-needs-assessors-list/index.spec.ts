@@ -6,7 +6,6 @@ import type { TestUserType } from '@users/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@users/shared/types';
 import { OrganisationsService } from '../_services/organisations.service';
 import type { ResponseDTO } from './transformation.dtos';
-import type { ParamsType } from './validation.schemas';
 
 jest.mock('@users/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
@@ -35,21 +34,17 @@ const expected = {
     }
   ]
 };
-const mock = jest.spyOn(OrganisationsService.prototype, 'getNeedsAccessorAndInnovations').mockResolvedValue(expected);
+const mock = jest.spyOn(OrganisationsService.prototype, 'getNeedsAssessorAndInnovations').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-organisation-unit-needs-accessors Suite', () => {
+describe('v1-needs-assessors Suite', () => {
   describe('200', () => {
-    it('should return the unit needs accessors and associated innovations', async () => {
+    it('should return needs assessors and associated innovations', async () => {
       const result = await new AzureHttpTriggerBuilder()
-        .setAuth(scenario.users.aliceQualifyingAccessor)
-        .setParams<ParamsType>({
-          organisationId: scenario.organisations.healthOrg.id,
-          organisationUnitId: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
-        })
+        .setAuth(scenario.users.paulNeedsAssessor)
         .call<ResponseDTO>(azureFunction);
 
       expect(result.body).toStrictEqual(expected);
@@ -61,18 +56,12 @@ describe('v1-organisation-unit-needs-accessors Suite', () => {
   describe('Access', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
-      ['QA', 200, scenario.users.aliceQualifyingAccessor],
+      ['QA', 403, scenario.users.aliceQualifyingAccessor],
       ['A', 403, scenario.users.ingridAccessor],
-      ['NA', 403, scenario.users.paulNeedsAssessor],
+      ['NA', 200, scenario.users.paulNeedsAssessor],
       ['Innovator', 403, scenario.users.johnInnovator]
     ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
-      const result = await new AzureHttpTriggerBuilder()
-        .setAuth(user)
-        .setParams<ParamsType>({
-          organisationId: scenario.organisations.healthOrg.id,
-          organisationUnitId: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
-        })
-        .call<ErrorResponseType>(azureFunction);
+      const result = await new AzureHttpTriggerBuilder().setAuth(user).call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(status);
     });

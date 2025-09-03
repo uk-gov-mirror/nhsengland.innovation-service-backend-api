@@ -27,7 +27,7 @@ import {
 import { addToArrayValueInMap } from '@users/shared/helpers/misc.helper';
 import type { DomainService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
-import { DomainContextType, isAccessorDomainContextType } from '@users/shared/types';
+import { DomainContextType, isAccessorDomainContextType, isAssessmentDomainContextType } from '@users/shared/types';
 import { BaseService } from './base.service';
 import { NeedsAssement } from '../_types/users.types';
 
@@ -289,18 +289,14 @@ export class OrganisationsService extends BaseService {
     return { count: data.length, data: data.sort((a, b) => a.accessor.name.localeCompare(b.accessor.name)) };
   }
 
-  async getNeedsAccessorAndInnovations(
+  async getNeedsAssessorAndInnovations(
     domainContext: DomainContextType,
-    unitId: string,
     entityManager?: EntityManager
   ): Promise<{
     count: number;
     data: Array<NeedsAssement>;
   }> {
-    if (!isAccessorDomainContextType(domainContext)) throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
-    if (domainContext.organisation.organisationUnit.id !== unitId)
-      throw new ForbiddenError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG);
-
+    if (!isAssessmentDomainContextType(domainContext)) throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
     const em = entityManager ?? this.sqlConnection.manager;
 
     const results = await em
@@ -326,7 +322,7 @@ export class OrganisationsService extends BaseService {
       em
     );
 
-    const data: Awaited<ReturnType<OrganisationsService['getNeedsAccessorAndInnovations']>>['data'] = results.map(
+    const data: Awaited<ReturnType<OrganisationsService['getNeedsAssessorAndInnovations']>>['data'] = results.map(
       r => ({
         assignedInnovation: r.assignedInnovation,
         innovationId: r.innovationId,
