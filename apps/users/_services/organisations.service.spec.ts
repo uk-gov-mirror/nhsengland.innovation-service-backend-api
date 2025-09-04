@@ -349,4 +349,21 @@ describe('Users / _services / organisations service suite', () => {
       ).rejects.toThrow(new ForbiddenError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG));
     });
   });
+
+  describe('getNeedsAssessorAndInnovations', () => {
+    const paul = scenario.users.paulNeedsAssessor;
+    it('should return needs assessors and innovations', async () => {
+      const innovation = scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation;
+      const result = await sut.getNeedsAssessorAndInnovations(DTOsHelper.getUserRequestContext(paul), em);
+      expect(result.count).toBe(1);
+      expect(result.data).toStrictEqual([
+        {
+          assignedInnovation: innovation.name,
+          innovationId: innovation.id,
+          needsAssessorUserName: paul.name,
+          needsAssessmentVersion: `${innovation.assessmentInProgress.majorVersion}.${innovation.assessmentInProgress.minorVersion}`
+        }
+      ]);
+    });
+  });
 });

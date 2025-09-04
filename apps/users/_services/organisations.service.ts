@@ -299,38 +299,39 @@ export class OrganisationsService extends BaseService {
     if (!isAssessmentDomainContextType(domainContext)) throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const results = await em
-      .createQueryBuilder(InnovationAssessmentEntity, 'ia')
-      .innerJoin('innovation', 'i', 'ia.id = i.currentAssessment')
-      .innerJoin('user_role', 'ur', 'ia.assign_to_id = ur.user_id')
+    const assessments = await em
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .select([
-        'ur.user_id AS needsAssessorUserId',
-        'i.name AS assignedInnovation',
-        'ia.major_version',
-        'ia.minor_version',
-        'i.id AS innovationId'
+        'innovation.id',
+        'innovation.name',
+        'assessment.majorVersion',
+        'assessment.minorVersion',
+        'assignTo.identityId'
       ])
+      .leftJoin('assessment.assignTo', 'assignTo')
+      .innerJoin('assessment.innovation', 'innovation', 'innovation.currentAssessment = assessment.id')
+      .innerJoin(UserRoleEntity, 'ur', 'assessment.assignTo = ur.user')
       .where('ur.role = :role', { role: ServiceRoleEnum.ASSESSMENT })
-      .andWhere('ia.assign_to_id IS NOT NULL')
-      .andWhere('i.status = :status', { status: InnovationStatusEnum.NEEDS_ASSESSMENT })
-      .getRawMany();
+      .andWhere('assessment.assignTo IS NOT NULL')
+      .andWhere('innovation.status = :status', { status: InnovationStatusEnum.NEEDS_ASSESSMENT })
+      .getMany();
 
     const usersInfoMap = await this.domainService.users.getUsersMap(
       {
-        identityIds: Array.from(new Set(results.map(u => u.needsAssessorUserId)))
+        identityIds: Array.from(new Set(assessments.map(u => u.assignTo!.identityId)))
       },
       em
     );
 
-    const data: Awaited<ReturnType<OrganisationsService['getNeedsAssessorAndInnovations']>>['data'] = results.map(
-      r => ({
-        assignedInnovation: r.assignedInnovation,
-        innovationId: r.innovationId,
-        needsAssessorUserName: usersInfoMap.getDisplayName(r.needsAssessorUserId.toLowerCase()),
-        needsAssessmentVersion: `${r.major_version}.${r.minor_version}`
+    const data: Awaited<ReturnType<OrganisationsService['getNeedsAssessorAndInnovations']>>['data'] = assessments.map(
+      assessment => ({
+        assignedInnovation: assessment.innovation.name,
+        innovationId: assessment.innovation.id,
+        needsAssessorUserName: usersInfoMap.getDisplayName(assessment.assignTo?.identityId),
+        needsAssessmentVersion: `${assessment.majorVersion}.${assessment.minorVersion}`
       })
     );
 
-    return { count: data.length, data: data };
+    return { count: data.length, data: data.sort((a, b) => a.assignedInnovation.localeCompare(b.assignedInnovation)) };
   }
 }
