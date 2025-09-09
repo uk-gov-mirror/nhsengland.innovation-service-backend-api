@@ -1199,7 +1199,16 @@ export class DomainInnovationsService {
       IIF(
         a.id IS NULL,
         NULL,
-        JSON_OBJECT('id': a.id, 'majorVersion': a.major_version, 'minorVersion': a.minor_version, 'updatedAt': a.updated_at, 'isExempt': CONVERT(BIT, IIF(a.exempted_at IS NULL, 0, 1)), 'assignedToId': a.assign_to_id ABSENT ON NULL)
+        JSON_OBJECT(
+        'id': a.id,
+        'majorVersion': a.major_version,
+        'minorVersion': a.minor_version,
+        'updatedAt': a.updated_at,
+        'finishedAt': a.finished_at,
+        'maturityLevel': a.maturity_level, 
+        'isExempt': CONVERT(BIT, IIF(a.exempted_at IS NULL, 0, 1)),
+        'assignedToId': a.assign_to_id ABSENT ON NULL
+    )
       ) AS assessment,
       (
         SELECT suggested_unit_id as suggestedUnitId, suggested_by_units_acronyms AS suggestedBy

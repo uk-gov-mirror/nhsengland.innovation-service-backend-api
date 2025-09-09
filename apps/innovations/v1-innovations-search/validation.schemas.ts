@@ -1,6 +1,11 @@
 import Joi from 'joi';
 
-import { InnovationGroupedStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import {
+  InnovationGroupedStatusEnum,
+  InnovationSupportStatusEnum,
+  MaturityLevelCatalogueType,
+  ServiceRoleEnum
+} from '@innovations/shared/enums';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { JoiHelper } from '@innovations/shared/helpers';
 
@@ -104,6 +109,14 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
         JoiHelper.AppCustomJoi()
           .string()
           .valid(...CurrentCatalogTypes.catalogAreas)
+      )
+      .optional(),
+    maturityLevels: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...MaturityLevelCatalogueType)
       )
       .optional()
   })
