@@ -53,6 +53,8 @@ type SearchInnovationListSelectType =
   | 'assessment.updatedAt'
   | 'assessment.assignedTo'
   | 'assessment.isExempt'
+  | 'assessment.maturityLevel'
+  | 'assessment.finishedAt'
   | 'support.id'
   | 'support.status'
   | 'support.updatedAt'
@@ -529,7 +531,8 @@ export class SearchService extends BaseService {
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
     supportStatuses: this.addSupportFilter.bind(this),
-    areas: this.addGenericFilter('filters.areas').bind(this)
+    areas: this.addGenericFilter('filters.areas').bind(this),
+    maturityLevels: this.addGenericFilter('assessment.maturityLevel.keyword').bind(this)
   };
 
   private async addSearchFilter(

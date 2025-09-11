@@ -46,6 +46,8 @@ export type ElasticSearchDocumentType = {
     assignedToId: string | null;
     updatedAt: Date;
     isExempt: boolean;
+    finishedAt: Date | null;
+    maturityLevel: string | null;
   };
   suggestions?: {
     suggestedUnitId: string;

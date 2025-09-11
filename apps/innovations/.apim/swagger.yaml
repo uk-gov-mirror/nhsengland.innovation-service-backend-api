@@ -1502,6 +1502,7 @@ paths:
                 - assessment.assignedTo
                 - assessment.updatedAt
                 - assessment.finishedAt
+                - assessment.maturityLevel
                 - engagingOrganisations
                 - engagingUnits
                 - suggestion.suggestedBy
@@ -6551,6 +6552,7 @@ paths:
                 - assessment.assignedTo
                 - assessment.updatedAt
                 - assessment.finishedAt
+                - assessment.maturityLevel
                 - engagingOrganisations
                 - engagingUnits
                 - suggestion.suggestedBy
@@ -6663,6 +6665,17 @@ paths:
                 - WORKFORCE_RESOURCE_OPTIMISATION
                 - NET_ZERO_GREENER_INNOVATION
                 - NONE
+        - name: maturityLevels
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - DISCOVERY
+                - ADVANCED
+                - READY
       responses:
         "204":
           description: Success
