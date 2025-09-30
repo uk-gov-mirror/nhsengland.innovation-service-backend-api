@@ -113,6 +113,7 @@ export const InnovationListSelectType = [
   'assessment.updatedAt',
   'assessment.finishedAt',
   'assessment.maturityLevel',
+  'progressAreas',
   'engagingOrganisations',
   'engagingUnits',
   // NOTE: The suggestion is always related to the unit from the QA accessing
@@ -208,6 +209,7 @@ export type InnovationListFilters = {
   closedByMyOrganisation?: boolean;
   areas?: CurrentCatalogTypes.catalogAreas[];
   maturityLevels?: MaturityLevelCatalogueType[];
+  progressAreas?: string[];
 };
 
 // Join types are the ones with nested selectable objects
@@ -720,7 +722,8 @@ export class InnovationsService extends BaseService {
     supportStatuses: this.addSupportFilter.bind(this),
     supportUnit: () => {}, // this is handled in the withSupport handler for admin users and forbidden otherwise
     areas: this.addJsonArrayInFilter('areas').bind(this),
-    maturityLevels: this.addJsonArrayInFilter('maturityLevels').bind(this)
+    maturityLevels: this.addJsonArrayInFilter('maturityLevels').bind(this),
+    progressAreas: this.addJsonArrayInFilter('progressAreas').bind(this)
   };
 
   /**

@@ -1503,6 +1503,7 @@ paths:
                 - assessment.updatedAt
                 - assessment.finishedAt
                 - assessment.maturityLevel
+                - progressAreas
                 - engagingOrganisations
                 - engagingUnits
                 - suggestion.suggestedBy
@@ -6553,6 +6554,7 @@ paths:
                 - assessment.updatedAt
                 - assessment.finishedAt
                 - assessment.maturityLevel
+                - progressAreas
                 - engagingOrganisations
                 - engagingUnits
                 - suggestion.suggestedBy
@@ -6676,6 +6678,27 @@ paths:
                 - DISCOVERY
                 - ADVANCED
                 - READY
+        - name: progressAreas
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - ukcaceCertification
+                - dtacCertification
+                - evidenceClinicalOrCare
+                - evidenceRealWorld
+                - assessmentRealWorldValidation
+                - evidenceOfImpact
+                - assessmentEvidenceProveEfficacy
+                - evidenceCostImpact
+                - workingProduct
+                - carbonReductionPlan
+                - htwTerComplete
+                - niceGuidanceComplete
+                - scProcurementRouteIdentified
       responses:
         "204":
           description: Success

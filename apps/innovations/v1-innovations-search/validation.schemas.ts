@@ -4,6 +4,7 @@ import {
   InnovationGroupedStatusEnum,
   InnovationSupportStatusEnum,
   MaturityLevelCatalogueType,
+  ProgressAreasCatalogType,
   ServiceRoleEnum
 } from '@innovations/shared/enums';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
@@ -117,6 +118,14 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
         JoiHelper.AppCustomJoi()
           .string()
           .valid(...MaturityLevelCatalogueType)
+      )
+      .optional(),
+      progressAreas: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...ProgressAreasCatalogType)
       )
       .optional()
   })
