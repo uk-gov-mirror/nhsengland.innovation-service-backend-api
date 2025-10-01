@@ -532,7 +532,8 @@ export class SearchService extends BaseService {
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
     supportStatuses: this.addSupportFilter.bind(this),
     areas: this.addGenericFilter('filters.areas').bind(this),
-    maturityLevels: this.addGenericFilter('assessment.maturityLevel.keyword').bind(this)
+    maturityLevels: this.addGenericFilter('assessment.maturityLevel').bind(this),
+    progressAreas: this.addGenericFilter('progressAreas').bind(this)
   };
 
   private async addSearchFilter(

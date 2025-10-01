@@ -8,6 +8,24 @@ export * from './organisation.enums';
 export * from './user.enums';
 
 // TODO - set these in a file, just fixing for now
+
+export const ProgressAreasCatalogType = [
+  'ukcaceCertification',
+  'dtacCertification',
+  'evidenceClinicalOrCare',
+  'evidenceRealWorld',
+  'assessmentRealWorldValidation',
+  'evidenceOfImpact',
+  'assessmentEvidenceProveEfficacy',
+  'evidenceCostImpact',
+  'workingProduct',
+  'carbonReductionPlan',
+  'htwTerComplete',
+  'niceGuidanceComplete',
+  'scProcurementRouteIdentified'
+] as const;
+export type ProgressAreasCatalogType = (typeof ProgressAreasCatalogType)[number];
+
 export const MaturityLevelCatalogueType = ['DISCOVERY', 'ADVANCED', 'READY'] as const;
 export type MaturityLevelCatalogueType = (typeof MaturityLevelCatalogueType)[number];
 
