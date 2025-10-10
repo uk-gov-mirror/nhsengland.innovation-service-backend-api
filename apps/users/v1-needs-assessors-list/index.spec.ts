@@ -30,7 +30,8 @@ const expected = {
       assignedInnovation: randUserName(),
       needsAssessmentVersion: `${randNumber({ length: 10 })}.${randNumber({ length: 10 })}`,
       innovationId: randUuid(),
-      needsAssessorUserName: randUserName()
+      needsAssessorUserName: randUserName(),
+      assessmentStartDate: null
     }
   ]
 };
