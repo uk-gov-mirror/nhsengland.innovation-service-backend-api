@@ -31,4 +31,5 @@ export type NeedsAssement = {
   needsAssessmentVersion: string;
   innovationId: string;
   needsAssessorUserName: string;
+  assessmentStartDate: Date | null;
 };

@@ -306,6 +306,7 @@ export class OrganisationsService extends BaseService {
         'innovation.name',
         'assessment.majorVersion',
         'assessment.minorVersion',
+        'assessment.startedAt',
         'assignTo.identityId'
       ])
       .leftJoin('assessment.assignTo', 'assignTo')
@@ -328,10 +329,11 @@ export class OrganisationsService extends BaseService {
         assignedInnovation: assessment.innovation.name,
         innovationId: assessment.innovation.id,
         needsAssessorUserName: usersInfoMap.getDisplayName(assessment.assignTo?.identityId),
-        needsAssessmentVersion: `${assessment.majorVersion}.${assessment.minorVersion}`
+        needsAssessmentVersion: `${assessment.majorVersion}.${assessment.minorVersion}`,
+        assessmentStartDate: assessment.startedAt
       })
     );
 
-    return { count: data.length, data: data.sort((a, b) => a.assignedInnovation.localeCompare(b.assignedInnovation)) };
+    return { count: data.length, data: data.sort((a, b) => a.needsAssessorUserName.localeCompare(b.needsAssessorUserName)) };
   }
 }

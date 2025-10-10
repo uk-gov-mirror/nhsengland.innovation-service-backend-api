@@ -108,7 +108,7 @@ These files are needed to provide environment variables to the app function when
 ### 1. Start the MSSQL DB server through docker and docker compose.
 
 ```bash
-$ docker-compose -f .docker/docker-compose.yml up
+$ docker compose -f .docker/docker-compose.yml up
 ```
 
 #### **Note: When running for the first time, make sure that:**

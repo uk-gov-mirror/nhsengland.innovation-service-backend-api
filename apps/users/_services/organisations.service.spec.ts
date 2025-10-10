@@ -361,7 +361,8 @@ describe('Users / _services / organisations service suite', () => {
           assignedInnovation: innovation.name,
           innovationId: innovation.id,
           needsAssessorUserName: paul.name,
-          needsAssessmentVersion: `${innovation.assessmentInProgress.majorVersion}.${innovation.assessmentInProgress.minorVersion}`
+          needsAssessmentVersion: `${innovation.assessmentInProgress.majorVersion}.${innovation.assessmentInProgress.minorVersion}`,
+          assessmentStartDate: expect.any(Date)
         }
       ]);
     });
