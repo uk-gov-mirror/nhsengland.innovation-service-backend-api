@@ -10,6 +10,7 @@ export * from './user.enums';
 // TODO - set these in a file, just fixing for now
 
 export const ProgressAreasCatalogType = [
+  'deploymentCount',
   'ukcaceCertification',
   'dtacCertification',
   'evidenceClinicalOrCare',

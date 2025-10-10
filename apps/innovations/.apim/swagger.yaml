@@ -6686,6 +6686,7 @@ paths:
             items:
               type: string
               enum:
+                - deploymentCount
                 - ukcaceCertification
                 - dtacCertification
                 - evidenceClinicalOrCare
