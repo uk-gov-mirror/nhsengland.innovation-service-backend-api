@@ -33,6 +33,7 @@ const expected = {
       updatedAt: new Date(),
       updatedBy: { name: randFullName(), displayTag: randText() },
       createdBy: { name: randFullName(), displayTag: randText() },
+      assignedTo: { name: randFullName(), displayTag: randText() },
       notifications: randNumber(),
       sameOrganisation: true
     },
@@ -46,6 +47,7 @@ const expected = {
       updatedAt: new Date(),
       updatedBy: { name: randFullName(), displayTag: randText() },
       createdBy: { name: randFullName(), displayTag: randText() },
+      assignedTo: { name: randFullName(), displayTag: randText() },
       sameOrganisation: true
     }
   ]

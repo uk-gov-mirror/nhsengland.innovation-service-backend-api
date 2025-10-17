@@ -53,6 +53,10 @@ class V1InnovationTaskInfo {
         createdBy: {
           name: result.createdBy.name,
           displayTag: result.createdBy.displayTag
+        },
+        assignedTo: {
+          name: result.assignedTo.name,
+          displayTag: result.assignedTo.displayTag
         }
       });
       return;

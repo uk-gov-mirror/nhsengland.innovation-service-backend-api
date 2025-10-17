@@ -479,7 +479,7 @@ export class RecipientsService extends BaseService {
       ])
       // Review we are inner joining with user / role and the createdBy might have been deleted, for tasks I don't
       // think it's too much of an error to not send notifications in those cases
-      .innerJoin('task.createdByUserRole', 'role')
+      .innerJoin('task.assignedToUserRole', 'role')
       .leftJoin('role.organisationUnit', 'ownerUnit')
       .innerJoin('role.user', 'user')
       .where(`task.id = :taskId`, { taskId: taskId })
@@ -495,12 +495,12 @@ export class RecipientsService extends BaseService {
       displayId: dbTask.displayId,
       status: dbTask.status,
       owner: {
-        userId: dbTask.createdByUserRole.user.id,
-        identityId: dbTask.createdByUserRole.user.identityId,
-        roleId: dbTask.createdByUserRole.id,
-        role: dbTask.createdByUserRole.role,
-        unitId: dbTask.createdByUserRole.organisationUnit?.id,
-        isActive: dbTask.createdByUserRole.isActive && dbTask.createdByUserRole.user.status === UserStatusEnum.ACTIVE
+        userId: dbTask.assignedToUserRole.user.id,
+        identityId: dbTask.assignedToUserRole.user.identityId,
+        roleId: dbTask.assignedToUserRole.id,
+        role: dbTask.assignedToUserRole.role,
+        unitId: dbTask.assignedToUserRole.organisationUnit?.id,
+        isActive: dbTask.assignedToUserRole.isActive && dbTask.assignedToUserRole.user.status === UserStatusEnum.ACTIVE
       }
     };
   }

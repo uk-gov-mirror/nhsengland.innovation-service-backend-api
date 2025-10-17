@@ -4,6 +4,7 @@ import {
   InnovationAssessmentEntity,
   InnovationEntity,
   InnovationReassessmentRequestEntity,
+  InnovationTaskEntity,
   InnovationThreadEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
@@ -14,6 +15,7 @@ import {
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   MaturityLevelCatalogueType,
   NotifierTypeEnum,
   ServiceRoleEnum,
@@ -41,6 +43,7 @@ import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 import type { InnovationDocumentService } from './innovation-document.service';
 import { InnovationSupportsService } from './innovation-supports.service';
+import type { InnovationTasksService } from './innovation-tasks.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 
@@ -52,6 +55,7 @@ export class InnovationAssessmentsService extends BaseService {
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationDocumentService) private documentService: InnovationDocumentService,
     @inject(SYMBOLS.InnovationSupportsService) private innovationSupportsService: InnovationSupportsService,
+    @inject(SYMBOLS.InnovationTasksService) private innovationTasksService: InnovationTasksService,
     @inject(SYMBOLS.InnovationThreadsService) private threadService: InnovationThreadsService
   ) {
     super();
@@ -771,6 +775,18 @@ export class InnovationAssessmentsService extends BaseService {
   ): Promise<{ assessmentId: string; assessorId: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
+    const assessment = await connection
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .leftJoinAndSelect('assessment.assignTo', 'assignedAssessor')
+      .innerJoinAndSelect('assessment.innovation', 'innovation')
+      .where('assessment.id = :assessmentId', { assessmentId })
+      .andWhere('innovation.id = :innovationId', { innovationId })
+      .getOne();
+
+    if (!assessment) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    }
+
     const newAssessor = await connection
       .createQueryBuilder(UserEntity, 'user')
       .innerJoinAndSelect('user.serviceRoles', 'serviceRoles')
@@ -785,24 +801,28 @@ export class InnovationAssessmentsService extends BaseService {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
     }
 
-    const assessment = await connection
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .leftJoinAndSelect('assessment.assignTo', 'assignedAssessor')
-      .innerJoinAndSelect('assessment.innovation', 'innovation')
-      .where('assessment.id = :assessmentId', { assessmentId })
-      .andWhere('innovation.id = :innovationId', { innovationId })
-      .getOne();
-
-    if (!assessment) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
-    }
-
     const previousAssessor = assessment.assignTo;
 
     const updatedAssessment = await connection.transaction(async transaction => {
       await transaction.update(InnovationAssessmentEntity, { id: assessment.id }, { assignTo: newAssessor });
 
       await this.updateAssessmentThreadAssignedNA(domainContext, innovationId, assessorRole.id, transaction);
+
+      if (previousAssessor) {
+        const tasks = await transaction
+          .createQueryBuilder(InnovationTaskEntity, 'task')
+          .innerJoin('task.innovationSection', 'section')
+          .where('section.innovation_id = :innovationId', { innovationId })
+          // .andWhere('task.created_by_user_role_id = :previousAssessorRoleId', {
+          //   previousAssessorRoleId: previousAssessor.id
+          // })
+          .andWhere('task.status = :status', { status: InnovationTaskStatusEnum.OPEN })
+          .getMany();
+
+        for (const task of tasks) {
+          await this.innovationTasksService.reassignTask(domainContext, task.id, assessorRole.id, transaction);
+        }
+      }
 
       return {
         id: assessment.id,
