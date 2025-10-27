@@ -346,6 +346,7 @@ describe('Innovation Tasks Suite', () => {
     it('should list all tasks created by QA/A as a QA/A', async () => {
       const task = innovation.tasks.taskByAlice;
       const task2 = innovation2.tasks.adamInnovationDoneTask;
+      const task3 = innovation.tasks.taskByAliceOpen;
       const expected = [
         {
           id: task.id,
@@ -382,6 +383,25 @@ describe('Innovation Tasks Suite', () => {
               scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           },
           sameOrganisation: true
+        },
+        {
+          id: task3.id,
+          displayId: task3.displayId,
+          innovation: { id: innovation.id, name: innovation.name },
+          status: task3.status,
+          section: task3.section,
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          updatedBy: {
+            name: scenario.users.johnInnovator.name,
+            displayTag: 'Owner'
+          },
+          createdBy: {
+            name: scenario.users.aliceQualifyingAccessor.name,
+            displayTag:
+              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+          },
+          sameOrganisation: true
         }
       ];
 
@@ -393,7 +413,10 @@ describe('Innovation Tasks Suite', () => {
       );
 
       expect(tasks.count).toBe(3);
-      expect(tasks.data).toEqual(expect.arrayContaining(expected));
+      expect(tasks.data.length).toBe(expected.length);
+      for (const expectedTask of expected) {
+        expect(tasks.data).toContainEqual(expect.objectContaining(expectedTask));
+      }
     });
 
     it('should list all tasks created by NA and QA/A as a QA/A', async () => {

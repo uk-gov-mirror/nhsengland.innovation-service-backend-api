@@ -121,8 +121,8 @@ export class InnovationTasksService extends BaseService {
       .innerJoin('innovationSection.innovation', 'innovation')
       .innerJoin('task.createdByUserRole', 'createdByUserRole')
       .innerJoin('createdByUserRole.user', 'createdByUser')
-      .innerJoin('task.assignedToUserRole', 'assignedToUserRole')
-      .innerJoin('assignedToUserRole.user', 'assignedToUser')
+      .leftJoin('task.assignedToUserRole', 'assignedToUserRole')
+      .leftJoin('assignedToUserRole.user', 'assignedToUser')
       .leftJoin('task.innovationSupport', 'innovationSupport')
       .leftJoin('innovationSupport.organisationUnit', 'organisationUnit')
       .leftJoin('task.updatedByUserRole', 'updatedByUserRole')
@@ -264,8 +264,8 @@ export class InnovationTasksService extends BaseService {
         task.createdByUserRole.user.status !== UserStatusEnum.DELETED
           ? task.createdByUserRole.user.identityId
           : undefined,
-        task.assignedToUserRole.user.status !== UserStatusEnum.DELETED
-          ? task.assignedToUserRole.user.identityId
+        task.assignedToUserRole?.user?.status !== UserStatusEnum.DELETED
+          ? task.assignedToUserRole?.user?.identityId
           : undefined,
         task.updatedByUserRole && task.updatedByUserRole.user.status !== UserStatusEnum.DELETED
           ? task.updatedByUserRole.user.identityId
@@ -303,10 +303,12 @@ export class InnovationTasksService extends BaseService {
         })
       },
       assignedTo: {
-        name: usersInfo.getDisplayName(task.assignedToUserRole.user.identityId),
-        displayTag: this.domainService.users.getDisplayTag(task.assignedToUserRole.role, {
-          unitName: task.innovationSupport?.organisationUnit?.name
-        })
+        name: usersInfo.getDisplayName(task.assignedToUserRole?.user?.identityId),
+        displayTag: task.assignedToUserRole?.role
+          ? this.domainService.users.getDisplayTag(task.assignedToUserRole.role, {
+              unitName: task.innovationSupport?.organisationUnit?.name
+            })
+          : ''
       },
       ...(!filters.fields?.includes('notifications')
         ? {}
@@ -400,8 +402,8 @@ export class InnovationTasksService extends BaseService {
 
     const users = [
       dbTask.createdByUserRole.user.identityId,
-      dbTask.updatedByUserRole.user.identityId,
-      dbTask.assignedToUserRole.user.identityId,
+      dbTask.updatedByUserRole?.user?.identityId,
+      dbTask.assignedToUserRole?.user?.identityId,
       ...dbTask.descriptions.map(d => d.createdByIdentityId)
     ].filter((id): id is string => id !== null);
 
@@ -431,11 +433,13 @@ export class InnovationTasksService extends BaseService {
       createdAt: dbTask.createdAt,
       updatedAt: dbTask.updatedAt,
       updatedBy: {
-        name: usersMap.getDisplayName(dbTask.updatedByUserRole.user.identityId),
-        displayTag: this.domainService.users.getDisplayTag(dbTask.updatedByUserRole.role, {
-          unitName,
-          isOwner: dbTask.innovationSection.innovation.owner?.id === dbTask.updatedByUserRole.user.id
-        })
+        name: usersMap.getDisplayName(dbTask.updatedByUserRole?.user?.identityId),
+        displayTag: dbTask.updatedByUserRole?.role
+          ? this.domainService.users.getDisplayTag(dbTask.updatedByUserRole.role, {
+              unitName,
+              isOwner: dbTask.innovationSection.innovation.owner?.id === dbTask.updatedByUserRole?.user.id
+            })
+          : ''
       },
       createdBy: {
         name: usersMap.getDisplayName(dbTask.createdByUserRole.user.identityId),
@@ -444,10 +448,12 @@ export class InnovationTasksService extends BaseService {
         })
       },
       assignedTo: {
-        name: usersMap.getDisplayName(dbTask.assignedToUserRole.user.identityId),
-        displayTag: this.domainService.users.getDisplayTag(dbTask.assignedToUserRole.role, {
-          unitName
-        })
+        name: usersMap.getDisplayName(dbTask.assignedToUserRole?.user?.identityId),
+        displayTag: dbTask.assignedToUserRole?.role
+          ? this.domainService.users.getDisplayTag(dbTask.assignedToUserRole.role, {
+              unitName
+            })
+          : ''
       }
     };
   }
@@ -865,7 +871,8 @@ export class InnovationTasksService extends BaseService {
 
     const task = await connection
       .createQueryBuilder(InnovationTaskEntity, 'task')
-      .innerJoinAndSelect('task.assignedToUserRole', 'assignedToUserRole')
+      .leftJoinAndSelect('task.assignedToUserRole', 'assignedToUserRole')
+      .innerJoinAndSelect('task.createdByUserRole', 'createdByUserRole')
       .where('task.id = :taskId', { taskId })
       .getOne();
 
@@ -873,7 +880,13 @@ export class InnovationTasksService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND);
     }
 
-    const oldAssessorRoleId = task.assignedToUserRole.id;
+
+
+    const oldAssessorRoleId = (task.assignedToUserRole ?? task.createdByUserRole)?.id;
+
+    if (!oldAssessorRoleId) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND);
+    }
 
     await connection.transaction(async transaction => {
       await transaction.update(
@@ -889,7 +902,8 @@ export class InnovationTasksService extends BaseService {
         .getOne();
 
       if (thread) {
-        await this.innovationThreadsService.removeFollowers(thread.id, [oldAssessorRoleId], transaction);
+        if (oldAssessorRoleId)
+          await this.innovationThreadsService.removeFollowers(thread.id, [oldAssessorRoleId], transaction);
         await this.innovationThreadsService.addFollowersToThread(
           domainContext,
           thread.id,

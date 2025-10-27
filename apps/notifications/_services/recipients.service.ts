@@ -475,32 +475,45 @@ export class RecipientsService extends BaseService {
         'role.id',
         'role.role',
         'role.isActive',
-        'ownerUnit.id'
+        'ownerUnit.id',
+        'createdByUser.id',
+        'createdByUser.identityId',
+        'createdByUser.status',
+        'createdByRole.id',
+        'createdByRole.role',
+        'createdByRole.isActive',
+        'createdByOwnerUnit.id'
       ])
       // Review we are inner joining with user / role and the createdBy might have been deleted, for tasks I don't
       // think it's too much of an error to not send notifications in those cases
-      .innerJoin('task.assignedToUserRole', 'role')
+      .leftJoin('task.assignedToUserRole', 'role')
       .leftJoin('role.organisationUnit', 'ownerUnit')
-      .innerJoin('role.user', 'user')
+      .leftJoin('role.user', 'user')
+      .leftJoin('task.createdByUserRole', 'createdByRole')
+      .leftJoin('createdByRole.organisationUnit', 'createdByOwnerUnit')
+      .leftJoin('createdByRole.user', 'createdByUser')
       .where(`task.id = :taskId`, { taskId: taskId })
-      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getOne();
 
     if (!dbTask) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND);
     }
 
+    const ownerRole = dbTask.assignedToUserRole ?? dbTask.createdByUserRole;
+    const ownerUser = ownerRole.user;
+    const ownerUnit = ownerRole.organisationUnit;
+
     return {
       id: dbTask.id,
       displayId: dbTask.displayId,
       status: dbTask.status,
       owner: {
-        userId: dbTask.assignedToUserRole.user.id,
-        identityId: dbTask.assignedToUserRole.user.identityId,
-        roleId: dbTask.assignedToUserRole.id,
-        role: dbTask.assignedToUserRole.role,
-        unitId: dbTask.assignedToUserRole.organisationUnit?.id,
-        isActive: dbTask.assignedToUserRole.isActive && dbTask.assignedToUserRole.user.status === UserStatusEnum.ACTIVE
+        userId: ownerUser.id,
+        identityId: ownerUser.identityId,
+        roleId: ownerRole.id,
+        role: ownerRole.role,
+        unitId: ownerUnit?.id,
+        isActive: ownerRole.isActive && ownerUser.status === UserStatusEnum.ACTIVE
       }
     };
   }
@@ -963,15 +976,15 @@ export class RecipientsService extends BaseService {
       // We want all dates before the date provided where the weekday is the same as the date provided
 
       // this is a hack to know the day of the week of assigned_date with 2 being Monday, Saturday and Sunday
-      const weekday = `CASE DATEPART(DW, support.created_at) WHEN 3 THEN 3 WHEN 4 THEN 4 WHEN 5 THEN 5 WHEN 6 THEN 6 ELSE 2 END`;
+      const weekday = `CASE DATEPART(DW, support.updated_at) WHEN 3 THEN 3 WHEN 4 THEN 4 WHEN 5 THEN 5 WHEN 6 THEN 6 ELSE 2 END`;
       date.setHours(23, 59, 59, 999);
       query
-        .andWhere('support.created_at <= :fullDate', { fullDate: date })
+        .andWhere('support.updated_at <= :fullDate', { fullDate: date })
         .andWhere(`${weekday} = DATEPART(DW, :date)`, { date: date.toISOString().split('T')[0] });
     } else {
       // We want all dates that are the same as the date provided (or previous day if it's a weekend)
       query.andWhere(
-        'DATEDIFF(day, "support"."created_at", :date) = 0 OR (DATEPART(DW, :date) = 2 AND DATEDIFF(day, "support"."created_at", :date) IN (1,2))',
+        'DATEDIFF(day, "support"."updated_at", :date) = 0 OR (DATEPART(DW, :date) = 2 AND DATEDIFF(day, "support"."updated_at", :date) IN (1,2))',
         { date: date.toISOString().split('T')[0] }
       );
     }
