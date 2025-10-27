@@ -19,6 +19,7 @@ export type ResponseDTO = {
   updatedAt: Date;
   updatedBy: { name: string; displayTag: string };
   createdBy: { name: string; displayTag: string };
+  assignedTo: { name: string; displayTag: string };
 };
 
 export const ResponseBodySchema = Joi.object<ResponseDTO>({
@@ -49,6 +50,10 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
     displayTag: Joi.string().required()
   }).required(),
   createdBy: Joi.object({
+    name: Joi.string().required(),
+    displayTag: Joi.string().required()
+  }).required(),
+  assignedTo: Joi.object({
     name: Joi.string().required(),
     displayTag: Joi.string().required()
   }).required()

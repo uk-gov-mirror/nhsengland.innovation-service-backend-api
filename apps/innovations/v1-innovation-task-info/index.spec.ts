@@ -41,7 +41,8 @@ const exampleTask = {
   createdAt: new Date(),
   updatedAt: new Date(),
   updatedBy: { name: 'name 1', displayTag: 'NHS Innovation Service' },
-  createdBy: { name: 'name 1', displayTag: 'NHS Innovation Service' }
+  createdBy: { name: 'name 1', displayTag: 'NHS Innovation Service' },
+  assignedTo: { name: 'name 1', displayTag: 'NHS Innovation Service' }
 };
 const mock = jest.spyOn(InnovationTasksService.prototype, 'getTaskInfo').mockResolvedValue(exampleTask);
 

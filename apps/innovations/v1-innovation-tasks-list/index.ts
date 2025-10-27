@@ -50,6 +50,7 @@ class V1InnovationTasksList {
           updatedAt: item.updatedAt,
           updatedBy: { name: item.updatedBy.name, displayTag: item.updatedBy.displayTag },
           createdBy: { name: item.createdBy.name, displayTag: item.createdBy.displayTag },
+          assignedTo: { name: item.assignedTo.name, displayTag: item.assignedTo.displayTag },
           sameOrganisation: item.sameOrganisation,
           ...(item.notifications && { notifications: item.notifications })
         }))

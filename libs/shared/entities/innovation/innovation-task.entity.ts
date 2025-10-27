@@ -32,6 +32,10 @@ export class InnovationTaskEntity extends BaseEntity {
   createdByUserRole: UserRoleEntity;
 
   @ManyToOne(() => UserRoleEntity)
+  @JoinColumn({ name: 'assigned_to_user_role_id' })
+  assignedToUserRole: UserRoleEntity;
+
+  @ManyToOne(() => UserRoleEntity)
   @JoinColumn({ name: 'updated_by_user_role_id' })
   updatedByUserRole: UserRoleEntity;
 

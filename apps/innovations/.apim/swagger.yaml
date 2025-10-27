@@ -4586,6 +4586,17 @@ paths:
                       - name
                       - displayTag
                     additionalProperties: false
+                  assignedTo:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      displayTag:
+                        type: string
+                    required:
+                      - name
+                      - displayTag
+                    additionalProperties: false
                 required:
                   - id
                   - displayId
@@ -4598,6 +4609,7 @@ paths:
                   - updatedAt
                   - updatedBy
                   - createdBy
+                  - assignedTo
                 additionalProperties: false
         "401":
           description: Unauthorized
