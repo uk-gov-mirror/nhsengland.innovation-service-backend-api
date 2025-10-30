@@ -2,6 +2,7 @@ import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import {
+  InnovationAssessmentEntity,
   InnovationSupportEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
@@ -9,6 +10,7 @@ import {
   UserRoleEntity
 } from '@users/shared/entities';
 import {
+  InnovationStatusEnum,
   InnovationSupportStatusEnum,
   OrganisationTypeEnum,
   ServiceRoleEnum,
@@ -25,8 +27,9 @@ import {
 import { addToArrayValueInMap } from '@users/shared/helpers/misc.helper';
 import type { DomainService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
-import { DomainContextType, isAccessorDomainContextType } from '@users/shared/types';
+import { DomainContextType, isAccessorDomainContextType, isAssessmentDomainContextType } from '@users/shared/types';
 import { BaseService } from './base.service';
+import { NeedsAssement } from '../_types/users.types';
 
 @injectable()
 export class OrganisationsService extends BaseService {
@@ -284,5 +287,53 @@ export class OrganisationsService extends BaseService {
     }
 
     return { count: data.length, data: data.sort((a, b) => a.accessor.name.localeCompare(b.accessor.name)) };
+  }
+
+  async getNeedsAssessorAndInnovations(
+    domainContext: DomainContextType,
+    entityManager?: EntityManager
+  ): Promise<{
+    count: number;
+    data: Array<NeedsAssement>;
+  }> {
+    if (!isAssessmentDomainContextType(domainContext)) throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const assessments = await em
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .select([
+        'innovation.id',
+        'innovation.name',
+        'assessment.majorVersion',
+        'assessment.minorVersion',
+        'assessment.startedAt',
+        'assignTo.identityId'
+      ])
+      .leftJoin('assessment.assignTo', 'assignTo')
+      .innerJoin('assessment.innovation', 'innovation', 'innovation.currentAssessment = assessment.id')
+      .innerJoin(UserRoleEntity, 'ur', 'assessment.assignTo = ur.user')
+      .where('ur.role = :role', { role: ServiceRoleEnum.ASSESSMENT })
+      .andWhere('assessment.assignTo IS NOT NULL')
+      .andWhere('innovation.status = :status', { status: InnovationStatusEnum.NEEDS_ASSESSMENT })
+      .getMany();
+
+    const usersInfoMap = await this.domainService.users.getUsersMap(
+      {
+        identityIds: Array.from(new Set(assessments.map(u => u.assignTo!.identityId)))
+      },
+      em
+    );
+
+    const data: Awaited<ReturnType<OrganisationsService['getNeedsAssessorAndInnovations']>>['data'] = assessments.map(
+      assessment => ({
+        assignedInnovation: assessment.innovation.name,
+        innovationId: assessment.innovation.id,
+        needsAssessorUserName: usersInfoMap.getDisplayName(assessment.assignTo?.identityId),
+        needsAssessmentVersion: `${assessment.majorVersion}.${assessment.minorVersion}`,
+        assessmentStartDate: assessment.startedAt
+      })
+    );
+
+    return { count: data.length, data: data.sort((a, b) => a.needsAssessorUserName.localeCompare(b.needsAssessorUserName)) };
   }
 }

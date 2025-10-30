@@ -25,3 +25,11 @@ export type UserFullInfoDTO = {
     units: { id: string; name: string; acronym: string; supportCount: null | number }[];
   }[];
 };
+
+export type NeedsAssement = {
+  assignedInnovation: string;
+  needsAssessmentVersion: string;
+  innovationId: string;
+  needsAssessorUserName: string;
+  assessmentStartDate: Date | null;
+};

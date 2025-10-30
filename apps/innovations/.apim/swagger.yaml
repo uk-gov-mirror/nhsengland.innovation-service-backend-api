@@ -1502,6 +1502,8 @@ paths:
                 - assessment.assignedTo
                 - assessment.updatedAt
                 - assessment.finishedAt
+                - assessment.maturityLevel
+                - progressAreas
                 - engagingOrganisations
                 - engagingUnits
                 - suggestion.suggestedBy
@@ -1606,12 +1608,14 @@ paths:
                 - EMERGING_INFECTIOUS_DISEASES
                 - DATA_ANALYTICS_AND_RESEARCH
                 - DIGITALISING_SYSTEM
+                - HOSPITAL_TO_COMMUNITY
                 - IMPROVING_SYSTEM_FLOW
                 - PREVENTIVE_CARE
                 - SUPPORTING_PEOPLE_HEALTH
                 - PATIENT_SAFETY
                 - WORKFORCE_RESOURCE_OPTIMISATION
                 - NET_ZERO_GREENER_INNOVATION
+                - NONE
       responses:
         "200":
           description: Success
@@ -2491,6 +2495,9 @@ paths:
                       - IN_PROGRESS
                       - WITHDRAWN
                       - ARCHIVED
+                  archiveReason:
+                    type: string
+                    nullable: true
                   groupedStatus:
                     type: string
                     enum:
@@ -2666,6 +2673,7 @@ paths:
                   - description
                   - version
                   - status
+                  - archiveReason
                   - groupedStatus
                   - hasBeenAssessed
                   - statusUpdatedAt
@@ -4578,6 +4586,17 @@ paths:
                       - name
                       - displayTag
                     additionalProperties: false
+                  assignedTo:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      displayTag:
+                        type: string
+                    required:
+                      - name
+                      - displayTag
+                    additionalProperties: false
                 required:
                   - id
                   - displayId
@@ -4590,6 +4609,7 @@ paths:
                   - updatedAt
                   - updatedBy
                   - createdBy
+                  - assignedTo
                 additionalProperties: false
         "401":
           description: Unauthorized
@@ -6545,6 +6565,8 @@ paths:
                 - assessment.assignedTo
                 - assessment.updatedAt
                 - assessment.finishedAt
+                - assessment.maturityLevel
+                - progressAreas
                 - engagingOrganisations
                 - engagingUnits
                 - suggestion.suggestedBy
@@ -6649,12 +6671,47 @@ paths:
                 - EMERGING_INFECTIOUS_DISEASES
                 - DATA_ANALYTICS_AND_RESEARCH
                 - DIGITALISING_SYSTEM
+                - HOSPITAL_TO_COMMUNITY
                 - IMPROVING_SYSTEM_FLOW
                 - PREVENTIVE_CARE
                 - SUPPORTING_PEOPLE_HEALTH
                 - PATIENT_SAFETY
                 - WORKFORCE_RESOURCE_OPTIMISATION
                 - NET_ZERO_GREENER_INNOVATION
+                - NONE
+        - name: maturityLevels
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - DISCOVERY
+                - ADVANCED
+                - READY
+        - name: progressAreas
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - deploymentCount
+                - ukcaceCertification
+                - dtacCertification
+                - evidenceClinicalOrCare
+                - evidenceRealWorld
+                - assessmentRealWorldValidation
+                - evidenceOfImpact
+                - assessmentEvidenceProveEfficacy
+                - evidenceCostImpact
+                - workingProduct
+                - carbonReductionPlan
+                - htwTerComplete
+                - niceGuidanceComplete
+                - scProcurementRouteIdentified
       responses:
         "204":
           description: Success

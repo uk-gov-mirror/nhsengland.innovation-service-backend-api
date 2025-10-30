@@ -5,6 +5,7 @@ import type {
   InnovationStatusEnum,
   InnovationSupportCloseReasonEnum,
   InnovationSupportStatusEnum,
+  ProgressAreasCatalogType,
   UserStatusEnum
 } from '../../enums';
 import type { CreateIndexParams } from '../../services/integrations/elastic-search.service';
@@ -46,7 +47,10 @@ export type ElasticSearchDocumentType = {
     assignedToId: string | null;
     updatedAt: Date;
     isExempt: boolean;
+    finishedAt: Date | null;
+    maturityLevel: string | null;
   };
+  progressAreas?: ProgressAreasCatalogType[];
   suggestions?: {
     suggestedUnitId: string;
     suggestedBy: string[];
@@ -152,10 +156,14 @@ export const ElasticSearchSchema: CreateIndexParams = {
           assignedToId: { type: 'keyword' },
           assignedToIdentityId: { type: 'keyword' },
           updatedAt: { type: 'date' },
-          isExempt: { type: 'boolean' }
+          isExempt: { type: 'boolean' },
+          maturityLevel:{ type: 'keyword' },
+          finishedAt: { type: 'date' }
         }
       },
-
+      progressAreas: {
+        type: 'keyword'
+      },
       filters: {
         properties: {
           name: KeywordType,

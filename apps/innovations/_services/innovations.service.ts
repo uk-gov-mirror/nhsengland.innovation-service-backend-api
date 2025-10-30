@@ -31,6 +31,7 @@ import {
   InnovationSupportCloseReasonEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
+  MaturityLevelCatalogueType,
   NotifierTypeEnum,
   type PhoneUserPreferenceEnum,
   ServiceRoleEnum,
@@ -111,6 +112,8 @@ export const InnovationListSelectType = [
   'assessment.assignedTo',
   'assessment.updatedAt',
   'assessment.finishedAt',
+  'assessment.maturityLevel',
+  'progressAreas',
   'engagingOrganisations',
   'engagingUnits',
   // NOTE: The suggestion is always related to the unit from the QA accessing
@@ -205,6 +208,8 @@ export type InnovationListFilters = {
   supportUnit?: string;
   closedByMyOrganisation?: boolean;
   areas?: CurrentCatalogTypes.catalogAreas[];
+  maturityLevels?: MaturityLevelCatalogueType[];
+  progressAreas?: string[];
 };
 
 // Join types are the ones with nested selectable objects
@@ -716,7 +721,9 @@ export class InnovationsService extends BaseService {
     search: this.addSearchFilter.bind(this),
     supportStatuses: this.addSupportFilter.bind(this),
     supportUnit: () => {}, // this is handled in the withSupport handler for admin users and forbidden otherwise
-    areas: this.addJsonArrayInFilter('areas').bind(this)
+    areas: this.addJsonArrayInFilter('areas').bind(this),
+    maturityLevels: this.addJsonArrayInFilter('maturityLevels').bind(this),
+    progressAreas: this.addJsonArrayInFilter('progressAreas').bind(this)
   };
 
   /**
@@ -1126,6 +1133,7 @@ export class InnovationsService extends BaseService {
     version: string;
     status: InnovationStatusEnum;
     groupedStatus: InnovationGroupedStatusEnum;
+    archiveReason: null | string;
     hasBeenAssessed: boolean;
     statusUpdatedAt: Date;
     submittedAt: null | Date;
@@ -1170,6 +1178,7 @@ export class InnovationsService extends BaseService {
         'innovation.uniqueId',
         'innovation.name',
         'innovation.status',
+        'innovation.archiveReason',
         'innovation.statusUpdatedAt',
         'innovation.hasBeenAssessed',
         'innovation.lastAssessmentRequestAt',
@@ -1322,6 +1331,7 @@ export class InnovationsService extends BaseService {
       description: documentData.description,
       version: documentData.version,
       status: innovation.status,
+      archiveReason: innovation.archiveReason,
       groupedStatus: innovation.innovationGroupedStatus.groupedStatus,
       hasBeenAssessed: innovation.hasBeenAssessed,
       statusUpdatedAt: innovation.statusUpdatedAt,

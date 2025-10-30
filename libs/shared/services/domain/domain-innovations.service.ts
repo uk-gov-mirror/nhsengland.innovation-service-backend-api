@@ -1199,8 +1199,54 @@ export class DomainInnovationsService {
       IIF(
         a.id IS NULL,
         NULL,
-        JSON_OBJECT('id': a.id, 'majorVersion': a.major_version, 'minorVersion': a.minor_version, 'updatedAt': a.updated_at, 'isExempt': CONVERT(BIT, IIF(a.exempted_at IS NULL, 0, 1)), 'assignedToId': a.assign_to_id ABSENT ON NULL)
+        JSON_OBJECT(
+        'id': a.id,
+        'majorVersion': a.major_version,
+        'minorVersion': a.minor_version,
+        'updatedAt': a.updated_at,
+        'finishedAt': a.finished_at,
+        'maturityLevel': a.maturity_level, 
+        'isExempt': CONVERT(BIT, IIF(a.exempted_at IS NULL, 0, 1)),
+        'assignedToId': a.assign_to_id ABSENT ON NULL
+    )
       ) AS assessment,
+      (
+          SELECT JSON_QUERY(
+              '[' + STRING_AGG(
+                  QUOTENAME(area, '"'), 
+                  ','
+              ) + ']'
+          ) AS progressAreas
+          FROM (
+              SELECT 'ukcaceCertification' AS area WHERE p.ukcace_certification IS NOT NULL
+              UNION ALL
+              SELECT 'deploymentCount' where p.deployment_count is NOT NULL
+              UNION ALL
+              SELECT 'dtacCertification' WHERE p.dtac_certification IS NOT NULL
+              UNION ALL
+              SELECT 'evidenceClinicalOrCare' WHERE p.evidence_clinical_or_care IS NOT NULL
+              UNION ALL
+              SELECT 'evidenceRealWorld' WHERE p.evidence_real_world IS NOT NULL
+              UNION ALL
+              SELECT 'assessmentRealWorldValidation' WHERE p.assessment_real_world_validation IS NOT NULL
+              UNION ALL
+              SELECT 'evidenceOfImpact' WHERE p.evidence_of_impact IS NOT NULL
+              UNION ALL
+              SELECT 'assessmentEvidenceProveEfficacy' WHERE p.assessment_evidence_prove_efficacy IS NOT NULL
+              UNION ALL
+              SELECT 'evidenceCostImpact' WHERE p.evidence_cost_impact IS NOT NULL
+              UNION ALL
+              SELECT 'workingProduct' WHERE p.working_product IS NOT NULL
+              UNION ALL
+              SELECT 'carbonReductionPlan' WHERE p.carbon_reduction_plan IS NOT NULL
+              UNION ALL
+              SELECT 'htwTerComplete' WHERE p.htw_ter_complete IS NOT NULL
+              UNION ALL
+              SELECT 'niceGuidanceComplete' WHERE p.nice_guidance_complete IS NOT NULL
+              UNION ALL
+              SELECT 'scProcurementRouteIdentified' WHERE p.sc_procurement_route_identified IS NOT NULL
+          ) t
+      ) AS progressAreas,
       (
         SELECT suggested_unit_id as suggestedUnitId, suggested_by_units_acronyms AS suggestedBy
       FROM innovation_suggested_units_view
@@ -1209,7 +1255,8 @@ export class DomainInnovationsService {
       ) AS suggestions
     FROM innovations i
       INNER JOIN innovation_document d ON i.id = d.id
-      LEFT JOIN innovation_assessment a ON i.id = a.innovation_id AND i.current_assessment_id = a.id AND a.deleted_at IS NULL`;
+      LEFT JOIN innovation_assessment a ON i.id = a.innovation_id AND i.current_assessment_id = a.id AND a.deleted_at IS NULL
+      left join innovation_progress_view p on i.id = p.innovation_id`;
 
     if (innovationId) {
       sql += ` WHERE i.id = @0`;
@@ -1240,6 +1287,7 @@ export class DomainInnovationsService {
         ...(innovation.shares && { shares: JSON.parse(innovation.shares) }),
         ...(innovation.supports && { supports: JSON.parse(innovation.supports) }),
         ...(innovation.assessment && { assessment: JSON.parse(innovation.assessment) }),
+        ...(innovation.progressAreas && { progressAreas: JSON.parse(innovation.progressAreas) }),
         ...(innovation.suggestions && { suggestions: JSON.parse(innovation.suggestions) }),
         filters: {
           name: document.INNOVATION_DESCRIPTION.name,
