@@ -83,9 +83,7 @@ export const requiredSectionsAndQuestions = new Map<InnovationSections, string[]
       'otherCareSetting',
       'involvedAACProgrammes',
       'hasWebsite',
-      'website',
-      'hasVideoDemonstration',
-      'videoDemonstrationUrl'
+      'website'
     ]
   ],
   [

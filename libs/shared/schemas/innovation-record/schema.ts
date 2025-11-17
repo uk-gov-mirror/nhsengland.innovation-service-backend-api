@@ -933,9 +933,6 @@ export const IR_SCHEMA = {
                   id: 'hasVideoDemonstration',
                   dataType: 'radio-group',
                   label: 'Does your innovation have a video that explains or demonstrates it?',
-                  validations: {
-                    isRequired: 'Choose one option'
-                  },
                   items: [
                     {
                       id: 'YES',
@@ -945,7 +942,6 @@ export const IR_SCHEMA = {
                         dataType: 'text',
                         label: 'Video URL',
                         validations: {
-                          isRequired: 'Video URL is required',
                           urlFormat: { maxLength: 2000 }
                         }
                       }
