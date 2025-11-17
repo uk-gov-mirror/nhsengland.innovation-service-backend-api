@@ -31,6 +31,8 @@ export type InnovationRecordDocumentType = {
     involvedAACProgrammes?: catalogInvolvedAACProgrammes[];
     hasWebsite?: string;
     website?: string;
+    hasVideoDemonstration?: string;
+    videoDemonstrationUrl?: string;
   } & OtherKeyValues;
   UNDERSTANDING_OF_NEEDS: {
     diseasesConditionsImpact?: string[];
@@ -81,7 +83,9 @@ export const requiredSectionsAndQuestions = new Map<InnovationSections, string[]
       'otherCareSetting',
       'involvedAACProgrammes',
       'hasWebsite',
-      'website'
+      'website',
+      'hasVideoDemonstration',
+      'videoDemonstrationUrl'
     ]
   ],
   [

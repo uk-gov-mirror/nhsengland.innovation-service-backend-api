@@ -930,6 +930,37 @@ export const IR_SCHEMA = {
             {
               questions: [
                 {
+                  id: 'hasVideoDemonstration',
+                  dataType: 'radio-group',
+                  label: 'Does your innovation have a video that explains or demonstrates it?',
+                  validations: {
+                    isRequired: 'Choose one option'
+                  },
+                  items: [
+                    {
+                      id: 'YES',
+                      label: 'Yes',
+                      conditional: {
+                        id: 'videoDemonstrationUrl',
+                        dataType: 'text',
+                        label: 'Video URL',
+                        validations: {
+                          isRequired: 'Video URL is required',
+                          urlFormat: { maxLength: 2000 }
+                        }
+                      }
+                    },
+                    {
+                      id: 'NO',
+                      label: 'No'
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              questions: [
+                {
                   id: 'categories',
                   dataType: 'checkbox-array',
                   label: 'Select all the categories that can be used to describe your innovation',
