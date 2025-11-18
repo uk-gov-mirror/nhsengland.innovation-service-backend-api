@@ -1315,13 +1315,24 @@ paths:
             schema:
               type: object
               properties:
-                name: {}
-                description: {}
-                officeLocation: {}
-                countryLocation: {}
-                postcode: {}
-                hasWebsite: {}
-                website: {}
+                name:
+                  type: string
+                description:
+                  type: string
+                officeLocation:
+                  type: string
+                countryLocation:
+                  type: string
+                postcode:
+                  type: string
+                hasWebsite:
+                  type: string
+                website:
+                  type: string
+                hasVideoDemonstration:
+                  type: string
+                videoDemonstrationUrl:
+                  type: string
               required:
                 - name
                 - description
