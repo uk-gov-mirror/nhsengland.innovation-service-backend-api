@@ -44,6 +44,8 @@ export const createDocumentFromInnovation = (
     postcode?: string;
     hasWebsite: string;
     website?: string;
+    hasVideoDemonstration?: string;
+    videoDemonstrationUrl?: string;
   }
 ): InnovationDocumentEntity => {
   const document: CurrentDocumentType = {
@@ -56,7 +58,9 @@ export const createDocumentFromInnovation = (
       officeLocation: fields.officeLocation,
       countryLocation: fields.countryLocation,
       hasWebsite: fields.hasWebsite,
-      website: fields.website
+      website: fields.website,
+      hasVideoDemonstration: fields.hasVideoDemonstration,
+      videoDemonstrationUrl: fields.videoDemonstrationUrl
     },
     UNDERSTANDING_OF_NEEDS: {},
     EVIDENCE_OF_EFFECTIVENESS: {},

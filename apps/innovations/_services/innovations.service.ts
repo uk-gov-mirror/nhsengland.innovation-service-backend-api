@@ -1486,6 +1486,8 @@ export class InnovationsService extends BaseService {
       postcode?: string;
       hasWebsite: string;
       website?: string;
+      hasVideoDemonstration?: string;
+      videoDemonstrationUrl?: string;
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
