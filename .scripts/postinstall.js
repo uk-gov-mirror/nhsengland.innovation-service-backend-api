@@ -7,4 +7,6 @@ if (process.env.PRE_INSTALL == "1" || process.platform == "win32") {
   fs.readdirSync("./apps").forEach((app) => {
     execSync(`npm run app:configure --function-app=${app}`);
   });
+
+  execSync("node node_modules/geoip-lite/scripts/updatedb.js", { stdio: 'inherit' });
 }
