@@ -43,7 +43,7 @@ class V1GeoIpLookup {
 export default openApi(V1GeoIpLookup.httpTrigger as AzureFunction, '/v1/geoip/lookup', {
   post: {
     description: 'Get country code for a given IP address.',
-    operationId: 'v1-geoip-lookup',
+    operationId: 'v1-geoip-lookup-post',
     requestBody: SwaggerHelper.bodyJ2S(Joi.object({ ip: Joi.string().description('IP address to lookup') })),
     responses: {
       '200': SwaggerHelper.responseJ2S(
@@ -58,7 +58,7 @@ export default openApi(V1GeoIpLookup.httpTrigger as AzureFunction, '/v1/geoip/lo
   },
   get: {
     description: 'Get country code for a given IP address.',
-    operationId: 'v1-geoip-lookup',
+    operationId: 'v1-geoip-lookup-get',
     parameters: [
       {
         in: 'query',
