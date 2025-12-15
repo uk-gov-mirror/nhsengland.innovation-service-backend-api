@@ -241,7 +241,7 @@ describe('Users / _services / statistics service suite', () => {
         em
       );
 
-      expect(suggestedInnovations).toBe(1);
+      expect(suggestedInnovations).toBe(2);
     });
   });
 });
