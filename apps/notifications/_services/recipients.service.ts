@@ -57,6 +57,7 @@ export type RecipientType = {
   identityId: string;
   isActive: boolean;
   unitId?: string;
+  jobTitle?: string | null;
 };
 
 type RoleFilter = {
@@ -361,7 +362,8 @@ export class RecipientsService extends BaseService {
         'userRole.isActive',
         'user.id',
         'user.identityId',
-        'user.status'
+        'user.status',
+        'user.jobTitle'
       ])
       .innerJoin('support.userRoles', 'userRole')
       .innerJoin('support.organisationUnit', 'organisationUnit')
@@ -392,7 +394,8 @@ export class RecipientsService extends BaseService {
             userId: userRole.user.id,
             identityId: userRole.user.identityId,
             isActive: userRole.isActive && userRole.user.status === UserStatusEnum.ACTIVE,
-            unitId: support.organisationUnit.id
+            unitId: support.organisationUnit.id,
+            jobTitle: userRole.user.jobTitle
           });
         }
       }
@@ -419,7 +422,8 @@ export class RecipientsService extends BaseService {
         'userRole.isActive',
         'user.id',
         'user.identityId',
-        'user.status'
+        'user.status',
+        'user.jobTitle'
       ])
       .innerJoin('innovation.innovationSupports', 'support', 'support.isMostRecent = 1')
       .innerJoin('support.organisationUnit', 'organisationUnit')
@@ -443,7 +447,8 @@ export class RecipientsService extends BaseService {
               userId: userRole.user.id,
               identityId: userRole.user.identityId,
               unitId: support.organisationUnit.id,
-              isActive: userRole.isActive && userRole.user.status === UserStatusEnum.ACTIVE
+              isActive: userRole.isActive && userRole.user.status === UserStatusEnum.ACTIVE,
+              jobTitle: userRole.user.jobTitle
             });
           }
         }
@@ -475,10 +480,12 @@ export class RecipientsService extends BaseService {
         'role.id',
         'role.role',
         'role.isActive',
+        'user.jobTitle',
         'ownerUnit.id',
         'createdByUser.id',
         'createdByUser.identityId',
         'createdByUser.status',
+        'createdByUser.jobTitle',
         'createdByRole.id',
         'createdByRole.role',
         'createdByRole.isActive',
@@ -513,7 +520,8 @@ export class RecipientsService extends BaseService {
         roleId: ownerRole.id,
         role: ownerRole.role,
         unitId: ownerUnit?.id,
-        isActive: ownerRole.isActive && ownerUser.status === UserStatusEnum.ACTIVE
+        isActive: ownerRole.isActive && ownerUser.status === UserStatusEnum.ACTIVE,
+        jobTitle: ownerUser.jobTitle
       }
     };
   }
@@ -538,6 +546,7 @@ export class RecipientsService extends BaseService {
         'authorUserRole.id',
         'authorUserRole.role',
         'authorUserRole.isActive',
+        'author.jobTitle',
         'authorUnit.id'
       ])
       .innerJoin('thread.author', 'author')
@@ -560,7 +569,8 @@ export class RecipientsService extends BaseService {
           roleId: dbThread.authorUserRole.id,
           role: dbThread.authorUserRole.role,
           unitId: dbThread.authorUserRole.organisationUnit?.id,
-          isActive: dbThread.author.status === UserStatusEnum.ACTIVE && dbThread.authorUserRole.isActive
+          isActive: dbThread.author.status === UserStatusEnum.ACTIVE && dbThread.authorUserRole.isActive,
+          jobTitle: dbThread.author.jobTitle
         }
       })
     };
@@ -1218,6 +1228,7 @@ export class RecipientsService extends BaseService {
         'user.id',
         'user.identityId',
         'user.status',
+        'user.jobTitle',
         'unit.id'
       ])
       .innerJoin('userRole.user', 'user')
@@ -1256,7 +1267,8 @@ export class RecipientsService extends BaseService {
       userId: r.user.id,
       identityId: r.user.identityId,
       unitId: r.organisationUnit?.id,
-      isActive: r.isActive && r.user.status === UserStatusEnum.ACTIVE
+      isActive: r.isActive && r.user.status === UserStatusEnum.ACTIVE,
+      jobTitle: r.user.jobTitle
     }));
 
     return userRoles;

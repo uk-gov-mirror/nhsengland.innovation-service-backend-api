@@ -38,6 +38,7 @@ export type TestUserType = {
   isActive: boolean;
   lockedAt: null | Date;
   createdAt: Date;
+  jobTitle: null | string;
   roles: Record<string, RoleType>;
   organisations: Record<string, TestUserOrganisationsType>;
 };
@@ -48,6 +49,7 @@ export class UserBuilder extends BaseBuilder {
   private additionalFields: {
     name: null | string;
     mobilePhone: null | string;
+    jobTitle: null | string;
   };
 
   private rolesToAdd: {
@@ -69,7 +71,8 @@ export class UserBuilder extends BaseBuilder {
 
     this.additionalFields = {
       name: null,
-      mobilePhone: null
+      mobilePhone: null,
+      jobTitle: null
     };
   }
 
@@ -85,6 +88,12 @@ export class UserBuilder extends BaseBuilder {
 
   setStatus(status: UserStatusEnum): this {
     this.user.status = status;
+    return this;
+  }
+
+  setJobTitle(jobTitle: string | null): this {
+    this.user.jobTitle = jobTitle;
+    this.additionalFields.jobTitle = jobTitle;
     return this;
   }
 
@@ -174,6 +183,7 @@ export class UserBuilder extends BaseBuilder {
         'user.lockedAt',
         'user.createdAt',
         'user.firstTimeSignInAt',
+        'user.jobTitle',
 
         'roles.id',
         'roles.role',
@@ -284,6 +294,7 @@ export class UserBuilder extends BaseBuilder {
       isActive: result.status === UserStatusEnum.ACTIVE,
       lockedAt: result.lockedAt,
       createdAt: result.createdAt,
+      jobTitle: result.jobTitle,
       roles: userRoles,
       organisations: userOrganisations
     };

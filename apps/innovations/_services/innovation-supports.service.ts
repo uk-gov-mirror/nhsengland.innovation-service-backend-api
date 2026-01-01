@@ -172,6 +172,7 @@ export class InnovationSupportsService extends BaseService {
             id: supportUserRole.user.id,
             userRoleId: supportUserRole.id,
             name: usersInfo.getDisplayName(supportUserRole.user.id, supportUserRole.role),
+            jobTitle: usersInfo.getJobTitleWithFallback(supportUserRole.user.id, supportUserRole.role),
             isActive: supportUserRole.isActive
           }))
           .filter(authUser => authUser.name);
@@ -441,7 +442,8 @@ export class InnovationSupportsService extends BaseService {
         .map(su => ({
           id: su.user.id,
           userRoleId: su.id,
-          name: usersInfo.getDisplayName(su.user.id, su.role)
+          name: usersInfo.getDisplayName(su.user.id, su.role),
+          jobTitle: usersInfo.getJobTitleWithFallback(su.user.id, su.role)
         }))
         .filter(authUser => authUser.name)
     };

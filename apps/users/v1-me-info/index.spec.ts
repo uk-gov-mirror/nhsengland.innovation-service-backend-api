@@ -35,6 +35,7 @@ const userInfo = {
   displayName: randFullName(),
   roles: [{ id: randUuid(), role: ServiceRoleEnum.INNOVATOR, isActive: true }],
   phone: null,
+  jobTitle: null,
   isActive: true,
   lockedAt: null,
   passwordResetAt: randPastDate(),

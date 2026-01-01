@@ -274,7 +274,7 @@ export class UsersService extends BaseService {
       phone: user.phone ?? undefined,
       roles: user.roles.map(r => ({
         ...r,
-        displayTeam: this.domainService.users.getDisplayTeamInformation(r.role, r.organisationUnit?.name)
+        displayTeam: this.domainService.users.getDisplayTeamInformation(r.role, r.organisationUnit?.name, user.jobTitle)
       }))
     };
   }

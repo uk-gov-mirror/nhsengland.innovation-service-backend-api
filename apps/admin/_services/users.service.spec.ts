@@ -408,6 +408,7 @@ describe('Admin / _services / users service suite', () => {
         id: scenarioUser.id,
         email: scenarioUser.email,
         name: scenarioUser.name,
+        jobTitle: scenarioUser.jobTitle ?? null,
         phone: scenarioUser.mobilePhone ?? undefined,
         isActive: scenarioUser.isActive,
         roles: Object.values(scenarioUser.roles).map(r => ({

@@ -7,10 +7,12 @@ import { JoiHelper } from '@users/shared/helpers';
 
 export type DefaultUserBodyType = {
   displayName: string;
+  jobTitle?: string | null;
 };
 
 export const DefaultUserBodySchema = Joi.object<DefaultUserBodyType>({
-  displayName: JoiHelper.AppCustomJoi().string().required()
+  displayName: JoiHelper.AppCustomJoi().string().required(),
+  jobTitle: JoiHelper.AppCustomJoi().string().optional().allow('', null)
 }).required();
 
 export type InnovatorBodyType = {

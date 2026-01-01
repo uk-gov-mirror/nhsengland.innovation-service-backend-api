@@ -5,62 +5,6 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-innovation-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
-  /v1/geoip/lookup:
-    post:
-      description: Get country code for a given IP address.
-      operationId: v1-geoip-lookup-post
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                ip:
-                  type: string
-                  description: IP address to lookup
-              additionalProperties: false
-      responses:
-        "200":
-          description: The country code for the given IP address.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  countryCode:
-                    type: string
-                    description: Two-letter country code (ISO 3166-1 alpha-2)
-                additionalProperties: false
-        "400":
-          description: Bad request.
-        "500":
-          description: An error occurred while fetching the geoip data.
-    get:
-      description: Get country code for a given IP address.
-      operationId: v1-geoip-lookup-get
-      parameters:
-        - in: query
-          name: ip
-          schema:
-            type: string
-          description: IP address to lookup
-      responses:
-        "200":
-          description: The country code for the given IP address.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  countryCode:
-                    type: string
-                    description: Two-letter country code (ISO 3166-1 alpha-2)
-                additionalProperties: false
-        "400":
-          description: Bad request.
-        "500":
-          description: An error occurred while fetching the geoip data.
   /v1/{innovationId}/activities:
     get:
       operationId: v1-innovation-activities-log-list
@@ -2639,6 +2583,9 @@ paths:
                       mobilePhone:
                         type: string
                         nullable: true
+                      jobTitle:
+                        type: string
+                        nullable: true
                       lastLoginAt:
                         type: string
                         format: date-time
@@ -2694,6 +2641,9 @@ paths:
                             type: string
                           userRoleId:
                             type: string
+                          jobTitle:
+                            type: string
+                            nullable: true
                         required:
                           - id
                           - name

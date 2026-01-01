@@ -65,6 +65,7 @@ export type DomainUserInfoType = {
   lockedAt: null | Date;
   passwordResetAt: null | Date;
   firstTimeSignInAt: null | Date;
+  jobTitle: null | string;
 };
 
 // This is mostly the same as DomainUserInfoType, but with some fields removed.
@@ -72,6 +73,7 @@ export type DomainUserIdentityInfo = {
   id: string;
   identityId: string;
   displayName: string;
+  jobTitle?: null | string;
   roles: Pick<RoleType, 'id' | 'isActive' | 'role'>[];
   email: string;
   mobilePhone: null | string;
@@ -82,6 +84,7 @@ export type DomainUserIdentityInfo = {
 export type InnovatorDomainContextType = {
   id: string;
   identityId: string;
+  jobTitle?: null | string;
   organisation: {
     id: string;
     name: string;
@@ -97,6 +100,7 @@ export type InnovatorDomainContextType = {
 export type AssessmentDomainContextType = {
   id: string;
   identityId: string;
+  jobTitle?: null | string;
   organisation?: never;
   currentRole: {
     id: string;
@@ -107,6 +111,7 @@ export type AssessmentDomainContextType = {
 export type AccessorDomainContextType = {
   id: string;
   identityId: string;
+  jobTitle?: null | string;
   organisation: {
     id: string;
     name: string;
@@ -122,6 +127,7 @@ export type AccessorDomainContextType = {
 export type AdminDomainContextType = {
   id: string;
   identityId: string;
+  jobTitle?: null | string;
   organisation?: never;
   currentRole: {
     id: string;
@@ -373,6 +379,7 @@ export type ActivityLogTemplatesType = {
 export type IdentityUserInfo = {
   identityId: string;
   displayName: string;
+  jobTitle?: null | string;
   email: string;
   mobilePhone: null | string;
   isActive: boolean;

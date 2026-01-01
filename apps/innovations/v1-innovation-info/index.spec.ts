@@ -96,7 +96,8 @@ describe('v1-innovation-info Suite', () => {
         contactDetails: randPhoneNumber(),
         mobilePhone: randPhoneNumber(),
         isActive: randBoolean(),
-        lastLoginAt: randPastDate()
+        lastLoginAt: randPastDate(),
+        jobTitle: null
       }
     };
 
@@ -224,7 +225,7 @@ describe('v1-innovation-info Suite', () => {
           currentMajorAssessmentId: randUuid(),
           majorVersion: randNumber(),
           minorVersion: randNumber(),
-          assignedTo: { id: randUuid(), name: randFullName(), userRoleId: randUuid() },
+          assignedTo: { id: randUuid(), name: randFullName(), userRoleId: randUuid(), jobTitle: null },
           createdAt: randPastDate(),
           finishedAt: randPastDate()
         }

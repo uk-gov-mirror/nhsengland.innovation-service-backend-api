@@ -8,6 +8,7 @@ import type { InAppTemplatesType } from '../_config/inapp.config';
 import { HandlersHelper } from '../_helpers/handlers.helper';
 import { unsubscribeUrl } from '../_helpers/url.helper';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
+import { TranslationHelper } from '@notifications/shared/helpers';
 import SYMBOLS from '../_services/symbols';
 
 export type EmailRecipientType = { email: string; displayname?: string };
@@ -232,5 +233,13 @@ export abstract class BaseHandler<
       default:
         return 'user';
     }
+  }
+
+  protected getJobTitleWithFallback(recipient: RecipientType): string {
+    return recipient.jobTitle || TranslationHelper.translate(`SERVICE_ROLES.${recipient.role}`);
+  }
+
+  protected getRequestJobTitleWithFallback(): string {
+    return this.requestUser.jobTitle || TranslationHelper.translate(`SERVICE_ROLES.${this.requestUser.currentRole.role}`);
   }
 }
