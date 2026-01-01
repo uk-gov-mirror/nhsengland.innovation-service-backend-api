@@ -258,6 +258,7 @@ export class UsersService extends BaseService {
     name: string;
     phone?: string;
     isActive: boolean;
+    jobTitle?: string | null;
     roles: (RoleType & {
       displayTeam?: string;
     })[];
@@ -272,6 +273,7 @@ export class UsersService extends BaseService {
       name: user.displayName,
       isActive: user.isActive,
       phone: user.phone ?? undefined,
+      jobTitle: user.jobTitle ?? null,
       roles: user.roles.map(r => ({
         ...r,
         displayTeam: this.domainService.users.getDisplayTeamInformation(r.role, r.organisationUnit?.name, user.jobTitle)

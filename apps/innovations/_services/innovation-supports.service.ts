@@ -173,6 +173,7 @@ export class InnovationSupportsService extends BaseService {
             userRoleId: supportUserRole.id,
             name: usersInfo.getDisplayName(supportUserRole.user.id, supportUserRole.role),
             jobTitle: usersInfo.getJobTitleWithFallback(supportUserRole.user.id, supportUserRole.role),
+            role: supportUserRole.role,
             isActive: supportUserRole.isActive
           }))
           .filter(authUser => authUser.name);

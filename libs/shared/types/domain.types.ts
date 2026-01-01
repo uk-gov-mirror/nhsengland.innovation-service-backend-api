@@ -162,6 +162,7 @@ export const isAdminDomainContextType = (value: DomainContextType): value is Adm
 export const DomainContextSchema = Joi.object<DomainContextType>({
   id: JoiHelper.AppCustomJoi().string().uuid().required(),
   identityId: JoiHelper.AppCustomJoi().string().uuid().required(),
+  jobTitle: JoiHelper.AppCustomJoi().string().allow(null, '').optional(),
   organisation: Joi.when('$currentRole.role', {
     is: ServiceRoleEnum.INNOVATOR,
     then: Joi.object({
