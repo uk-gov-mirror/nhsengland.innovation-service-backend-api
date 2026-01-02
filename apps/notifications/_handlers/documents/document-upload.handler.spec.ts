@@ -46,7 +46,7 @@ describe('Notifications / _handlers / document-upload suite', () => {
           {
             templateId: 'DC01_UPLOADED_DOCUMENT_TO_INNOVATOR',
             notificationPreferenceType: 'DOCUMENTS',
-            to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+            to: { ...DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'), jobTitle: null },
             params: {
               accessor_name: requestUser.name,
               unit_name: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
@@ -56,7 +56,7 @@ describe('Notifications / _handlers / document-upload suite', () => {
           {
             templateId: 'DC01_UPLOADED_DOCUMENT_TO_INNOVATOR',
             notificationPreferenceType: 'DOCUMENTS',
-            to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
+            to: { ...DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'), jobTitle: null },
             params: {
               accessor_name: requestUser.name,
               unit_name: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,

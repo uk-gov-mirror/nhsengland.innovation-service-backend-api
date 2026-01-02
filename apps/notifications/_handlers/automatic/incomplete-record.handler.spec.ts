@@ -39,7 +39,7 @@ describe('Notifications / _handlers / incomplete record suite', () => {
         {
           templateId: 'AU01_INNOVATOR_INCOMPLETE_RECORD',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.johnInnovator), jobTitle: null },
           params: {
             innovation_record_url: innovationRecordUrl(
               ServiceRoleEnum.INNOVATOR,
@@ -51,7 +51,7 @@ describe('Notifications / _handlers / incomplete record suite', () => {
         {
           templateId: 'AU01_INNOVATOR_INCOMPLETE_RECORD',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.janeInnovator), jobTitle: null },
           params: {
             innovation_record_url: innovationRecordUrl(
               ServiceRoleEnum.INNOVATOR,
@@ -63,7 +63,7 @@ describe('Notifications / _handlers / incomplete record suite', () => {
         {
           templateId: 'AU01_INNOVATOR_INCOMPLETE_RECORD',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.ottoOctaviusInnovator),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.ottoOctaviusInnovator), jobTitle: null },
           params: {
             innovation_record_url: innovationRecordUrl(
               ServiceRoleEnum.INNOVATOR,

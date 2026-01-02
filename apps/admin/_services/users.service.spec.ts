@@ -415,7 +415,7 @@ describe('Admin / _services / users service suite', () => {
           id: r.id,
           role: r.role,
           ...(r.role === ServiceRoleEnum.ACCESSOR || r.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
-            ? { displayTeam: r.organisationUnit?.name }
+            ? { displayTeam: `${TranslationHelper.translate(('SERVICE_ROLES.' + r.role) as any)} (${r.organisationUnit?.name})` }
             : undefined),
           ...(r.role === ServiceRoleEnum.ADMIN || r.role === ServiceRoleEnum.ASSESSMENT
             ? { displayTeam: TranslationHelper.translate(`TEAMS.${r.role}`) }
@@ -700,27 +700,27 @@ describe('Admin / _services / users service suite', () => {
         {
           innovation: { id: adamInnovation.id, name: adamInnovation.name },
           supportedBy: [supportedByAlice, supportedByJamie],
-          unit: 'Health Org Unit'
+          unit: 'Accessor (Health Org Unit)'
         },
         {
           innovation: { id: chestInnovation.id, name: chestInnovation.name },
           supportedBy: [supportedByAlice, supportedByJamie],
-          unit: 'Health Org Unit'
+          unit: 'Accessor (Health Org Unit)'
         },
         {
           innovation: { id: innovationUpdateInPast.id, name: innovationUpdateInPast.name },
           supportedBy: [supportedByJamie],
-          unit: 'Health Org Unit'
+          unit: 'Accessor (Health Org Unit)'
         },
         {
           innovation: { id: johnInnovation.id, name: johnInnovation.name },
           supportedBy: [supportedByAlice, supportedByJamie],
-          unit: 'Health Org Unit'
+          unit: 'Accessor (Health Org Unit)'
         },
         {
           innovation: { id: tentaclesInnovation.id, name: tentaclesInnovation.name },
           supportedBy: [supportedByJamie],
-          unit: 'Health Org Unit'
+          unit: 'Accessor (Health Org Unit)'
         }
       ]);
     });
