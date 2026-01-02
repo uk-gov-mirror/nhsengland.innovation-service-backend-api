@@ -547,9 +547,10 @@ export class DomainUsersService {
   getDisplayTeamInformation(role: ServiceRoleEnum, unitName?: string, jobTitle?: string | null): string | undefined {
     const roleOrJobTitle = jobTitle || TranslationHelper.translate(`SERVICE_ROLES.${role}`);
 
-    if (role === ServiceRoleEnum.ACCESSOR || role === ServiceRoleEnum.QUALIFYING_ACCESSOR) return unitName ? `${roleOrJobTitle} (${unitName})` : roleOrJobTitle;
-    if (role === ServiceRoleEnum.ASSESSMENT) return `${roleOrJobTitle} (${TranslationHelper.translate(`TEAMS.${role}`)})`;
-    if (role === ServiceRoleEnum.ADMIN) return TranslationHelper.translate(`TEAMS.${role}`);
+    if (role === ServiceRoleEnum.ACCESSOR || role === ServiceRoleEnum.QUALIFYING_ACCESSOR)
+      return unitName ? `${roleOrJobTitle} (${unitName})` : roleOrJobTitle;
+    if (role === ServiceRoleEnum.ASSESSMENT || role === ServiceRoleEnum.ADMIN)
+      return TranslationHelper.translate(`TEAMS.${role}`);
 
     return;
   }
