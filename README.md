@@ -130,6 +130,8 @@ $ npm run seeds
 ```bash
 $ npm run app:lint --function-app=innovations
 $ npm run app:lint --function-app=users
+$ npm run app:lint --function-app=admin
+$ npm run app:lint --function-app=notifications
 $ ...
 
 ```
