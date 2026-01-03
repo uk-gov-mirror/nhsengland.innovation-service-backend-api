@@ -157,7 +157,11 @@ export class InnovationSupportsService extends BaseService {
             support.status === InnovationSupportStatusEnum.ENGAGING ||
             support.status === InnovationSupportStatusEnum.WAITING
         )
-        .flatMap(support => support.userRoles.filter(item => item.isActive).map(item => item.user.id));
+        .flatMap(support =>
+          support.userRoles
+            .filter(item => item.isActive && item.user.status === UserStatusEnum.ACTIVE)
+            .map(item => item.user.id)
+        );
 
       usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds }, connection);
     }
@@ -168,6 +172,7 @@ export class InnovationSupportsService extends BaseService {
 
       if (filters.fields.includes('engagingAccessors')) {
         engagingAccessors = support.userRoles
+          .filter(su => su.user.status === UserStatusEnum.ACTIVE)
           .map(supportUserRole => ({
             id: supportUserRole.user.id,
             userRoleId: supportUserRole.id,
@@ -428,11 +433,9 @@ export class InnovationSupportsService extends BaseService {
     if (!innovationSupport) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
-
     // Fetch users names.
 
     const assignedAccessorsIds = innovationSupport.userRoles
-      .filter(item => item.user.status === UserStatusEnum.ACTIVE)
       .map(item => item.user.id);
     const usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds }, connection);
 
