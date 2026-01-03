@@ -16,7 +16,12 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
   const scenario: CompleteScenarioType = testsHelper.getCompleteScenario();
 
   beforeAll(async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-01-05'));
     await testsHelper.init();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
   });
 
   const suggestedMock = jest.spyOn(RecipientsService.prototype, 'suggestedInnovationsWithoutUnitAction');
