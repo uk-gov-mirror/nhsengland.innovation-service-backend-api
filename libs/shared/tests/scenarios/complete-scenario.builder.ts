@@ -1074,7 +1074,7 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationSupportStatusEnum.SUGGESTED)
         .setOrganisationUnit(healthOrgUnit.id)
         .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
-        .setUpdatedAt(DatesHelper.addWorkingDays(new Date(), -4))
+        .setUpdatedAt(DatesHelper.addWorkingDays(new Date(), -5))
         .save();
 
       const announcementForQAs = await new AnnouncementBuilder(entityManager)
