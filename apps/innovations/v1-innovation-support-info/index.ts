@@ -12,7 +12,7 @@ import { container } from '../_config';
 import type { InnovationSupportsService } from '../_services/innovation-supports.service';
 import SYMBOLS from '../_services/symbols';
 import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, type ParamsType } from './validation.schemas';
+import { ParamsSchema, QueryParamsSchema, type ParamsType, type QueryParamsType } from './validation.schemas';
 
 class V1InnovationSupportInfo {
   @JwtDecoder()
@@ -22,10 +22,14 @@ class V1InnovationSupportInfo {
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       await authorizationService.validate(context).setInnovation(params.innovationId).checkAccessorType().verify();
 
-      const result = await innovationSupportsService.getInnovationSupportInfo(params.supportId);
+      const result = await innovationSupportsService.getInnovationSupportInfo(
+        params.supportId,
+        { includeInactive: queryParams.includeInactive }
+      );
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         status: result.status,

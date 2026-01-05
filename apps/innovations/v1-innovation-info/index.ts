@@ -61,6 +61,7 @@ class V1InnovationInfo {
               owner: {
                 id: result.owner.id,
                 name: result.owner.name,
+                jobTitle: result.owner.jobTitle,
                 isActive: result.owner.isActive,
                 organisation: result.owner.organisation,
                 // Contact details are always sent to ADMIN and sent to non innovators if innovation is not archived
@@ -83,7 +84,23 @@ class V1InnovationInfo {
             }),
         daysSinceNoActiveSupport: result.daysSinceNoActiveSupport,
         expectedArchiveDate: result.expectedArchiveDate,
-        ...(result.assessment === undefined ? {} : { assessment: result.assessment }),
+        ...(result.assessment === undefined || result.assessment === null
+          ? {}
+          : {
+              assessment: {
+                id: result.assessment.id,
+                createdAt: result.assessment.createdAt,
+                finishedAt: result.assessment.finishedAt,
+                ...(result.assessment.assignedTo && {
+                  assignedTo: {
+                    id: result.assessment.assignedTo.id,
+                    name: result.assessment.assignedTo.name,
+                    userRoleId: result.assessment.assignedTo.userRoleId,
+                    jobTitle: result.assessment.assignedTo.jobTitle
+                  }
+                })
+              }
+            }),
         ...(result.supports === undefined
           ? {}
           : {

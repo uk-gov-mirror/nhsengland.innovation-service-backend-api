@@ -47,7 +47,11 @@ class V1MeUpdate {
         const accessorResult = await usersService.updateUserInfo(
           { id: requestUser.id, identityId: requestUser.identityId },
           domainContext.currentRole.role,
-          { displayName: accessorBody.displayName, howDidYouFindUsAnswers: {} }
+          {
+            displayName: accessorBody.displayName,
+            jobTitle: accessorBody.jobTitle,
+            howDidYouFindUsAnswers: {}
+          }
         );
 
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: accessorResult.id });

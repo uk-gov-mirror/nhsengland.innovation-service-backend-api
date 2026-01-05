@@ -21,7 +21,7 @@ import {
   randProductName,
   randUuid
 } from '@ngneat/falso';
-import { pick } from 'lodash';
+import { omit, pick } from 'lodash';
 import { InnovationsService } from '../_services/innovations.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
@@ -96,7 +96,8 @@ describe('v1-innovation-info Suite', () => {
         contactDetails: randPhoneNumber(),
         mobilePhone: randPhoneNumber(),
         isActive: randBoolean(),
-        lastLoginAt: randPastDate()
+        lastLoginAt: randPastDate(),
+        jobTitle: null
       }
     };
 
@@ -112,7 +113,7 @@ describe('v1-innovation-info Suite', () => {
       expect(result.body).toStrictEqual({
         ...expectedWithOwner,
         owner: {
-          ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive']),
+          ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive', 'jobTitle']),
           organisation: undefined
         }
       });
@@ -139,7 +140,8 @@ describe('v1-innovation-info Suite', () => {
             'contactByEmail',
             'contactByPhone',
             'contactByPhoneTimeframe',
-            'contactDetails'
+            'contactDetails',
+            'jobTitle'
           ]),
           organisation: undefined
         }
@@ -159,7 +161,7 @@ describe('v1-innovation-info Suite', () => {
         ...expectedWithOwner,
         status: InnovationStatusEnum.ARCHIVED,
         owner: {
-          ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive']),
+          ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive', 'jobTitle']),
           organisation: undefined
         }
       });
@@ -187,7 +189,8 @@ describe('v1-innovation-info Suite', () => {
             'contactByPhone',
             'contactByPhoneTimeframe',
             'contactDetails',
-            'lastLoginAt'
+            'lastLoginAt',
+            'jobTitle'
           ]),
           organisation: undefined
         }
@@ -210,7 +213,7 @@ describe('v1-innovation-info Suite', () => {
       expect(result.body).toStrictEqual({
         ...expectedWithOwner,
         owner: {
-          ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive']),
+          ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive', 'jobTitle']),
           organisation
         }
       });
@@ -224,7 +227,7 @@ describe('v1-innovation-info Suite', () => {
           currentMajorAssessmentId: randUuid(),
           majorVersion: randNumber(),
           minorVersion: randNumber(),
-          assignedTo: { id: randUuid(), name: randFullName(), userRoleId: randUuid() },
+          assignedTo: { id: randUuid(), name: randFullName(), userRoleId: randUuid(), jobTitle: null },
           createdAt: randPastDate(),
           finishedAt: randPastDate()
         }
@@ -237,7 +240,14 @@ describe('v1-innovation-info Suite', () => {
         })
         .call<ResponseDTO>(azureFunction);
 
-      expect(result.body).toStrictEqual(expectedWithAssessment);
+      expect(result.body).toStrictEqual({
+        ...expectedWithAssessment,
+        assessment: omit(expectedWithAssessment.assessment, [
+          'currentMajorAssessmentId',
+          'majorVersion',
+          'minorVersion'
+        ])
+      });
     });
 
     it('should test supports', async () => {

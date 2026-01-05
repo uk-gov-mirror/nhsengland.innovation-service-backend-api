@@ -39,7 +39,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
         {
           templateId: 'TA01_TASK_CREATION_TO_INNOVATOR',
           notificationPreferenceType: 'TASK',
-          to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'), jobTitle: null },
           params: {
             innovation_name: innovation.name,
             unit_name: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
@@ -49,7 +49,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
         {
           templateId: 'TA01_TASK_CREATION_TO_INNOVATOR',
           notificationPreferenceType: 'TASK',
-          to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'), jobTitle: null },
           params: {
             innovation_name: innovation.name,
             unit_name: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,

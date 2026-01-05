@@ -61,7 +61,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
         {
           templateId: 'AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor), jobTitle: null },
           params: {
             innovation_name: johnInnovation.name,
             support_status_url: supportStatusUrl(
@@ -82,7 +82,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
         {
           templateId: 'AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'), jobTitle: null },
           params: {
             innovation_name: johnInnovation.name,
             support_status_url: supportStatusUrl(
@@ -103,7 +103,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
         {
           templateId: 'AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.samAccessor),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.samAccessor), jobTitle: null },
           params: {
             innovation_name: johnInnovation.name,
             support_status_url: supportStatusUrl(
@@ -173,7 +173,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
         {
           templateId: 'AU06_ACCESSOR_IDLE_WAITING',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor), jobTitle: null },
           params: {
             innovation_name: johnInnovation.name,
             innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId),
@@ -183,7 +183,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
         {
           templateId: 'AU06_ACCESSOR_IDLE_WAITING',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'), jobTitle: null },
           params: {
             innovation_name: johnInnovation.name,
             innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId),
@@ -193,7 +193,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
         {
           templateId: 'AU06_ACCESSOR_IDLE_WAITING',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.samAccessor),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.samAccessor), jobTitle: null },
           params: {
             innovation_name: johnInnovation.name,
             innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId),
@@ -252,7 +252,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
         {
           templateId: 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor), jobTitle: null },
           params: {
             innovation_name: johnInnovation.name
           }
@@ -260,7 +260,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
         {
           templateId: 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'), jobTitle: null },
           params: {
             innovation_name: johnInnovation.name
           }
@@ -307,7 +307,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
         {
           templateId: 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.samAccessor),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.samAccessor), jobTitle: null },
           params: johnInnovationParams
         }
       ]);

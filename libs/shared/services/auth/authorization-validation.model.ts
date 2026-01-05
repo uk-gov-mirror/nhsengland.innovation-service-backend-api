@@ -303,6 +303,7 @@ export class AuthorizationValidationModel {
         this.requestContext = {
           id: this.user.data.id,
           identityId: this.user.data.identityId,
+          jobTitle: this.user.data.jobTitle,
           organisation: {
             id: role.organisation.id,
             name: role.organisation.name,
@@ -322,6 +323,7 @@ export class AuthorizationValidationModel {
         this.requestContext = {
           id: this.user.data.id,
           identityId: this.user.data.identityId,
+          jobTitle: this.user.data.jobTitle,
           organisation: {
             id: role.organisation.id,
             name: role.organisation.name,
@@ -342,6 +344,7 @@ export class AuthorizationValidationModel {
         this.requestContext = {
           id: this.user.data.id,
           identityId: this.user.data.identityId,
+          jobTitle: this.user.data.jobTitle,
           currentRole: {
             id: role.id,
             role: role.role
@@ -352,6 +355,7 @@ export class AuthorizationValidationModel {
         this.requestContext = {
           id: this.user.data.id,
           identityId: this.user.data.identityId,
+          jobTitle: this.user.data.jobTitle,
           currentRole: {
             id: role.id,
             role: role.role
@@ -419,7 +423,8 @@ export class AuthorizationValidationModel {
       isActive: userInfo.isActive,
       lockedAt: userInfo.lockedAt,
       passwordResetAt: userInfo.passwordResetAt,
-      firstTimeSignInAt: userInfo.firstTimeSignInAt
+      firstTimeSignInAt: userInfo.firstTimeSignInAt,
+      jobTitle: userInfo.jobTitle
     };
   }
 

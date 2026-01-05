@@ -7,6 +7,7 @@ export type ResponseDTO = {
   name: string;
   phone?: string;
   isActive: boolean;
+  jobTitle?: string | null;
   roles: {
     id: string;
     role: ServiceRoleEnum;
@@ -23,6 +24,7 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
   name: Joi.string().required(),
   phone: Joi.string().optional(),
   isActive: Joi.boolean().required(),
+  jobTitle: Joi.string().allow(null).optional(),
   roles: Joi.array().items(
     Joi.object({
       id: Joi.string().uuid().required(),

@@ -417,6 +417,9 @@ paths:
                       type: string
                     displayName:
                       type: string
+                    jobTitle:
+                      type: string
+                      nullable: true
                     roles:
                       type: object
                       properties:
@@ -541,6 +544,7 @@ paths:
                     - id
                     - email
                     - displayName
+                    - jobTitle
                     - contactByEmail
                     - contactByPhone
                     - contactDetails

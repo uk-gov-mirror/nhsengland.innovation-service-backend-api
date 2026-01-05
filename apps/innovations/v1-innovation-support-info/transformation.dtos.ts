@@ -4,7 +4,7 @@ import Joi from 'joi';
 export type ResponseDTO = {
   id: string;
   status: InnovationSupportStatusEnum;
-  engagingAccessors: { id: string; userRoleId: string; name: string }[];
+  engagingAccessors: { id: string; userRoleId: string; name: string; isActive: boolean }[];
 };
 
 export const ResponseBodySchema = Joi.object<ResponseDTO>({
@@ -14,7 +14,8 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
     Joi.object({
       id: Joi.string().uuid().required(),
       userRoleId: Joi.string().uuid().required(),
-      name: Joi.string().required()
+      name: Joi.string().required(),
+      isActive: Joi.boolean().required()
     })
   )
 });

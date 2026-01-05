@@ -26,7 +26,7 @@ import { displayName, UserMap } from '../../models/user.map';
 import { AuthErrorsEnum } from '../auth/authorization-validation.model';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
-import { SQLConnectionService } from '../storage/sql-connection.service';
+import type { SQLConnectionService } from '../storage/sql-connection.service';
 import type { DomainInnovationsService } from './domain-innovations.service';
 
 export class DomainUsersService {
@@ -103,6 +103,7 @@ export class DomainUsersService {
     lockedAt: null | Date;
     passwordResetAt: null | Date;
     firstTimeSignInAt: null | Date;
+    jobTitle: null | string;
     organisations?: {
       id: string;
       name: string;
@@ -129,6 +130,7 @@ export class DomainUsersService {
         'user.lockedAt',
         'user.status',
         'user.firstTimeSignInAt',
+        'user.jobTitle',
         // Service roles
         'serviceRoles.id',
         'serviceRoles.role',
@@ -225,6 +227,7 @@ export class DomainUsersService {
       lockedAt: dbUser.lockedAt,
       passwordResetAt: user.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
+      jobTitle: dbUser.jobTitle,
       ...(filters?.organisations && { organisations: [...organisationsMap.values()] })
     };
   }
@@ -252,7 +255,15 @@ export class DomainUsersService {
 
     const query = em
       .createQueryBuilder(UserEntity, 'users')
-      .select(['users.id', 'users.identityId', 'users.status', 'roles.id', 'roles.role', 'roles.isActive'])
+      .select([
+        'users.id',
+        'users.identityId',
+        'users.status',
+        'users.jobTitle',
+        'roles.id',
+        'roles.role',
+        'roles.isActive'
+      ])
       .innerJoin('users.serviceRoles', 'roles')
       .where('users.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
     if (data.userIds) {
@@ -279,6 +290,7 @@ export class DomainUsersService {
         email: identityUser.email,
         mobilePhone: identityUser.mobilePhone,
         isActive: dbUser.status === UserStatusEnum.ACTIVE,
+        jobTitle: dbUser.jobTitle,
         lastLoginAt: identityUser.lastLoginAt
       };
     });
@@ -417,7 +429,8 @@ export class DomainUsersService {
         'organisationUnit.name',
         'organisationUnit.acronym',
         'user.id',
-        'user.identityId'
+        'user.identityId',
+        'user.jobTitle'
       ])
       .leftJoin('userRole.organisation', 'organisation')
       .leftJoin('userRole.organisationUnit', 'organisationUnit')
@@ -433,10 +446,15 @@ export class DomainUsersService {
       throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);
     }
     const role = roleEntity2RoleType(dbUserRole);
-    return this.roleTypeToDomainContext(dbUserRole.user.id, dbUserRole.user.identityId, role);
+    return this.roleTypeToDomainContext(dbUserRole.user.id, dbUserRole.user.identityId, dbUserRole.user.jobTitle, role);
   }
 
-  async roleTypeToDomainContext(userId: string, identityId: string, role: RoleType): Promise<DomainContextType> {
+  async roleTypeToDomainContext(
+    userId: string,
+    identityId: string,
+    jobTitle: string | null,
+    role: RoleType
+  ): Promise<DomainContextType> {
     switch (role.role) {
       case ServiceRoleEnum.INNOVATOR:
         if (!role.organisation) {
@@ -445,6 +463,7 @@ export class DomainUsersService {
         return {
           id: userId,
           identityId: identityId,
+          jobTitle: null,
           organisation: {
             id: role.organisation.id,
             name: role.organisation.name,
@@ -463,6 +482,7 @@ export class DomainUsersService {
         return {
           id: userId,
           identityId: identityId,
+          jobTitle: jobTitle,
           organisation: {
             id: role.organisation.id,
             name: role.organisation.name,
@@ -483,6 +503,7 @@ export class DomainUsersService {
         return {
           id: userId,
           identityId: identityId,
+          jobTitle: jobTitle,
           currentRole: {
             id: role.id,
             role: role.role
@@ -493,6 +514,7 @@ export class DomainUsersService {
         return {
           id: userId,
           identityId: identityId,
+          jobTitle: jobTitle,
           currentRole: {
             id: role.id,
             role: role.role
@@ -522,14 +544,13 @@ export class DomainUsersService {
   }
 
   // try to deprecate
-  getDisplayTeamInformation(role: ServiceRoleEnum, unitName?: string): string | undefined {
-    if (role === ServiceRoleEnum.ACCESSOR || role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
-      return unitName;
-    }
+  getDisplayTeamInformation(role: ServiceRoleEnum, unitName?: string, jobTitle?: string | null): string | undefined {
+    const roleOrJobTitle = jobTitle || TranslationHelper.translate(`SERVICE_ROLES.${role}`);
 
-    if (role === ServiceRoleEnum.ASSESSMENT || role === ServiceRoleEnum.ADMIN) {
+    if (role === ServiceRoleEnum.ACCESSOR || role === ServiceRoleEnum.QUALIFYING_ACCESSOR)
+      return unitName ? `${roleOrJobTitle} (${unitName})` : roleOrJobTitle;
+    if (role === ServiceRoleEnum.ASSESSMENT || role === ServiceRoleEnum.ADMIN)
       return TranslationHelper.translate(`TEAMS.${role}`);
-    }
 
     return;
   }
@@ -538,11 +559,16 @@ export class DomainUsersService {
   // this function is supposed to be the standard display of additional info for the users and should
   // adjust the output according to the data passed, the invoker controls what's shown by passing the data
   // but the same data will always produce the same output
-  getDisplayTag(role: ServiceRoleEnum, data: { unitName?: string | null; isOwner?: boolean }): string {
+  getDisplayTag(
+    role: ServiceRoleEnum,
+    data: { unitName?: string | null; isOwner?: boolean; jobTitle?: string | null }
+  ): string {
     switch (role) {
       case ServiceRoleEnum.ACCESSOR:
-      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
-        return data.unitName ?? '';
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR: {
+        const roleName = data.jobTitle ?? TranslationHelper.translate(`SERVICE_ROLES.${role}`);
+        return data.unitName ? `${roleName} (${data.unitName})` : roleName;
+      }
       case ServiceRoleEnum.ASSESSMENT:
       case ServiceRoleEnum.ADMIN:
         return TranslationHelper.translate(`TEAMS.${role}`);
@@ -572,6 +598,7 @@ export class DomainUsersService {
         'userRole.id',
         'user.id',
         'user.identityId',
+        'user.jobTitle',
         'organisation.id',
         'organisation.name',
         'organisation.acronym'
@@ -589,6 +616,7 @@ export class DomainUsersService {
     return {
       id: role.user.id,
       identityId: role.user.identityId,
+      jobTitle: null,
       organisation: {
         id: role.organisation.id,
         name: role.organisation.name,

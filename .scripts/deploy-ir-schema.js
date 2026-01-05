@@ -958,6 +958,33 @@
                      {
                         questions: [
                            {
+                              id: 'hasVideoDemonstration',
+                              dataType: 'radio-group',
+                              label: 'Does your innovation have a video that explains how it works ?',
+                              items: [
+                                 {
+                                    id: 'YES',
+                                    label: 'Yes',
+                                    conditional: {
+                                       id: 'videoDemonstrationUrl',
+                                       dataType: 'text',
+                                       label: 'Link',
+                                       validations: {
+                                          urlFormat: { maxLength: 2000 }
+                                       }
+                                    }
+                                 },
+                                 {
+                                    id: 'NO',
+                                    label: 'No'
+                                 }
+                              ]
+                           }
+                        ]
+                     },
+                     {
+                        questions: [
+                           {
                               id: 'categories',
                               dataType: 'checkbox-array',
                               label: 'Select all the categories that can be used to describe your innovation',
@@ -1359,37 +1386,6 @@
                                  {
                                     id: 'Test beds',
                                     label: 'Test beds'
-                                 }
-                              ]
-                           }
-                        ]
-                     },
-                     {
-                        questions: [
-                           {
-                              id: 'hasVideoDemonstration',
-                              dataType: 'radio-group',
-                              label: 'Does your innovation have a video that explains or demonstrates it?',
-                              validations: {
-                                 isRequired: 'Choose one option'
-                              },
-                              items: [
-                                 {
-                                    id: 'YES',
-                                    label: 'Yes',
-                                    conditional: {
-                                       id: 'videoDemonstrationUrl',
-                                       dataType: 'text',
-                                       label: 'Video URL',
-                                       validations: {
-                                          isRequired: 'Video URL is required',
-                                          urlFormat: { maxLength: 2000 }
-                                       }
-                                    }
-                                 },
-                                 {
-                                    id: 'NO',
-                                    label: 'No'
                                  }
                               ]
                            }
@@ -3692,65 +3688,65 @@
          }
       ]
    };
-  // --- Configuration ---
-  // Default to the current browser origin, but you can override this for other environments.
-  const TARGET_URL = window.location.origin;
-  const ENDPOINT_URL = `${TARGET_URL}/transactional/api/admins/v1/ir-schema`; // Corrected endpoint URL
+   // --- Configuration ---
+   // Default to the current browser origin, but you can override this for other environments.
+   const TARGET_URL = window.location.origin;
+   const ENDPOINT_URL = `${TARGET_URL}/transactional/api/admins/v1/ir-schema`; // Corrected endpoint URL
 
-  console.log("--- Starting Schema Deployment ---");
+   console.log("--- Starting Schema Deployment ---");
 
-  // --- Step 1: Validate Prerequisites ---
-  if (typeof schemaToDeploy === "undefined") {
-    console.error(
-      "ERROR: The `schemaToDeploy` global variable is not defined.\n" +
-        "Please define it first by running: const schemaToDeploy = { ... };"
-    );
-    return;
-  }
-
-  console.log("Schema object found. Preparing to deploy...");
-
-  try {
-    // --- Step 2: Deploy Schema via Fetch API ---
-    console.log(`Sending POST request to ${ENDPOINT_URL}...`);
-
-    const response = await fetch(ENDPOINT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // The browser automatically includes the 'connect.sid' cookie for this domain.
-      },
-      body: JSON.stringify(schemaToDeploy),
-    });
-
-    // --- Step 3: Verifying Deployment ---
-    console.log(`Received HTTP status code: ${response.status}`);
-
-    if (response.ok && response.status === 204) {
-      console.log(
-        "%cSUCCESS: Schema deployed successfully.",
-        "color: green; font-weight: bold;"
-      );
-    } else {
-      // Try to get more error details from the response body if available
-      let errorDetails = "No additional details provided.";
-      try {
-        const errorJson = await response.json();
-        errorDetails = JSON.stringify(errorJson, null, 2);
-      } catch (e) {
-        // The response was not JSON, which is fine.
-      }
+   // --- Step 1: Validate Prerequisites ---
+   if (typeof schemaToDeploy === "undefined") {
       console.error(
-        `%cERROR: Schema deployment failed with status ${response.status}.`,
-        "color: red; font-weight: bold;"
+         "ERROR: The `schemaToDeploy` global variable is not defined.\n" +
+         "Please define it first by running: const schemaToDeploy = { ... };"
       );
-      console.error("Server response:", errorDetails);
-    }
-  } catch (error) {
-    console.error(
-      "%cERROR: An unexpected error occurred during the fetch operation.",
-      "color: red; font-weight: bold;"
-    );
-    console.error(error);
-  }
+      return;
+   }
+
+   console.log("Schema object found. Preparing to deploy...");
+
+   try {
+      // --- Step 2: Deploy Schema via Fetch API ---
+      console.log(`Sending POST request to ${ENDPOINT_URL}...`);
+
+      const response = await fetch(ENDPOINT_URL, {
+         method: "POST",
+         headers: {
+            "Content-Type": "application/json",
+            // The browser automatically includes the 'connect.sid' cookie for this domain.
+         },
+         body: JSON.stringify(schemaToDeploy),
+      });
+
+      // --- Step 3: Verifying Deployment ---
+      console.log(`Received HTTP status code: ${response.status}`);
+
+      if (response.ok && response.status === 204) {
+         console.log(
+            "%cSUCCESS: Schema deployed successfully.",
+            "color: green; font-weight: bold;"
+         );
+      } else {
+         // Try to get more error details from the response body if available
+         let errorDetails = "No additional details provided.";
+         try {
+            const errorJson = await response.json();
+            errorDetails = JSON.stringify(errorJson, null, 2);
+         } catch (e) {
+            // The response was not JSON, which is fine.
+         }
+         console.error(
+            `%cERROR: Schema deployment failed with status ${response.status}.`,
+            "color: red; font-weight: bold;"
+         );
+         console.error("Server response:", errorDetails);
+      }
+   } catch (error) {
+      console.error(
+         "%cERROR: An unexpected error occurred during the fetch operation.",
+         "color: red; font-weight: bold;"
+      );
+      console.error(error);
+   }
 })();

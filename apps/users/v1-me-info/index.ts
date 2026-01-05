@@ -86,6 +86,7 @@ class V1MeInfo {
         contactByPhoneTimeframe: userPreferences.contactByPhoneTimeframe,
         contactDetails: userPreferences.contactDetails,
         phone: requestUser.phone,
+        jobTitle: requestUser.jobTitle,
         passwordResetAt: requestUser.passwordResetAt,
         firstTimeSignInAt: requestUser.firstTimeSignInAt,
         termsOfUseAccepted,

@@ -897,6 +897,9 @@ paths:
                     type: string
                   isActive:
                     type: boolean
+                  jobTitle:
+                    type: string
+                    nullable: true
                   roles:
                     type: array
                     items:

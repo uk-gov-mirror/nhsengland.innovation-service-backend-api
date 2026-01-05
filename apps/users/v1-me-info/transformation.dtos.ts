@@ -7,6 +7,7 @@ export type ResponseDTO = {
   id: string;
   email: string;
   displayName: string;
+  jobTitle?: string | null;
   roles: RoleType[];
   contactByEmail: boolean;
   contactByPhone: boolean;
@@ -64,6 +65,7 @@ export const ResponseBodySchema = Joi.array<ResponseDTO>().items(
     id: Joi.string().uuid().required(),
     email: Joi.string().required(),
     displayName: Joi.string().required(),
+    jobTitle: Joi.string().allow(null).required(),
     roles: rolesTypeSchema,
     contactByEmail: Joi.boolean().required(),
     contactByPhone: Joi.boolean().required(),

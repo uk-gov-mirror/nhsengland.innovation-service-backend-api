@@ -42,6 +42,7 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
       .allow(null)
       .required(),
     mobilePhone: Joi.string().allow(null).optional(),
+    jobTitle: Joi.string().allow(null).optional(),
     lastLoginAt: Joi.date().allow(null).optional(),
     organisation: Joi.object({
       name: Joi.string().required(),
@@ -58,7 +59,8 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
     assignedTo: Joi.object({
       id: Joi.string().uuid().required(),
       name: Joi.string().required(),
-      userRoleId: Joi.string().required()
+      userRoleId: Joi.string().required(),
+      jobTitle: Joi.string().allow(null).optional()
     }).optional()
   }).optional(),
   supports: Joi.array()
@@ -100,6 +102,7 @@ export type ResponseDTO = {
     contactByPhone?: boolean;
     contactByPhoneTimeframe?: PhoneUserPreferenceEnum | null;
     mobilePhone?: null | string;
+    jobTitle?: null | string;
     lastLoginAt?: null | Date;
     organisation?: { name: string; size: null | string; registrationNumber: null | string };
   };
@@ -109,7 +112,7 @@ export type ResponseDTO = {
     id: string;
     createdAt: Date;
     finishedAt: null | Date;
-    assignedTo?: { id: string; name: string; userRoleId: string };
+    assignedTo?: { id: string; name: string; userRoleId: string; jobTitle?: string | null };
   };
   supports?: null | { id: string; status: InnovationSupportStatusEnum; organisationUnitId: string }[];
   collaboratorId?: string;

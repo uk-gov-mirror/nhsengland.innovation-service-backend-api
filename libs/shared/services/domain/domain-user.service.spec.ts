@@ -5,7 +5,7 @@ import { ServiceRoleEnum } from '../../enums';
 import { NotFoundError, UserErrorsEnum } from '../../errors';
 import { TestsHelper } from '../../tests';
 import SHARED_SYMBOLS from '../symbols';
-import { DomainUsersService } from './domain-users.service';
+import type { DomainUsersService } from './domain-users.service';
 import type { DomainService } from './domain.service';
 
 describe('Shared / services / domain user suite', () => {

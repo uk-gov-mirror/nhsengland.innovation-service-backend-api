@@ -53,7 +53,11 @@ describe('Notifications / _handlers / support-status-update suite', () => {
         },
         recipients: recipients,
         outputData: {
-          accessors_name: HandlersHelper.transformIntoBullet(support.accessors.map(a => a.name)),
+          accessors_name: HandlersHelper.transformIntoBullet([
+            `${scenario.users.aliceQualifyingAccessor.name} (Qualifying Accessor)`,
+            `${scenario.users.jamieMadroxAccessor.name} (Accessor)`,
+            `${scenario.users.jamieMadroxAccessor.name} (Accessor)`
+          ]),
           innovation_name: innovation.name,
           message: message,
           unit_name: requestUserUnit.name,
@@ -213,7 +217,11 @@ describe('Notifications / _handlers / support-status-update suite', () => {
         },
         recipients: recipients,
         outputData: {
-          accessors_name: HandlersHelper.transformIntoBullet(support.accessors.map(a => a.name)),
+          accessors_name: HandlersHelper.transformIntoBullet([
+            `${scenario.users.aliceQualifyingAccessor.name} (Qualifying Accessor)`,
+            `${scenario.users.jamieMadroxAccessor.name} (Accessor)`,
+            `${scenario.users.jamieMadroxAccessor.name} (Accessor)`
+          ]),
           innovation_name: innovation.name,
           unit_name: requestUserUnit.name,
           message: message,

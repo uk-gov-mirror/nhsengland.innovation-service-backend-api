@@ -90,9 +90,11 @@ export class InnovationExportRequestService extends BaseService {
         'userRole.id',
         'userRole.role',
         'unit.id',
-        'unit.name'
+        'unit.name',
+        'roleUser.jobTitle'
       ])
       .innerJoin('request.createdByUserRole', 'userRole')
+      .leftJoin('userRole.user', 'roleUser')
       .leftJoin('userRole.organisationUnit', 'unit')
       .where('request.id = :exportRequestId', { exportRequestId });
 
@@ -131,7 +133,8 @@ export class InnovationExportRequestService extends BaseService {
         ),
         displayTeam: this.domainService.users.getDisplayTeamInformation(
           request.createdByUserRole.role,
-          request.createdByUserRole.organisationUnit?.name
+          request.createdByUserRole.organisationUnit?.name,
+          (request.createdByUserRole as any).user?.jobTitle
         )
       },
       updatedAt: request.updatedAt,
@@ -174,9 +177,11 @@ export class InnovationExportRequestService extends BaseService {
         'userRole.id',
         'userRole.role',
         'unit.id',
-        'unit.name'
+        'unit.name',
+        'roleUser.jobTitle'
       ])
       .innerJoin('request.createdByUserRole', 'userRole')
+      .leftJoin('userRole.user', 'roleUser')
       .leftJoin('userRole.organisationUnit', 'unit')
       .where('request.innovation_id = :innovationId', { innovationId });
 
@@ -228,7 +233,8 @@ export class InnovationExportRequestService extends BaseService {
           displayRole: this.domainService.users.getDisplayRoleInformation(r.createdBy, r.createdByUserRole.role),
           displayTeam: this.domainService.users.getDisplayTeamInformation(
             r.createdByUserRole.role,
-            r.createdByUserRole.organisationUnit?.name
+            r.createdByUserRole.organisationUnit?.name,
+            (r.createdByUserRole as any).user?.jobTitle
           )
         }
       }))
