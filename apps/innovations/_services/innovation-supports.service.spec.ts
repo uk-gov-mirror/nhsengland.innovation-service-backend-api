@@ -225,9 +225,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
   });
 
   describe('getInnovationSupportInfo', () => {
-    it('should get the innovation support info', async () => {
+    it('should get the innovation support info with default behavior (excludes inactive users)', async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      const support = await sut.getInnovationSupportInfo(innovation.supports.supportByHealthOrgUnit.id, em);
+      const support = await sut.getInnovationSupportInfo(innovation.supports.supportByHealthOrgUnit.id, undefined, em);
 
       expect(support).toMatchObject({
         id: innovation.supports.supportByHealthOrgUnit.id,
@@ -236,19 +236,176 @@ describe('Innovations / _services / innovation-supports suite', () => {
           {
             id: scenario.users.aliceQualifyingAccessor.id,
             userRoleId: scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
-            name: scenario.users.aliceQualifyingAccessor.name
+            name: scenario.users.aliceQualifyingAccessor.name,
+            isActive: true
           },
           {
             id: scenario.users.jamieMadroxAccessor.id,
             userRoleId: scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id,
-            name: scenario.users.jamieMadroxAccessor.name
+            name: scenario.users.jamieMadroxAccessor.name,
+            isActive: true
           }
         ]
       });
     });
 
+    it('should get the innovation support info with includeInactive: false (excludes inactive users)', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const support = await sut.getInnovationSupportInfo(
+        innovation.supports.supportByHealthOrgUnit.id,
+        { includeInactive: false },
+        em
+      );
+
+      expect(support).toMatchObject({
+        id: innovation.supports.supportByHealthOrgUnit.id,
+        status: innovation.supports.supportByHealthOrgUnit.status,
+        engagingAccessors: [
+          {
+            id: scenario.users.aliceQualifyingAccessor.id,
+            userRoleId: scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
+            name: scenario.users.aliceQualifyingAccessor.name,
+            isActive: true
+          },
+          {
+            id: scenario.users.jamieMadroxAccessor.id,
+            userRoleId: scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id,
+            name: scenario.users.jamieMadroxAccessor.name,
+            isActive: true
+          }
+        ]
+      });
+    });
+
+    it('should get the innovation support info with includeInactive: true (includes inactive users)', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      
+      // Deactivate one of the accessors
+      await em.query(
+        `UPDATE user_role SET user_id = (SELECT id FROM "user" WHERE id = @0) WHERE id = @1`,
+        [scenario.users.jamieMadroxAccessor.id, scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id]
+      );
+      await em.query(
+        `UPDATE "user" SET status = 'INACTIVE' WHERE id = @0`,
+        [scenario.users.jamieMadroxAccessor.id]
+      );
+
+      const support = await sut.getInnovationSupportInfo(
+        innovation.supports.supportByHealthOrgUnit.id,
+        { includeInactive: true },
+        em
+      );
+
+      expect(support.engagingAccessors).toHaveLength(2);
+      expect(support.engagingAccessors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: scenario.users.aliceQualifyingAccessor.id,
+            isActive: true
+          }),
+          expect.objectContaining({
+            id: scenario.users.jamieMadroxAccessor.id,
+            isActive: false
+          })
+        ])
+      );
+    });
+
+    it('should exclude locked users when includeInactive: false', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      
+      // Lock one of the accessors
+      await em.query(
+        `UPDATE "user" SET locked_at = CURRENT_TIMESTAMP WHERE id = @0`,
+        [scenario.users.jamieMadroxAccessor.id]
+      );
+
+      const support = await sut.getInnovationSupportInfo(
+        innovation.supports.supportByHealthOrgUnit.id,
+        { includeInactive: false },
+        em
+      );
+
+      expect(support.engagingAccessors).toHaveLength(1);
+      expect(support.engagingAccessors[0]).toMatchObject({
+        id: scenario.users.aliceQualifyingAccessor.id,
+        isActive: true
+      });
+    });
+
+    it('should include locked users when includeInactive: true', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      
+      // Lock one of the accessors
+      await em.query(
+        `UPDATE "user" SET locked_at = CURRENT_TIMESTAMP WHERE id = @0`,
+        [scenario.users.jamieMadroxAccessor.id]
+      );
+
+      const support = await sut.getInnovationSupportInfo(
+        innovation.supports.supportByHealthOrgUnit.id,
+        { includeInactive: true },
+        em
+      );
+
+      expect(support.engagingAccessors).toHaveLength(2);
+      expect(support.engagingAccessors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: scenario.users.aliceQualifyingAccessor.id,
+            isActive: true
+          }),
+          expect.objectContaining({
+            id: scenario.users.jamieMadroxAccessor.id,
+            isActive: false
+          })
+        ])
+      );
+    });
+
+    it('should handle mix of active, inactive, and locked users with includeInactive: true', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      
+      // Make Jamie inactive
+      await em.query(
+        `UPDATE "user" SET status = 'INACTIVE' WHERE id = @0`,
+        [scenario.users.jamieMadroxAccessor.id]
+      );
+
+      const support = await sut.getInnovationSupportInfo(
+        innovation.supports.supportByHealthOrgUnit.id,
+        { includeInactive: true },
+        em
+      );
+
+      expect(support.engagingAccessors).toHaveLength(2);
+      
+      const activeAccessors = support.engagingAccessors.filter(a => a.isActive);
+      const inactiveAccessors = support.engagingAccessors.filter(a => !a.isActive);
+      
+      expect(activeAccessors).toHaveLength(1);
+      expect(inactiveAccessors).toHaveLength(1);
+      expect(activeAccessors[0]!.id).toBe(scenario.users.aliceQualifyingAccessor.id);
+      expect(inactiveAccessors[0]!.id).toBe(scenario.users.jamieMadroxAccessor.id);
+    });
+
+    it('should always include isActive field in response', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const support = await sut.getInnovationSupportInfo(
+        innovation.supports.supportByHealthOrgUnit.id,
+        undefined,
+        em
+      );
+
+      expect(support.engagingAccessors.length).toBeGreaterThan(0);
+      support.engagingAccessors.forEach(accessor => {
+        expect(accessor).toHaveProperty('isActive');
+        expect(typeof accessor.isActive).toBe('boolean');
+      });
+    });
+
     it(`should throw a not found error if the support doesn't exist`, async () => {
-      await expect(() => sut.getInnovationSupportInfo(randUuid(), em)).rejects.toThrow(
+      await expect(() => sut.getInnovationSupportInfo(randUuid(), undefined, em)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND)
       );
     });

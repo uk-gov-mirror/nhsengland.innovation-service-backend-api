@@ -186,7 +186,8 @@ export class RecipientsService extends BaseService {
       .select(['au.id', 'user.id'])
       .where('au.announcement = :announcementId', { announcementId })
       .andWhere('au.innovation_id IS null')
-      .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED });
+      .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED })
+      .andWhere('user.lockedAt IS NULL'); // Filter users who have left
 
     const users = await query.getMany();
 
@@ -205,7 +206,8 @@ export class RecipientsService extends BaseService {
       .innerJoin('au.innovation', 'innovation')
       .select(['au.id', 'user.id', 'innovation.name'])
       .where('au.announcement = :announcementId', { announcementId })
-      .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED });
+      .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED })
+      .andWhere('user.lockedAt IS NULL'); // Filter users who have left
 
     const records = await query.getMany();
 
@@ -363,13 +365,14 @@ export class RecipientsService extends BaseService {
         'user.id',
         'user.identityId',
         'user.status',
+        'user.lockedAt',
         'user.jobTitle'
       ])
       .innerJoin('support.userRoles', 'userRole')
       .innerJoin('support.organisationUnit', 'organisationUnit')
       .innerJoin('userRole.user', 'user')
       .where('userRole.organisation_unit_id = organisationUnit.id') // Only get the role for the organisation unit
-      .andWhere('user.status != :userDeleted', { userDeleted: UserStatusEnum.DELETED }) // Filter deleted users
+      .andWhere('user.status = :userStatus', { userStatus: UserStatusEnum.ACTIVE })
       .andWhere('support.innovation_id = :innovationId', { innovationId: innovationId })
       .andWhere('support.isMostRecent = 1');
 
@@ -393,7 +396,7 @@ export class RecipientsService extends BaseService {
             role: userRole.role,
             userId: userRole.user.id,
             identityId: userRole.user.identityId,
-            isActive: userRole.isActive && userRole.user.status === UserStatusEnum.ACTIVE,
+            isActive: userRole.isActive && userRole.user.status === UserStatusEnum.ACTIVE && !userRole.user.lockedAt,
             unitId: support.organisationUnit.id,
             jobTitle: userRole.user.jobTitle
           });
@@ -432,6 +435,7 @@ export class RecipientsService extends BaseService {
       .where('innovation.owner_id = :userId', { userId })
       .andWhere('userRole.organisation_unit_id = organisationUnit.id')
       .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
+      .andWhere('user.lockedAt IS NULL')
       .getMany();
 
     const res: Awaited<ReturnType<RecipientsService['userInnovationsWithAssignedRecipients']>> = [];
@@ -447,7 +451,7 @@ export class RecipientsService extends BaseService {
               userId: userRole.user.id,
               identityId: userRole.user.identityId,
               unitId: support.organisationUnit.id,
-              isActive: userRole.isActive && userRole.user.status === UserStatusEnum.ACTIVE,
+              isActive: userRole.isActive && userRole.user.status === UserStatusEnum.ACTIVE && !userRole.user.lockedAt,
               jobTitle: userRole.user.jobTitle
             });
           }
@@ -1171,6 +1175,7 @@ export class RecipientsService extends BaseService {
         'user.id',
         'user.identityId',
         'user.status',
+        'user.lockedAt',
         'unit.id'
       ])
       .innerJoin('userRole.user', 'user')
@@ -1184,7 +1189,7 @@ export class RecipientsService extends BaseService {
       userId: r.user.id,
       identityId: r.user.identityId,
       unitId: r.organisationUnit?.id,
-      isActive: r.isActive && r.user.status === UserStatusEnum.ACTIVE
+      isActive: r.isActive && r.user.status === UserStatusEnum.ACTIVE && !r.user.lockedAt
     }));
   }
 
@@ -1228,6 +1233,7 @@ export class RecipientsService extends BaseService {
         'user.id',
         'user.identityId',
         'user.status',
+        'user.lockedAt',
         'user.jobTitle',
         'unit.id'
       ])
@@ -1253,6 +1259,7 @@ export class RecipientsService extends BaseService {
     if (!includeLocked) {
       query
         .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED })
+        .andWhere('user.lockedAt IS NULL') // Filter users who have left
         .andWhere('userRole.is_active = 1');
     }
 
@@ -1267,7 +1274,7 @@ export class RecipientsService extends BaseService {
       userId: r.user.id,
       identityId: r.user.identityId,
       unitId: r.organisationUnit?.id,
-      isActive: r.isActive && r.user.status === UserStatusEnum.ACTIVE,
+      isActive: includeLocked ? r.isActive : r.isActive && r.user.status === UserStatusEnum.ACTIVE && !r.user.lockedAt,
       jobTitle: r.user.jobTitle
     }));
 
