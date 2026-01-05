@@ -424,11 +424,14 @@ describe('Admin / _services / announcements service suite', () => {
         .andWhere('innovation.submittedAt IS NOT NULL')
         .getMany();
 
-      const collaboratorsCount = await em
-        .createQueryBuilder(InnovationCollaboratorEntity, 'c')
-        .where('c.innovation_id IN (:...innovations)', { innovations: documents.map(d => d.innovation.id) })
-        .andWhere('c.status = :active', { active: InnovationCollaboratorStatusEnum.ACTIVE })
-        .getCount();
+      const innovations = documents.map(d => d.innovation.id);
+      const collaboratorsCount = innovations.length
+        ? await em
+            .createQueryBuilder(InnovationCollaboratorEntity, 'c')
+            .where('c.innovation_id IN (:...innovations)', { innovations })
+            .andWhere('c.status = :active', { active: InnovationCollaboratorStatusEnum.ACTIVE })
+            .getCount()
+        : 0;
 
       expect(affectedUsersCount).toBe(documents.length + collaboratorsCount);
       expect(updateStatusMock).toHaveBeenCalledTimes(0);
