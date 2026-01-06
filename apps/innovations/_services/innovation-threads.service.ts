@@ -830,8 +830,7 @@ export class InnovationThreadsService extends BaseService {
             id: t.message_author_id,
             displayTeam: this.domainService.users.getDisplayTeamInformation(
               t.message_author_role_role,
-              t.message_author_unit_name,
-              t.message_author_job_title
+              t.message_author_unit_name
             )
           }
         },
@@ -839,8 +838,7 @@ export class InnovationThreadsService extends BaseService {
           id: t.thread_author_id,
           displayTeam: this.domainService.users.getDisplayTeamInformation(
             t.thread_author_role_role,
-            t.thread_author_unit_name,
-            t.thread_author_job_title
+            t.thread_author_unit_name
           )
         }
       }))
