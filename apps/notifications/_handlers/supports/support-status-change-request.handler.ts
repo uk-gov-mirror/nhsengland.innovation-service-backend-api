@@ -23,7 +23,6 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
     if (this.requestUser.organisation?.organisationUnit) {
       const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
       const accessor = await this.getUserName(this.requestUser.identityId);
-      const accessorWithJobTitle = `${accessor} (${this.getRequestJobTitleWithFallback()})`;
       const qas = await this.recipientsService.organisationUnitsQualifyingAccessors([
         this.requestUser.organisation.organisationUnit.id
       ]);
@@ -35,7 +34,7 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
         email: {
           notificationPreferenceType: 'SUPPORT',
           params: {
-            accessor_name: accessorWithJobTitle,
+            accessor_name: accessor,
             innovation_name: innovation.name,
             innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId),
             proposed_status: status,
@@ -50,7 +49,7 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
           },
           innovationId: innovation.id,
           params: {
-            accessorName: accessorWithJobTitle,
+            accessorName: accessor,
             innovationName: innovation.name,
             status
           },
