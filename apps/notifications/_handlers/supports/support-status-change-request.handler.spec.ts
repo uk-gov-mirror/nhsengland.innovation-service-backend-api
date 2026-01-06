@@ -41,7 +41,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
         },
         recipients: [DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)],
         outputData: {
-          accessor_name: requestUser.name + ' (Accessor)',
+          accessor_name: requestUser.name,
           innovation_name: innovation.name,
           innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId),
           proposed_status: status,
@@ -66,7 +66,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
         },
         recipients: [DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)],
         outputData: {
-          accessorName: requestUser.name + ' (Accessor)',
+          accessorName: requestUser.name,
           innovationName: innovation.name,
           status
         },

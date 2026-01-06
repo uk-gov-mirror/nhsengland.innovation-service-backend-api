@@ -52,24 +52,9 @@ export class SupportStatusUpdateHandler extends BaseHandler<
     const accessorsIdentityIds = await this.recipientsService.usersIds2IdentityIds(
       this.inputData.support.newAssignedAccessorsIds ?? []
     );
-    const accessorsRecipients = await this.recipientsService.getUsersRecipient(
-      Array.from(accessorsIdentityIds.keys()),
-      [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR]
-    );
-
+    const accessorsInfo = await this.recipientsService.usersIdentityInfo(Array.from(accessorsIdentityIds.values()));
     const accessorNames: string[] = [];
-    if (accessorsRecipients) {
-      const recipients = Array.isArray(accessorsRecipients) ? accessorsRecipients : [accessorsRecipients];
-      const identityIds = recipients.map(r => r.identityId);
-      const identityInfo = await this.recipientsService.usersIdentityInfo(identityIds);
-
-      recipients.forEach(r => {
-        const info = identityInfo.get(r.identityId);
-        if (info) {
-          accessorNames.push(`${info.displayName} (${this.getJobTitleWithFallback(r)})`);
-        }
-      });
-    }
+    accessorsInfo.forEach(a => accessorNames.push(a.displayName));
     return accessorNames;
   }
 
