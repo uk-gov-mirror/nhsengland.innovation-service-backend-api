@@ -307,7 +307,7 @@ describe('Users / _services / organisations service suite', () => {
       expect(result.count).toBe(3);
       expect(result.data).toStrictEqual([
         {
-          accessor: { name: alice.name, role: alice.roles.qaRole.role },
+          accessor: { name: alice.name, role: alice.roles.qaRole.role, jobTitle: null },
           innovations: [
             { id: johnInnovation.id, name: johnInnovation.name },
             { id: adamInnovation.id, name: adamInnovation.name },
@@ -315,11 +315,11 @@ describe('Users / _services / organisations service suite', () => {
           ]
         },
         {
-          accessor: { name: ingrid.name, role: ingrid.roles.accessorRole.role },
+          accessor: { name: ingrid.name, role: ingrid.roles.accessorRole.role, jobTitle: null },
           innovations: []
         },
         {
-          accessor: { name: jamie.name, role: jamie.roles.healthAccessorRole.role },
+          accessor: { name: jamie.name, role: jamie.roles.healthAccessorRole.role, jobTitle: null },
           innovations: [
             { id: johnInnovation.id, name: johnInnovation.name },
             { id: adamInnovation.id, name: adamInnovation.name },
