@@ -3651,10 +3651,13 @@ paths:
                           format: uuid
                         name:
                           type: string
+                        isActive:
+                          type: boolean
                       required:
                         - id
                         - userRoleId
                         - name
+                        - isActive
                       additionalProperties: false
                 required:
                   - id
@@ -4249,6 +4252,9 @@ paths:
                           type: string
                         displayRole:
                           type: string
+                        jobTitle:
+                          type: string
+                          nullable: true
                     type:
                       type: string
                     params:

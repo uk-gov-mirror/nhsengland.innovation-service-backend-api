@@ -1930,6 +1930,9 @@ paths:
                                 - ACCESSOR
                                 - ASSESSMENT
                                 - QUALIFYING_ACCESSOR
+                            jobTitle:
+                              type: string
+                              nullable: true
                           required:
                             - name
                           additionalProperties: false

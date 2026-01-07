@@ -544,13 +544,14 @@ export class DomainUsersService {
   }
 
   // try to deprecate
-  getDisplayTeamInformation(role: ServiceRoleEnum, unitName?: string, jobTitle?: string | null): string | undefined {
-    const roleOrJobTitle = jobTitle || TranslationHelper.translate(`SERVICE_ROLES.${role}`);
+  getDisplayTeamInformation(role: ServiceRoleEnum, unitName?: string): string | undefined {
+    if (role === ServiceRoleEnum.ACCESSOR || role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
+      return unitName;
+    }
 
-    if (role === ServiceRoleEnum.ACCESSOR || role === ServiceRoleEnum.QUALIFYING_ACCESSOR)
-      return unitName ? `${roleOrJobTitle} (${unitName})` : roleOrJobTitle;
-    if (role === ServiceRoleEnum.ASSESSMENT || role === ServiceRoleEnum.ADMIN)
+    if (role === ServiceRoleEnum.ASSESSMENT || role === ServiceRoleEnum.ADMIN) {
       return TranslationHelper.translate(`TEAMS.${role}`);
+    }
 
     return;
   }
@@ -559,16 +560,11 @@ export class DomainUsersService {
   // this function is supposed to be the standard display of additional info for the users and should
   // adjust the output according to the data passed, the invoker controls what's shown by passing the data
   // but the same data will always produce the same output
-  getDisplayTag(
-    role: ServiceRoleEnum,
-    data: { unitName?: string | null; isOwner?: boolean; jobTitle?: string | null }
-  ): string {
+  getDisplayTag(role: ServiceRoleEnum, data: { unitName?: string | null; isOwner?: boolean }): string {
     switch (role) {
       case ServiceRoleEnum.ACCESSOR:
-      case ServiceRoleEnum.QUALIFYING_ACCESSOR: {
-        const roleName = data.jobTitle ?? TranslationHelper.translate(`SERVICE_ROLES.${role}`);
-        return data.unitName ? `${roleName} (${data.unitName})` : roleName;
-      }
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+        return data.unitName ?? '';
       case ServiceRoleEnum.ASSESSMENT:
       case ServiceRoleEnum.ADMIN:
         return TranslationHelper.translate(`TEAMS.${role}`);

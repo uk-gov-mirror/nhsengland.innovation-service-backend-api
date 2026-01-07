@@ -75,7 +75,8 @@ export default openApi(
                       properties: {
                         id: { type: 'string' },
                         name: { type: 'string' },
-                        displayRole: { type: 'string' }
+                        displayRole: { type: 'string' },
+                        jobTitle: { type: 'string', nullable: true }
                       }
                     },
                     type: { type: 'string' },

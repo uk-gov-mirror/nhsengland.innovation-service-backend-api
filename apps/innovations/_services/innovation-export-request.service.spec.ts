@@ -102,7 +102,7 @@ describe('Innovations / _services / innovation export request suite', () => {
           createdBy: {
             name: createdByUser.name,
             displayRole: TranslationHelper.translate('SERVICE_ROLES.QUALIFYING_ACCESSOR'),
-            displayTeam: `Qualifying Accessor (${createdByUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name})`
+            displayTeam: createdByUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           },
           updatedAt: expect.any(Date),
           updatedBy: { name: createdByUser.name }
@@ -188,7 +188,7 @@ describe('Innovations / _services / innovation export request suite', () => {
           createdBy: {
             name: scenario.users.aliceQualifyingAccessor.name,
             displayRole: TranslationHelper.translate('SERVICE_ROLES.QUALIFYING_ACCESSOR'),
-            displayTeam: `Qualifying Accessor (${scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name})`
+            displayTeam: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           },
           createdAt: expect.any(Date)
         },
@@ -198,7 +198,7 @@ describe('Innovations / _services / innovation export request suite', () => {
           createdBy: {
             name: scenario.users.ingridAccessor.name,
             displayRole: TranslationHelper.translate('SERVICE_ROLES.ACCESSOR'),
-            displayTeam: `Accessor (${scenario.users.ingridAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name})`
+            displayTeam: scenario.users.ingridAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           },
           createdAt: expect.any(Date)
         }

@@ -449,7 +449,7 @@ export class InnovationSupportsService extends BaseService {
         .map(su => ({
           id: su.user.id,
           userRoleId: su.id,
-          name: usersInfo.getDisplayName(su.user.id, su.role) || 'Inactive User',
+          name: usersInfo.getDisplayName(su.user.id, su.role),
           jobTitle: usersInfo.getJobTitleWithFallback(su.user.id, su.role),
           isActive: su.user.status === UserStatusEnum.ACTIVE && !su.user.lockedAt
         }))
@@ -1347,7 +1347,8 @@ export class InnovationSupportsService extends BaseService {
             supportLog.createdBy,
             supportLog.createdByUserRole.role,
             innovation.owner?.id
-          )
+          ),
+          jobTitle: usersInfo.getJobTitleWithFallback(supportLog.createdBy, supportLog.createdByUserRole.role)
         }
       };
       switch (supportLog.type) {

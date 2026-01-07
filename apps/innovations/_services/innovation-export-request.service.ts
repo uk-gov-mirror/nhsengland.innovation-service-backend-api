@@ -133,8 +133,7 @@ export class InnovationExportRequestService extends BaseService {
         ),
         displayTeam: this.domainService.users.getDisplayTeamInformation(
           request.createdByUserRole.role,
-          request.createdByUserRole.organisationUnit?.name,
-          (request.createdByUserRole as any).user?.jobTitle
+          request.createdByUserRole.organisationUnit?.name
         )
       },
       updatedAt: request.updatedAt,
@@ -233,8 +232,7 @@ export class InnovationExportRequestService extends BaseService {
           displayRole: this.domainService.users.getDisplayRoleInformation(r.createdBy, r.createdByUserRole.role),
           displayTeam: this.domainService.users.getDisplayTeamInformation(
             r.createdByUserRole.role,
-            r.createdByUserRole.organisationUnit?.name,
-            (r.createdByUserRole as any).user?.jobTitle
+            r.createdByUserRole.organisationUnit?.name
           )
         }
       }))
