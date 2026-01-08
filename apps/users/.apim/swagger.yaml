@@ -471,6 +471,20 @@ paths:
                         - id
                         - isActive
                       additionalProperties: false
+                    strategicRoles:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          strategicRole:
+                            type: string
+                        required:
+                          - id
+                          - strategicRole
+                        additionalProperties: false
                     contactByEmail:
                       type: boolean
                     contactByPhone:

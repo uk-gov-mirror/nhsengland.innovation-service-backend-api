@@ -2,9 +2,9 @@ import type { EntityManager } from 'typeorm';
 
 import { TestsHelper } from '@admin/shared/tests';
 
-import { UserEntity, UserRoleEntity } from '@admin/shared/entities';
+import { UserEntity, UserRoleEntity, UserStrategicRoleEntity } from '@admin/shared/entities';
 
-import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum, StrategicRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
   ConflictError,
@@ -756,6 +756,36 @@ describe('Admin / _services / users service suite', () => {
       await expect(sut.getAssignedInnovations(scenario.users.johnInnovator.id, em)).rejects.toThrow(
         new ConflictError(UserErrorsEnum.USER_ROLE_NOT_ALLOWED)
       );
+    });
+  });
+
+  describe('deleteStrategicRole', () => {
+    it('should hard delete the strategic role from the database', async () => {
+      const user = scenario.users.aliceQualifyingAccessor;
+      const healthOrg = scenario.organisations.healthOrg;
+
+      // Manually insert a strategic role first
+      const strategicRole = await em.save(
+        UserStrategicRoleEntity,
+        UserStrategicRoleEntity.new({
+          user: UserEntity.new({ id: user.id }),
+          organisation: { id: healthOrg.id } as any,
+          strategicRole: StrategicRoleEnum.CHAMPION,
+          createdBy: userAdminContext.id,
+          updatedBy: userAdminContext.id
+        })
+      );
+
+      // Verify insertion
+      const savedRole = await em.findOne(UserStrategicRoleEntity, { where: { id: strategicRole.id } });
+      expect(savedRole).toBeDefined();
+
+      // Perform deletion via service
+      await sut.deleteStrategicRole(userAdminContext, user.id, strategicRole.id, em);
+
+      // Verify permanent deletion
+      const deletedRole = await em.findOne(UserStrategicRoleEntity, { where: { id: strategicRole.id } });
+      expect(deletedRole).toBeNull();
     });
   });
 });

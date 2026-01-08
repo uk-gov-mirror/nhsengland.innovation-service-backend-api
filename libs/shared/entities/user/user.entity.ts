@@ -5,6 +5,7 @@ import { BaseEntity } from '../base.entity';
 import { UserStatusEnum } from '../../enums/user.enums';
 import { TermsOfUseUserEntity } from '../general/terms-of-use-user.entity';
 import { UserRoleEntity } from './user-role.entity';
+import { UserStrategicRoleEntity } from './user-strategic-role.entity';
 
 export type HowDidYouFindUsAnswersType = {
   event?: boolean;
@@ -48,6 +49,9 @@ export class UserEntity extends BaseEntity {
 
   @OneToMany(() => UserRoleEntity, record => record.user, { cascade: ['update', 'insert'] })
   serviceRoles: UserRoleEntity[];
+
+  @OneToMany(() => UserStrategicRoleEntity, record => record.user, { cascade: ['insert'] })
+  strategicRoles: UserStrategicRoleEntity[];
 
   @OneToMany(() => TermsOfUseUserEntity, record => record.user, { lazy: true })
   termsOfUseUser: Promise<TermsOfUseUserEntity[]>;

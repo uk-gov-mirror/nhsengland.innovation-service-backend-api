@@ -89,7 +89,7 @@ export class DomainUsersService {
 
   async getUserInfo(
     data: { userId: string } | { identityId: string } | { email: string },
-    filters?: { organisations?: boolean },
+    filters?: { organisations?: boolean; loadStrategicRoles?: boolean },
     entityManager?: EntityManager,
     options?: { forceRefresh?: boolean }
   ): Promise<{
@@ -104,6 +104,7 @@ export class DomainUsersService {
     passwordResetAt: null | Date;
     firstTimeSignInAt: null | Date;
     jobTitle: null | string;
+    strategicRoles: { id: string; strategicRole: string }[];
     organisations?: {
       id: string;
       name: string;
@@ -140,11 +141,15 @@ export class DomainUsersService {
         'roleOrganisation.acronym',
         'roleOrganisationUnit.id',
         'roleOrganisationUnit.name',
-        'roleOrganisationUnit.acronym'
+        'roleOrganisationUnit.acronym',
+        // Strategic roles
+        'strategicRoles.id',
+        'strategicRoles.strategicRole'
       ])
       .innerJoin('user.serviceRoles', 'serviceRoles')
       .leftJoin('serviceRoles.organisation', 'roleOrganisation')
       .leftJoin('serviceRoles.organisationUnit', 'roleOrganisationUnit')
+      .leftJoin('user.strategicRoles', 'strategicRoles')
       .where('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
 
     if (filters?.organisations) {
@@ -228,6 +233,7 @@ export class DomainUsersService {
       passwordResetAt: user.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
       jobTitle: dbUser.jobTitle,
+      strategicRoles: dbUser.strategicRoles ? dbUser.strategicRoles.map(sr => ({ id: sr.id, strategicRole: sr.strategicRole })) : [],
       ...(filters?.organisations && { organisations: [...organisationsMap.values()] })
     };
   }

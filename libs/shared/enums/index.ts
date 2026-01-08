@@ -6,6 +6,7 @@ export * from './notification.enums';
 export { NotifierTypeEnum } from './notifier.enums';
 export * from './organisation.enums';
 export * from './user.enums';
+export * from './strategic-role.enum';
 
 // TODO - set these in a file, just fixing for now
 

@@ -40,6 +40,7 @@ const userInfo = {
   lockedAt: null,
   passwordResetAt: randPastDate(),
   firstTimeSignInAt: randPastDate(),
+  strategicRoles: [],
   organisations: [
     {
       id: randUuid(),
@@ -132,7 +133,8 @@ describe('v1-me-info Suite', () => {
     ])("shouldn't return preferences, collaborations and transfers for %s", async (role: ServiceRoleEnum) => {
       mock.mockResolvedValueOnce({
         ...userInfo,
-        roles: [{ id: randUuid(), role, isActive: true }]
+        roles: [{ id: randUuid(), role, isActive: true }],
+        strategicRoles: []
       });
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
@@ -153,7 +155,8 @@ describe('v1-me-info Suite', () => {
     it("shouldn't check announcements and termsOfUse for admin", async () => {
       mock.mockResolvedValueOnce({
         ...userInfo,
-        roles: [{ id: randUuid(), role: ServiceRoleEnum.ADMIN, isActive: true }]
+        roles: [{ id: randUuid(), role: ServiceRoleEnum.ADMIN, isActive: true }],
+        strategicRoles: []
       });
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
@@ -174,7 +177,8 @@ describe('v1-me-info Suite', () => {
     ])('should check annoucements and termsOfUse for %s', async role => {
       mock.mockResolvedValueOnce({
         ...userInfo,
-        roles: [{ id: randUuid(), role, isActive: true }]
+        roles: [{ id: randUuid(), role, isActive: true }],
+        strategicRoles: []
       });
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
@@ -193,7 +197,8 @@ describe('v1-me-info Suite', () => {
         roles: [
           { id: randUuid(), role: ServiceRoleEnum.QUALIFYING_ACCESSOR, isActive: true },
           { id: randUuid(), role: ServiceRoleEnum.INNOVATOR, isActive: true } // this isn't possible but helps prove a point
-        ]
+        ],
+        strategicRoles: []
       });
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
@@ -218,7 +223,8 @@ describe('v1-me-info Suite', () => {
     it('should only consider active roles', async () => {
       mock.mockResolvedValueOnce({
         ...userInfo,
-        roles: [...userInfo.roles, { id: randUuid(), role: ServiceRoleEnum.QUALIFYING_ACCESSOR, isActive: false }]
+        roles: [...userInfo.roles, { id: randUuid(), role: ServiceRoleEnum.QUALIFYING_ACCESSOR, isActive: false }],
+        strategicRoles: []
       });
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
