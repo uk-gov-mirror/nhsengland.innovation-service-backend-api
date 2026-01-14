@@ -186,6 +186,69 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  /v1/strategic-roles:
+    get:
+      description: List all users with strategic roles grouped by organisation.
+      operationId: v1-admin-strategic-roles-list
+      responses:
+        "200":
+          description: The list of strategic roles.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    organisation:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                      required:
+                        - id
+                        - name
+                      additionalProperties: false
+                    champions:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          email:
+                            type: string
+                            format: email
+                        required:
+                          - name
+                          - email
+                        additionalProperties: false
+                    seniorSponsors:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          email:
+                            type: string
+                            format: email
+                        required:
+                          - name
+                          - email
+                        additionalProperties: false
+                  required:
+                    - organisation
+                    - champions
+                    - seniorSponsors
+                  additionalProperties: false
+        "401":
+          description: The user is not authorized.
+        "500":
+          description: An error occurred.
   /v1/tou/{touId}:
     get:
       description: Get terms of use.
@@ -724,6 +787,14 @@ paths:
                   format: email
                   maxLength: 100
                   description: Email of the user.
+                strategicRoles:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - CHAMPION
+                      - SENIOR_SPONSOR
+                  description: Strategic roles to be assigned to the user.
                 role:
                   type: string
                   enum:
@@ -955,11 +1026,29 @@ paths:
                         - id
                         - isActive
                       additionalProperties: false
+                  strategicRoles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        role:
+                          type: string
+                          enum:
+                            - CHAMPION
+                            - SENIOR_SPONSOR
+                      required:
+                        - id
+                        - role
+                      additionalProperties: false
                 required:
                   - id
                   - email
                   - name
                   - isActive
+                  - strategicRoles
                 additionalProperties: false
         "400":
           description: The request is invalid.
@@ -1129,6 +1218,85 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
+  /v1/users/{userId}/strategic-roles/{strategicRoleId}:
+    delete:
+      description: Delete a strategic role from a user.
+      operationId: v1-admin-user-strategic-role-update
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The user id.
+        - name: strategicRoleId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The strategic role id.
+      responses:
+        "204":
+          description: The strategic role has been deleted.
+        "401":
+          description: The user is not authorized.
+        "404":
+          description: The strategic role was not found.
+        "500":
+          description: An error occurred.
+  /v1/users/{userId}/strategic-roles:
+    post:
+      description: Create strategic roles for a user.
+      operationId: v1-admin-user-strategic-roles-create
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The user id.
+      requestBody:
+        description: The strategic roles to be assigned.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                strategicRoles:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - CHAMPION
+                      - SENIOR_SPONSOR
+                  minItems: 1
+                  description: The strategic roles to be assigned to the user.
+              required:
+                - strategicRoles
+              additionalProperties: false
+      responses:
+        "201":
+          description: The strategic roles have been created.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                  required:
+                    - id
+                  additionalProperties: false
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized.
+        "500":
+          description: An error occurred.
   /v1/users/{userId}/validate:
     get:
       description: Get validation information.

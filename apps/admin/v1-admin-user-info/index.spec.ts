@@ -29,7 +29,8 @@ const expected: Awaited<ReturnType<UsersService['getUserInfo']>> = {
   email: randEmail(),
   isActive: randBoolean(),
   name: randFullName(),
-  roles: [{ id: randUuid(), isActive: randBoolean(), role: ServiceRoleEnum.INNOVATOR }]
+  roles: [{ id: randUuid(), isActive: randBoolean(), role: ServiceRoleEnum.INNOVATOR }],
+  strategicRoles: []
 };
 const mock = jest.spyOn(UsersService.prototype, 'getUserInfo').mockResolvedValue(expected);
 

@@ -81,6 +81,7 @@ class V1MeInfo {
         email: requestUser.email,
         displayName: requestUser.displayName,
         roles: userRoles,
+        strategicRoles: requestUser.strategicRoles,
         contactByEmail: userPreferences.contactByEmail,
         contactByPhone: userPreferences.contactByPhone,
         contactByPhoneTimeframe: userPreferences.contactByPhoneTimeframe,
