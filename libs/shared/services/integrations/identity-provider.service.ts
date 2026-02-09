@@ -18,6 +18,8 @@ import SHARED_SYMBOLS from '../symbols';
 import type { LoggerService } from './logger.service';
 import { QueuesEnum, StorageQueueService } from './storage-queue.service';
 
+import { sleep } from '../../helpers/misc.helper';
+
 type b2cGetUserInfoByEmailDTO = {
   value: {
     id: string;
@@ -285,9 +287,36 @@ export class IdentityProviderService {
 
         const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`;
 
-        const response = await axios.get<b2cGetUsersListDTO>(url, {
-          headers: { Authorization: `Bearer ${this.sessionData.token}` }
-        });
+        let retryCount = 0;
+        const maxRetries = 5;
+        let response;
+
+        while (retryCount < maxRetries) {
+          try {
+            response = await axios.get<b2cGetUsersListDTO>(url, {
+              headers: { Authorization: `Bearer ${this.sessionData.token}` }
+            });
+            break;
+          } catch (error: any) {
+            if (error.response?.status === 429) {
+              retryCount++;
+              const retryAfter = error.response.headers['retry-after'] || Math.pow(2, retryCount);
+              const waitTime = parseInt(retryAfter, 10) * 1000;
+              this.loggerService.log(
+                `B2C Rate limit hit. Retrying in ${waitTime}ms... (Attempt ${retryCount}/${maxRetries})`
+              );
+              await sleep(waitTime);
+            } else {
+              throw error;
+            }
+          }
+        }
+
+        if (!response) {
+          throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
+            message: 'B2C Rate limit reached and retries exhausted'
+          });
+        }
 
         return response.data.value.map(u => ({
           identityId: u.id,
