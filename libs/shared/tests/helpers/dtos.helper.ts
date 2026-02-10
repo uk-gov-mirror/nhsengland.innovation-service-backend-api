@@ -27,6 +27,7 @@ export class DTOsHelper {
         id: user.id,
         identityId: user.identityId,
         currentRole: { id: role.id, role: role.role },
+        jobTitle: null,
         organisation: { id: role.organisation.id, name: role.organisation.name, acronym: role.organisation.acronym }
       };
     }
@@ -39,6 +40,7 @@ export class DTOsHelper {
         id: user.id,
         identityId: user.identityId,
         currentRole: { id: role.id, role: role.role },
+        jobTitle: null,
         organisation: {
           id: role.organisation.id,
           name: role.organisation.name,
@@ -56,7 +58,7 @@ export class DTOsHelper {
       return {
         id: user.id,
         identityId: user.identityId,
-        currentRole: { id: role.id, role: role.role }
+        currentRole: { id: role.id, role: role.role }, jobTitle: null
       };
     }
 
@@ -64,7 +66,7 @@ export class DTOsHelper {
       return {
         id: user.id,
         identityId: user.identityId,
-        currentRole: { id: role.id, role: role.role }
+        currentRole: { id: role.id, role: role.role }, jobTitle: null
       };
     }
 

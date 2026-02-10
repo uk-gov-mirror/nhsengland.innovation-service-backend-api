@@ -7,9 +7,10 @@ import {
   OrganisationEntity,
   OrganisationUnitEntity,
   UserEntity,
-  UserRoleEntity
+  UserRoleEntity,
+  UserStrategicRoleEntity
 } from '@admin/shared/entities';
-import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum, StrategicRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
   ConflictError,
@@ -149,7 +150,7 @@ export class UsersService extends BaseService {
     data: {
       name: string;
       email: string;
-    } & CreateRolesType,
+    } & CreateRolesType & { strategicRoles?: StrategicRoleEnum[] },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -219,6 +220,10 @@ export class UsersService extends BaseService {
         await this.addDbRole(domainContext, user.id, role, transaction);
       }
 
+      if (data.strategicRoles?.length) {
+        await this.createStrategicRoles(domainContext, user.id, { strategicRoles: data.strategicRoles }, transaction);
+      }
+
       // Send notification to new account
       if (data.email && user) {
         await this.notifierService.send(domainContext, NotifierTypeEnum.NEW_SUPPORTING_ACCOUNT, {
@@ -258,13 +263,15 @@ export class UsersService extends BaseService {
     name: string;
     phone?: string;
     isActive: boolean;
+    jobTitle?: string | null;
     roles: (RoleType & {
       displayTeam?: string;
     })[];
+    strategicRoles: { id: string; role: StrategicRoleEnum }[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
     const identifier = this.isUuid(idOrEmail) ? { userId: idOrEmail } : { email: idOrEmail };
-    const user = await this.domainService.users.getUserInfo(identifier, {}, em);
+    const user = await this.domainService.users.getUserInfo(identifier, { loadStrategicRoles: true }, em);
 
     return {
       id: user.id,
@@ -272,11 +279,141 @@ export class UsersService extends BaseService {
       name: user.displayName,
       isActive: user.isActive,
       phone: user.phone ?? undefined,
+      jobTitle: user.jobTitle ?? null,
       roles: user.roles.map(r => ({
         ...r,
         displayTeam: this.domainService.users.getDisplayTeamInformation(r.role, r.organisationUnit?.name)
-      }))
+      })),
+      strategicRoles: user.strategicRoles.map(sr => ({ id: sr.id, role: sr.strategicRole as StrategicRoleEnum }))
     };
+  }
+
+  async createStrategicRoles(
+    domainContext: DomainContextType,
+    userId: string,
+    data: { strategicRoles: StrategicRoleEnum[] },
+    entityManager?: EntityManager
+  ): Promise<{ id: string }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const user = await em
+      .createQueryBuilder(UserEntity, 'user')
+      .innerJoinAndSelect('user.serviceRoles', 'role')
+      .leftJoinAndSelect('role.organisation', 'organisation')
+      .where('user.id = :userId', { userId })
+      .andWhere('role.role IN (:...allowedRoles)', {
+        allowedRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR]
+      })
+      .getOne();
+
+    if (!user) {
+      throw new BadRequestError(UserErrorsEnum.USER_ROLE_NOT_ALLOWED);
+    }
+
+    // Strategic role is related to the whole organisation.
+    // We take the organisation from the first active role found (since roles for accessor/QA must have an organisation).
+    const role = user.serviceRoles?.[0];
+    const organisationId = role?.organisation?.id ?? role?.organisationId;
+
+    if (!organisationId) {
+      throw new BadRequestError(UserErrorsEnum.USER_ROLE_NOT_ALLOWED);
+    }
+
+    return await em.transaction(async transaction => {
+      const createdRoles = [];
+      for (const strategicRole of data.strategicRoles) {
+        // Check if role already exists for this user and organisation
+        const existing = await transaction.findOne(UserStrategicRoleEntity, {
+          where: { user: { id: userId }, organisation: { id: organisationId }, strategicRole }
+        });
+
+        if (!existing) {
+          const newRole = await transaction.save(
+            UserStrategicRoleEntity,
+            UserStrategicRoleEntity.new({
+              user: UserEntity.new({ id: userId }),
+              organisation: OrganisationEntity.new({ id: organisationId }),
+              strategicRole,
+              createdBy: domainContext.id,
+              updatedBy: domainContext.id
+            })
+          );
+          createdRoles.push({ id: newRole.id });
+        }
+      }
+      return createdRoles;
+    });
+  }
+
+  async deleteStrategicRole(
+    _domainContext: DomainContextType,
+    userId: string,
+    strategicRoleId: string,
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const role = await em.findOne(UserStrategicRoleEntity, {
+      where: { id: strategicRoleId, user: { id: userId } }
+    });
+
+    if (!role) {
+      throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);
+    }
+
+    await em.delete(UserStrategicRoleEntity, { id: strategicRoleId });
+  }
+
+  async getStrategicRolesList(entityManager?: EntityManager): Promise<
+    {
+      organisation: { id: string; name: string };
+      champions: { name: string; email: string }[];
+      seniorSponsors: { name: string; email: string }[];
+    }[]
+  > {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const strategicRoles = await em
+      .createQueryBuilder(UserStrategicRoleEntity, 'sr')
+      .innerJoinAndSelect('sr.organisation', 'organisation')
+      .innerJoinAndSelect('sr.user', 'user')
+      .getMany();
+
+    const identityIds = strategicRoles.map(sr => sr.user.identityId);
+    const usersMap = await this.domainService.users.getUsersMap({ identityIds }, em);
+
+    const orgMap = new Map<
+      string,
+      {
+        organisation: { id: string; name: string };
+        champions: { name: string; email: string }[];
+        seniorSponsors: { name: string; email: string }[];
+      }
+    >();
+
+    for (const sr of strategicRoles) {
+      if (!orgMap.has(sr.organisation.id)) {
+        orgMap.set(sr.organisation.id, {
+          organisation: { id: sr.organisation.id, name: sr.organisation.name },
+          champions: [],
+          seniorSponsors: []
+        });
+      }
+
+      const orgData = orgMap.get(sr.organisation.id)!;
+      const userDetails = {
+        name: usersMap.getDisplayName(sr.user.identityId),
+        email: usersMap.get(sr.user.identityId)?.email ?? ''
+      };
+
+      if (sr.strategicRole === StrategicRoleEnum.CHAMPION) {
+        orgData.champions.push(userDetails);
+      } else if (sr.strategicRole === StrategicRoleEnum.SENIOR_SPONSOR) {
+        orgData.seniorSponsors.push(userDetails);
+      }
+    }
+
+    return Array.from(orgMap.values()).sort((a, b) => a.organisation.name.localeCompare(b.organisation.name));
   }
 
   async addRoles(

@@ -1,4 +1,4 @@
-import { ServiceRoleEnum } from '@admin/shared/enums';
+import { ServiceRoleEnum, StrategicRoleEnum } from '@admin/shared/enums';
 import Joi from 'joi';
 
 export type ResponseDTO = {
@@ -7,6 +7,7 @@ export type ResponseDTO = {
   name: string;
   phone?: string;
   isActive: boolean;
+  jobTitle?: string | null;
   roles: {
     id: string;
     role: ServiceRoleEnum;
@@ -15,6 +16,7 @@ export type ResponseDTO = {
     organisationUnit?: { id: string; name: string; acronym: string };
     displayTeam?: string;
   }[];
+  strategicRoles: { id: string; role: StrategicRoleEnum }[];
 };
 
 export const ResponseBodySchema = Joi.object<ResponseDTO>({
@@ -23,6 +25,7 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
   name: Joi.string().required(),
   phone: Joi.string().optional(),
   isActive: Joi.boolean().required(),
+  jobTitle: Joi.string().allow(null).optional(),
   roles: Joi.array().items(
     Joi.object({
       id: Joi.string().uuid().required(),
@@ -40,5 +43,11 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
       }).optional(),
       displayTeam: Joi.string().optional()
     })
-  )
+  ),
+  strategicRoles: Joi.array().items(
+    Joi.object({
+      id: Joi.string().uuid().required(),
+      role: Joi.string().valid(...Object.values(StrategicRoleEnum)).required()
+    })
+  ).required()
 });

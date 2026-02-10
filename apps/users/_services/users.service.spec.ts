@@ -215,6 +215,26 @@ describe('Users / _services / users service suite', () => {
         expect.any(EntityManager)
       );
     });
+
+    it('should update jobTitle', async () => {
+      const user = scenario.users.adamInnovator;
+      const newJobTitle = 'Principal Consultant';
+      const newData = {
+        displayName: randFullName(),
+        jobTitle: newJobTitle,
+        howDidYouFindUsAnswers: {}
+      };
+
+      await sut.updateUserInfo(
+        { id: user.id, identityId: user.identityId },
+        user.roles.innovatorRole.role,
+        newData,
+        em
+      );
+
+      const dbUser = await em.findOneOrFail(UserEntity, { where: { id: user.id } });
+      expect(dbUser.jobTitle).toBe(newJobTitle);
+    });
   });
 
   describe('getUsersList', () => {

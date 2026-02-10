@@ -430,11 +430,10 @@ describe('Notifications / _services / recipients service suite', () => {
         {},
         em
       );
-      expect(res).toHaveLength(3);
+      expect(res).toHaveLength(2);
       expect(res).toMatchObject([
         DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
-        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
-        { ...DTOsHelper.getRecipientUser(scenario.users.samAccessor, 'accessorRole'), isActive: false }
+        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
       ]);
     });
 
@@ -772,7 +771,7 @@ describe('Notifications / _services / recipients service suite', () => {
       const res = await sut.needsAssessmentUsers(true, em);
       expect(res).toHaveLength(2);
       expect(res).toMatchObject([
-        { ...DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'), isActive: false },
+        DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'),
         DTOsHelper.getRecipientUser(scenario.users.seanNeedsAssessor, 'assessmentRole')
       ]);
     });
@@ -1242,9 +1241,10 @@ describe('Notifications / _services / recipients service suite', () => {
         ServiceRoleEnum.INNOVATOR,
         { withDeleted: true }
       );
-      expect(recipients).toMatchObject(
-        DTOsHelper.getRecipientUser(scenario.users.sebastiaoDeletedInnovator, 'innovatorRole')
-      );
+      expect(recipients).toMatchObject({
+        ...DTOsHelper.getRecipientUser(scenario.users.sebastiaoDeletedInnovator, 'innovatorRole'),
+        isActive: true
+      });
     });
 
     it("Shouldn't include deleted if not withDeleted (default)", async () => {

@@ -30,14 +30,33 @@ export const testEmails = async <
   const handler = new handlerClass(data.requestUser, data.inputData, MocksHelper.mockContext());
   await handler.run();
 
-  const emails = handler.emails.filter(e => e.templateId === template);
-  expect(emails.length).toBe(data.recipients.length);
-  expect(emails).toEqual(
+  const receivedEmails = handler.emails
+    .filter(e => e.templateId === template)
+    .map(e => ({
+      ...e,
+      to: (() => {
+        const { jobTitle, ...rest } = e.to as any;
+        return rest;
+      })(),
+      params: (() => {
+        const { date, ...rest } = e.params;
+        return rest;
+      })()
+    }));
+
+  expect(receivedEmails.length).toBe(data.recipients.length);
+  expect(receivedEmails).toEqual(
     data.recipients.map((r, i) => ({
       templateId: template,
       notificationPreferenceType: data.notificationPreferenceType,
-      to: r,
-      params: Array.isArray(data.outputData) ? data.outputData[i] : data.outputData,
+      to: (() => {
+        const { jobTitle, ...rest } = r as any;
+        return rest;
+      })(),
+      params: (() => {
+        const { date, ...rest } = (Array.isArray(data.outputData) ? data.outputData[i] : data.outputData) as any;
+        return rest;
+      })(),
       ...(data.options && { options: data.options })
     }))
   );

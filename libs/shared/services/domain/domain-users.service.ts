@@ -26,7 +26,7 @@ import { displayName, UserMap } from '../../models/user.map';
 import { AuthErrorsEnum } from '../auth/authorization-validation.model';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
-import { SQLConnectionService } from '../storage/sql-connection.service';
+import type { SQLConnectionService } from '../storage/sql-connection.service';
 import type { DomainInnovationsService } from './domain-innovations.service';
 
 export class DomainUsersService {
@@ -89,7 +89,7 @@ export class DomainUsersService {
 
   async getUserInfo(
     data: { userId: string } | { identityId: string } | { email: string },
-    filters?: { organisations?: boolean },
+    filters?: { organisations?: boolean; loadStrategicRoles?: boolean },
     entityManager?: EntityManager,
     options?: { forceRefresh?: boolean }
   ): Promise<{
@@ -103,6 +103,8 @@ export class DomainUsersService {
     lockedAt: null | Date;
     passwordResetAt: null | Date;
     firstTimeSignInAt: null | Date;
+    jobTitle: null | string;
+    strategicRoles: { id: string; strategicRole: string }[];
     organisations?: {
       id: string;
       name: string;
@@ -129,6 +131,7 @@ export class DomainUsersService {
         'user.lockedAt',
         'user.status',
         'user.firstTimeSignInAt',
+        'user.jobTitle',
         // Service roles
         'serviceRoles.id',
         'serviceRoles.role',
@@ -138,11 +141,15 @@ export class DomainUsersService {
         'roleOrganisation.acronym',
         'roleOrganisationUnit.id',
         'roleOrganisationUnit.name',
-        'roleOrganisationUnit.acronym'
+        'roleOrganisationUnit.acronym',
+        // Strategic roles
+        'strategicRoles.id',
+        'strategicRoles.strategicRole'
       ])
       .innerJoin('user.serviceRoles', 'serviceRoles')
       .leftJoin('serviceRoles.organisation', 'roleOrganisation')
       .leftJoin('serviceRoles.organisationUnit', 'roleOrganisationUnit')
+      .leftJoin('user.strategicRoles', 'strategicRoles')
       .where('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
 
     if (filters?.organisations) {
@@ -225,6 +232,8 @@ export class DomainUsersService {
       lockedAt: dbUser.lockedAt,
       passwordResetAt: user.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
+      jobTitle: dbUser.jobTitle,
+      strategicRoles: dbUser.strategicRoles ? dbUser.strategicRoles.map(sr => ({ id: sr.id, strategicRole: sr.strategicRole })) : [],
       ...(filters?.organisations && { organisations: [...organisationsMap.values()] })
     };
   }
@@ -252,7 +261,15 @@ export class DomainUsersService {
 
     const query = em
       .createQueryBuilder(UserEntity, 'users')
-      .select(['users.id', 'users.identityId', 'users.status', 'roles.id', 'roles.role', 'roles.isActive'])
+      .select([
+        'users.id',
+        'users.identityId',
+        'users.status',
+        'users.jobTitle',
+        'roles.id',
+        'roles.role',
+        'roles.isActive'
+      ])
       .innerJoin('users.serviceRoles', 'roles')
       .where('users.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
     if (data.userIds) {
@@ -279,6 +296,7 @@ export class DomainUsersService {
         email: identityUser.email,
         mobilePhone: identityUser.mobilePhone,
         isActive: dbUser.status === UserStatusEnum.ACTIVE,
+        jobTitle: dbUser.jobTitle,
         lastLoginAt: identityUser.lastLoginAt
       };
     });
@@ -417,7 +435,8 @@ export class DomainUsersService {
         'organisationUnit.name',
         'organisationUnit.acronym',
         'user.id',
-        'user.identityId'
+        'user.identityId',
+        'user.jobTitle'
       ])
       .leftJoin('userRole.organisation', 'organisation')
       .leftJoin('userRole.organisationUnit', 'organisationUnit')
@@ -433,10 +452,15 @@ export class DomainUsersService {
       throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);
     }
     const role = roleEntity2RoleType(dbUserRole);
-    return this.roleTypeToDomainContext(dbUserRole.user.id, dbUserRole.user.identityId, role);
+    return this.roleTypeToDomainContext(dbUserRole.user.id, dbUserRole.user.identityId, dbUserRole.user.jobTitle, role);
   }
 
-  async roleTypeToDomainContext(userId: string, identityId: string, role: RoleType): Promise<DomainContextType> {
+  async roleTypeToDomainContext(
+    userId: string,
+    identityId: string,
+    jobTitle: string | null,
+    role: RoleType
+  ): Promise<DomainContextType> {
     switch (role.role) {
       case ServiceRoleEnum.INNOVATOR:
         if (!role.organisation) {
@@ -445,6 +469,7 @@ export class DomainUsersService {
         return {
           id: userId,
           identityId: identityId,
+          jobTitle: null,
           organisation: {
             id: role.organisation.id,
             name: role.organisation.name,
@@ -463,6 +488,7 @@ export class DomainUsersService {
         return {
           id: userId,
           identityId: identityId,
+          jobTitle: jobTitle,
           organisation: {
             id: role.organisation.id,
             name: role.organisation.name,
@@ -483,6 +509,7 @@ export class DomainUsersService {
         return {
           id: userId,
           identityId: identityId,
+          jobTitle: jobTitle,
           currentRole: {
             id: role.id,
             role: role.role
@@ -493,6 +520,7 @@ export class DomainUsersService {
         return {
           id: userId,
           identityId: identityId,
+          jobTitle: jobTitle,
           currentRole: {
             id: role.id,
             role: role.role
@@ -572,6 +600,7 @@ export class DomainUsersService {
         'userRole.id',
         'user.id',
         'user.identityId',
+        'user.jobTitle',
         'organisation.id',
         'organisation.name',
         'organisation.acronym'
@@ -589,6 +618,7 @@ export class DomainUsersService {
     return {
       id: role.user.id,
       identityId: role.user.identityId,
+      jobTitle: null,
       organisation: {
         id: role.organisation.id,
         name: role.organisation.name,

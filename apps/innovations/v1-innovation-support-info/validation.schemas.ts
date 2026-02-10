@@ -9,3 +9,10 @@ export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
   supportId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
+
+export type QueryParamsType = {
+  includeInactive?: boolean;
+};
+export const QueryParamsSchema = Joi.object<QueryParamsType>({
+  includeInactive: Joi.boolean().optional()
+}).required();

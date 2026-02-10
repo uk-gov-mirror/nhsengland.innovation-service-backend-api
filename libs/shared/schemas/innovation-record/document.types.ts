@@ -31,6 +31,8 @@ export type InnovationRecordDocumentType = {
     involvedAACProgrammes?: catalogInvolvedAACProgrammes[];
     hasWebsite?: string;
     website?: string;
+    hasVideoDemonstration?: string;
+    videoDemonstrationUrl?: string;
   } & OtherKeyValues;
   UNDERSTANDING_OF_NEEDS: {
     diseasesConditionsImpact?: string[];

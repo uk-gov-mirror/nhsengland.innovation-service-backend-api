@@ -24,7 +24,7 @@ export class SQLConnectionService {
         ? new DataSource(SQLDB_TESTS_CONNECTION)
         : new DataSource(SQLDB_DEFAULT_CONNECTION);
 
-    this._connection.initialize();
+    void this._connection.initialize();
     this.logger.log('SQLConnectionService initialized');
   }
 

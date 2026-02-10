@@ -1,6 +1,6 @@
-import { ServiceRoleEnum } from '../enums';
+import type { ServiceRoleEnum } from '../enums';
 import { TranslationHelper } from '../helpers';
-import { DomainUserIdentityInfo } from '../types';
+import type { DomainUserIdentityInfo } from '../types';
 
 const knownDisplayNames = {
   '00000000-0000-0000-0000-000000000000': 'System'
@@ -20,8 +20,18 @@ export const displayName = (data?: DomainUserIdentityInfo | string, role?: Servi
   return '[deleted user]';
 };
 
+export const jobTitleWithFallback = (data?: DomainUserIdentityInfo | string, role?: ServiceRoleEnum): string => {
+  if (typeof data === 'object' && data.jobTitle) return data.jobTitle;
+  if (role) return TranslationHelper.translate(`SERVICE_ROLES.${role}`);
+  return '';
+};
+
 export class UserMap extends Map<string, DomainUserIdentityInfo> {
   getDisplayName(id?: string | null, role?: ServiceRoleEnum): string {
     return displayName(this.get(id ?? '') ?? id ?? undefined, role);
+  }
+
+  getJobTitleWithFallback(id?: string | null, role?: ServiceRoleEnum): string {
+    return jobTitleWithFallback(this.get(id ?? '') ?? id ?? undefined, role);
   }
 }

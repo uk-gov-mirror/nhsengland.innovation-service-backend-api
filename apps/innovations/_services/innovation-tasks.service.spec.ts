@@ -358,13 +358,11 @@ describe('Innovation Tasks Suite', () => {
           updatedAt: expect.any(Date),
           updatedBy: {
             name: scenario.users.aliceQualifyingAccessor.name,
-            displayTag:
-              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+            displayTag: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           },
           createdBy: {
             name: scenario.users.aliceQualifyingAccessor.name,
-            displayTag:
-              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+            displayTag: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           },
           sameOrganisation: true
         },
@@ -379,8 +377,7 @@ describe('Innovation Tasks Suite', () => {
           updatedBy: { name: scenario.users.adamInnovator.name, displayTag: 'Owner' },
           createdBy: {
             name: scenario.users.aliceQualifyingAccessor.name,
-            displayTag:
-              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+            displayTag: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           },
           sameOrganisation: true
         },
@@ -398,8 +395,7 @@ describe('Innovation Tasks Suite', () => {
           },
           createdBy: {
             name: scenario.users.aliceQualifyingAccessor.name,
-            displayTag:
-              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+            displayTag: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           },
           sameOrganisation: true
         }
@@ -544,22 +540,19 @@ describe('Innovation Tasks Suite', () => {
         {
           createdBy: {
             name: scenario.users.aliceQualifyingAccessor.name,
-            displayTag:
-              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+            displayTag: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           }
         },
         {
           createdBy: {
             name: scenario.users.aliceQualifyingAccessor.name,
-            displayTag:
-              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+            displayTag: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           }
         },
         {
           createdBy: {
             name: scenario.users.aliceQualifyingAccessor.name,
-            displayTag:
-              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+            displayTag: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           }
         }
       ]);

@@ -215,7 +215,7 @@ export class OrganisationsService extends BaseService {
   ): Promise<{
     count: number;
     data: {
-      accessor: { name: string; role: ServiceRoleEnum };
+      accessor: { name: string; role: ServiceRoleEnum; jobTitle?: string | null };
       innovations: { id: string; name: string }[];
     }[];
   }> {
@@ -237,10 +237,14 @@ export class OrganisationsService extends BaseService {
       },
       em
     );
-    const identityInfoMap = new Map<string, { name: string; role: ServiceRoleEnum }>(
+    const identityInfoMap = new Map<string, { name: string; role: ServiceRoleEnum; jobTitle?: string | null }>(
       allUnitUsers.map(u => [
         u.identityId,
-        { name: usersInfoMap.getDisplayName(u.identityId), role: u.serviceRoles[0]!.role }
+        {
+          name: usersInfoMap.getDisplayName(u.identityId),
+          role: u.serviceRoles[0]!.role,
+          jobTitle: usersInfoMap.get(u.identityId)?.jobTitle
+        }
       ])
     );
 

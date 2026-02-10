@@ -1,7 +1,7 @@
 import type { EntityManager } from 'typeorm';
 import { ActivityLogEntity, InnovationEntity, UserRoleEntity } from '../../entities';
 import type { ActivityEnum, ActivityTypeEnum } from '../../enums';
-import { ActivityLogDBParamsType } from '../../types';
+import type { ActivityLogDBParamsType } from '../../types';
 import { BaseBuilder } from './base.builder';
 import type { TestUserType } from './user.builder';
 

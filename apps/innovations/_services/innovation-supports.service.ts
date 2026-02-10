@@ -157,7 +157,11 @@ export class InnovationSupportsService extends BaseService {
             support.status === InnovationSupportStatusEnum.ENGAGING ||
             support.status === InnovationSupportStatusEnum.WAITING
         )
-        .flatMap(support => support.userRoles.filter(item => item.isActive).map(item => item.user.id));
+        .flatMap(support =>
+          support.userRoles
+            .filter(item => item.isActive && item.user.status === UserStatusEnum.ACTIVE && !item.user.lockedAt)
+            .map(item => item.user.id)
+        );
 
       usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds }, connection);
     }
@@ -168,10 +172,13 @@ export class InnovationSupportsService extends BaseService {
 
       if (filters.fields.includes('engagingAccessors')) {
         engagingAccessors = support.userRoles
+          .filter(su => su.isActive && su.user.status === UserStatusEnum.ACTIVE && !su.user.lockedAt)
           .map(supportUserRole => ({
             id: supportUserRole.user.id,
             userRoleId: supportUserRole.id,
             name: usersInfo.getDisplayName(supportUserRole.user.id, supportUserRole.role),
+            jobTitle: usersInfo.getJobTitleWithFallback(supportUserRole.user.id, supportUserRole.role),
+            role: supportUserRole.role,
             isActive: supportUserRole.isActive
           }))
           .filter(authUser => authUser.name);
@@ -405,13 +412,15 @@ export class InnovationSupportsService extends BaseService {
 
   async getInnovationSupportInfo(
     innovationSupportId: string,
+    options?: { includeInactive?: boolean },
     entityManager?: EntityManager
   ): Promise<{
     id: string;
     status: InnovationSupportStatusEnum;
-    engagingAccessors: { id: string; userRoleId: string; name: string }[];
+    engagingAccessors: { id: string; userRoleId: string; name: string; isActive: boolean }[];
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
+    const includeInactive = options?.includeInactive ?? false;
 
     const innovationSupport = await connection
       .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -426,11 +435,9 @@ export class InnovationSupportsService extends BaseService {
     if (!innovationSupport) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
-
     // Fetch users names.
 
     const assignedAccessorsIds = innovationSupport.userRoles
-      .filter(item => item.user.status === UserStatusEnum.ACTIVE)
       .map(item => item.user.id);
     const usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds }, connection);
 
@@ -438,10 +445,13 @@ export class InnovationSupportsService extends BaseService {
       id: innovationSupport.id,
       status: innovationSupport.status,
       engagingAccessors: innovationSupport.userRoles
+        .filter(su => includeInactive || (su.user.status === UserStatusEnum.ACTIVE && !su.user.lockedAt))
         .map(su => ({
           id: su.user.id,
           userRoleId: su.id,
-          name: usersInfo.getDisplayName(su.user.id, su.role)
+          name: usersInfo.getDisplayName(su.user.id, su.role),
+          jobTitle: usersInfo.getJobTitleWithFallback(su.user.id, su.role),
+          isActive: su.user.status === UserStatusEnum.ACTIVE && !su.user.lockedAt
         }))
         .filter(authUser => authUser.name)
     };
@@ -1337,7 +1347,8 @@ export class InnovationSupportsService extends BaseService {
             supportLog.createdBy,
             supportLog.createdByUserRole.role,
             innovation.owner?.id
-          )
+          ),
+          jobTitle: usersInfo.getJobTitleWithFallback(supportLog.createdBy, supportLog.createdByUserRole.role)
         }
       };
       switch (supportLog.type) {

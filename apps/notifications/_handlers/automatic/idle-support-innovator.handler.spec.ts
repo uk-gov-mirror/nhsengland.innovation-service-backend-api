@@ -43,7 +43,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
         {
           templateId: 'AU03_INNOVATOR_IDLE_SUPPORT',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.johnInnovator), jobTitle: null },
           params: {
             innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name,
             innovation_record_url: innovationRecordUrl(
@@ -62,7 +62,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
         {
           templateId: 'AU03_INNOVATOR_IDLE_SUPPORT',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.janeInnovator), jobTitle: null },
           params: {
             innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name,
             innovation_record_url: innovationRecordUrl(
@@ -81,7 +81,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
         {
           templateId: 'AU03_INNOVATOR_IDLE_SUPPORT',
           notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.ottoOctaviusInnovator),
+          to: { ...DTOsHelper.getRecipientUser(scenario.users.ottoOctaviusInnovator), jobTitle: null },
           params: {
             innovation_name: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.name,
             innovation_record_url: innovationRecordUrl(

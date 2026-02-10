@@ -28,7 +28,7 @@ beforeAll(async () => {
 const expected = {
   id: randUuid(),
   status: InnovationSupportStatusEnum.ENGAGING,
-  engagingAccessors: [{ id: randUuid(), userRoleId: randUuid(), name: randFullName() }]
+  engagingAccessors: [{ id: randUuid(), userRoleId: randUuid(), name: randFullName(), isActive: true }]
 };
 const mock = jest.spyOn(InnovationSupportsService.prototype, 'getInnovationSupportInfo').mockResolvedValue(expected);
 

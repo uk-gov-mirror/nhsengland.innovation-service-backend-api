@@ -188,8 +188,7 @@ describe('Innovations / _services / innovation export request suite', () => {
           createdBy: {
             name: scenario.users.aliceQualifyingAccessor.name,
             displayRole: TranslationHelper.translate('SERVICE_ROLES.QUALIFYING_ACCESSOR'),
-            displayTeam:
-              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+            displayTeam: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           },
           createdAt: expect.any(Date)
         },

@@ -90,9 +90,11 @@ export class InnovationExportRequestService extends BaseService {
         'userRole.id',
         'userRole.role',
         'unit.id',
-        'unit.name'
+        'unit.name',
+        'roleUser.jobTitle'
       ])
       .innerJoin('request.createdByUserRole', 'userRole')
+      .leftJoin('userRole.user', 'roleUser')
       .leftJoin('userRole.organisationUnit', 'unit')
       .where('request.id = :exportRequestId', { exportRequestId });
 
@@ -174,9 +176,11 @@ export class InnovationExportRequestService extends BaseService {
         'userRole.id',
         'userRole.role',
         'unit.id',
-        'unit.name'
+        'unit.name',
+        'roleUser.jobTitle'
       ])
       .innerJoin('request.createdByUserRole', 'userRole')
+      .leftJoin('userRole.user', 'roleUser')
       .leftJoin('userRole.organisationUnit', 'unit')
       .where('request.innovation_id = :innovationId', { innovationId });
 

@@ -4,6 +4,7 @@ import { BaseEntity } from '../base.entity';
 
 import { InnovationEntity } from '../innovation/innovation.entity';
 import { OrganisationUnitEntity } from './organisation-unit.entity';
+import { UserStrategicRoleEntity } from '../user/user-strategic-role.entity';
 
 import { OrganisationTypeEnum } from '../../enums/organisation.enums';
 
@@ -49,6 +50,9 @@ export class OrganisationEntity extends BaseEntity {
 
   @OneToMany(() => OrganisationUnitEntity, record => record.organisation, { lazy: true })
   organisationUnits: Promise<OrganisationUnitEntity[]>;
+
+  @OneToMany(() => UserStrategicRoleEntity, record => record.organisation)
+  strategicRoles: UserStrategicRoleEntity[];
 
   static new(data: Partial<OrganisationEntity>): OrganisationEntity {
     const instance = new OrganisationEntity();

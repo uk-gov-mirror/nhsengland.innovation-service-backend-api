@@ -5,6 +5,7 @@ import { BaseEntity } from '../base.entity';
 import { UserStatusEnum } from '../../enums/user.enums';
 import { TermsOfUseUserEntity } from '../general/terms-of-use-user.entity';
 import { UserRoleEntity } from './user-role.entity';
+import { UserStrategicRoleEntity } from './user-strategic-role.entity';
 
 export type HowDidYouFindUsAnswersType = {
   event?: boolean;
@@ -40,11 +41,17 @@ export class UserEntity extends BaseEntity {
   @Column({ name: 'delete_reason', type: 'nvarchar', nullable: true })
   deleteReason: null | string;
 
+  @Column({ name: 'job_title', type: 'nvarchar', nullable: true })
+  jobTitle: null | string;
+
   @Column({ name: 'how_did_you_find_us_answers', type: 'simple-json', select: false })
   howDidYouFindUsAnswers: null | HowDidYouFindUsAnswersType;
 
   @OneToMany(() => UserRoleEntity, record => record.user, { cascade: ['update', 'insert'] })
   serviceRoles: UserRoleEntity[];
+
+  @OneToMany(() => UserStrategicRoleEntity, record => record.user, { cascade: ['insert'] })
+  strategicRoles: UserStrategicRoleEntity[];
 
   @OneToMany(() => TermsOfUseUserEntity, record => record.user, { lazy: true })
   termsOfUseUser: Promise<TermsOfUseUserEntity[]>;

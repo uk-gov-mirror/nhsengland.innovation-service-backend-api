@@ -417,6 +417,9 @@ paths:
                       type: string
                     displayName:
                       type: string
+                    jobTitle:
+                      type: string
+                      nullable: true
                     roles:
                       type: object
                       properties:
@@ -468,6 +471,20 @@ paths:
                         - id
                         - isActive
                       additionalProperties: false
+                    strategicRoles:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          strategicRole:
+                            type: string
+                        required:
+                          - id
+                          - strategicRole
+                        additionalProperties: false
                     contactByEmail:
                       type: boolean
                     contactByPhone:
@@ -541,6 +558,7 @@ paths:
                     - id
                     - email
                     - displayName
+                    - jobTitle
                     - contactByEmail
                     - contactByPhone
                     - contactDetails
@@ -1926,6 +1944,9 @@ paths:
                                 - ACCESSOR
                                 - ASSESSMENT
                                 - QUALIFYING_ACCESSOR
+                            jobTitle:
+                              type: string
+                              nullable: true
                           required:
                             - name
                           additionalProperties: false

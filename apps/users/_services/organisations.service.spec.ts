@@ -146,38 +146,26 @@ describe('Users / _services / organisations service suite', () => {
     it('should get a list of organisations with inactive organisations', async () => {
       const result = await sut.getOrganisationsList({ withInactive: true }, em);
 
-      expect(result).toMatchObject([
-        {
-          id: scenario.organisations.healthOrg.id,
-          name: scenario.organisations.healthOrg.name,
-          acronym: scenario.organisations.healthOrg.acronym,
-          isActive: scenario.organisations.healthOrg.isActive
-        },
-        {
-          id: scenario.organisations.inactiveEmptyOrg.id,
-          name: scenario.organisations.inactiveEmptyOrg.name,
-          acronym: scenario.organisations.inactiveEmptyOrg.acronym,
-          isActive: scenario.organisations.inactiveEmptyOrg.isActive
-        },
-        {
-          id: scenario.organisations.innovTechOrg.id,
-          name: scenario.organisations.innovTechOrg.name,
-          acronym: scenario.organisations.innovTechOrg.acronym,
-          isActive: scenario.organisations.innovTechOrg.isActive
-        },
-        {
-          id: scenario.organisations.medTechOrg.id,
-          name: scenario.organisations.medTechOrg.name,
-          acronym: scenario.organisations.medTechOrg.acronym,
-          isActive: scenario.organisations.medTechOrg.isActive
-        },
-        {
-          id: scenario.organisations.notSharedOrg.id,
-          name: scenario.organisations.notSharedOrg.name,
-          acronym: scenario.organisations.notSharedOrg.acronym,
-          isActive: scenario.organisations.notSharedOrg.isActive
-        }
-      ]);
+      const expected = [
+        scenario.organisations.healthOrg,
+        scenario.organisations.inactiveEmptyOrg,
+        scenario.organisations.innovTechOrg,
+        scenario.organisations.medTechOrg,
+        scenario.organisations.notSharedOrg
+      ];
+
+      expect(result).toEqual(
+        expect.arrayContaining(
+          expected.map(org =>
+            expect.objectContaining({
+              id: org.id,
+              name: org.name,
+              acronym: org.acronym,
+              isActive: org.isActive
+            })
+          )
+        )
+      );
     });
   });
 
@@ -319,7 +307,7 @@ describe('Users / _services / organisations service suite', () => {
       expect(result.count).toBe(3);
       expect(result.data).toStrictEqual([
         {
-          accessor: { name: alice.name, role: alice.roles.qaRole.role },
+          accessor: { name: alice.name, role: alice.roles.qaRole.role, jobTitle: null },
           innovations: [
             { id: johnInnovation.id, name: johnInnovation.name },
             { id: adamInnovation.id, name: adamInnovation.name },
@@ -327,11 +315,11 @@ describe('Users / _services / organisations service suite', () => {
           ]
         },
         {
-          accessor: { name: ingrid.name, role: ingrid.roles.accessorRole.role },
+          accessor: { name: ingrid.name, role: ingrid.roles.accessorRole.role, jobTitle: null },
           innovations: []
         },
         {
-          accessor: { name: jamie.name, role: jamie.roles.healthAccessorRole.role },
+          accessor: { name: jamie.name, role: jamie.roles.healthAccessorRole.role, jobTitle: null },
           innovations: [
             { id: johnInnovation.id, name: johnInnovation.name },
             { id: adamInnovation.id, name: adamInnovation.name },

@@ -4,7 +4,7 @@ import type { SupportLogProgressUpdate } from '@innovations/shared/types';
 export type SupportSummaryUnitInfo = {
   id: string;
   createdAt: Date;
-  createdBy: { id: string; name: string; displayRole?: string };
+  createdBy: { id: string; name: string; displayRole?: string; jobTitle?: string | null };
 } & (SupportUpdateData | SuggestedOrganisationData | ProgressUpdateData | InnovationArchivedData | StopShareData);
 
 type SupportUpdateData = {

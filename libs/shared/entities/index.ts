@@ -62,6 +62,7 @@ import { NotifyMeSubscriptionEntity } from './user/notify-me-subscription.entity
 import { NotificationScheduleEntity } from './user/notification-schedule.entity';
 import { UserPreferenceEntity } from './user/user-preference.entity';
 import { UserRoleEntity } from './user/user-role.entity';
+import { UserStrategicRoleEntity } from './user/user-strategic-role.entity';
 import { UserEntity } from './user/user.entity';
 export { AnnouncementEntity } from './user/announcement.entity';
 export { AnnouncementUserEntity } from './user/announcement-user.entity';
@@ -72,6 +73,7 @@ export { NotifyMeSubscriptionEntity } from './user/notify-me-subscription.entity
 export { NotificationScheduleEntity } from './user/notification-schedule.entity';
 export { UserPreferenceEntity } from './user/user-preference.entity';
 export { UserRoleEntity } from './user/user-role.entity';
+export { UserStrategicRoleEntity } from './user/user-strategic-role.entity';
 export { UserEntity } from './user/user.entity';
 
 // Views
@@ -127,6 +129,7 @@ export const USER_ENTITIES = [
   NotificationScheduleEntity,
   UserPreferenceEntity,
   UserRoleEntity,
+  UserStrategicRoleEntity,
   UserEntity
 ];
 export const VIEW_ENTITIES = [

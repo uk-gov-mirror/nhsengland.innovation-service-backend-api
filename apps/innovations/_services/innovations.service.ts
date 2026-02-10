@@ -1151,6 +1151,7 @@ export class InnovationsService extends BaseService {
       contactDetails: string | null;
       mobilePhone: null | string;
       isActive: boolean;
+      jobTitle: string | null;
       lastLoginAt?: null | Date;
       organisation?: { name: string; size: null | string; registrationNumber: null | string };
     };
@@ -1163,7 +1164,7 @@ export class InnovationsService extends BaseService {
       minorVersion: number;
       createdAt: Date;
       finishedAt: null | Date;
-      assignedTo?: { id: string; name: string; userRoleId: string };
+      assignedTo?: { id: string; name: string; userRoleId: string; jobTitle: string | null };
     };
     supports?: { id: string; status: InnovationSupportStatusEnum; organisationUnitId: string }[];
     collaboratorId?: string;
@@ -1185,6 +1186,7 @@ export class InnovationsService extends BaseService {
         'innovation.createdAt',
         'innovationOwner.id',
         'innovationOwner.status',
+        'innovationOwner.jobTitle',
         'innovationOwnerUserRole.id',
         'innovationOwnerOrganisation.isShadow',
         'innovationOwnerOrganisation.name',
@@ -1233,6 +1235,7 @@ export class InnovationsService extends BaseService {
         'currentMajorAssessment.id',
         'assignTo.id',
         'assignTo.status',
+        'assignTo.jobTitle',
         'assignToRoles.id'
       ]);
     }
@@ -1297,7 +1300,7 @@ export class InnovationsService extends BaseService {
           minorVersion: number;
           createdAt: Date;
           finishedAt: null | Date;
-          assignedTo?: { id: string; name: string; userRoleId: string };
+          assignedTo?: { id: string; name: string; userRoleId: string; jobTitle: string | null };
         };
 
     if (filters.fields?.includes('assessment')) {
@@ -1315,7 +1318,8 @@ export class InnovationsService extends BaseService {
                   assignedTo: {
                     id: assessmentUser.id,
                     name: usersInfo.getDisplayName(assessmentUser.id, ServiceRoleEnum.ASSESSMENT),
-                    userRoleId: assessmentUser.serviceRoles[0].id
+                    userRoleId: assessmentUser.serviceRoles[0].id,
+                    jobTitle: usersInfo.getJobTitleWithFallback(assessmentUser.id, ServiceRoleEnum.ASSESSMENT)
                   }
                 })
             }
@@ -1345,6 +1349,7 @@ export class InnovationsService extends BaseService {
             owner: {
               id: innovation.owner.id,
               name: usersInfo.getDisplayName(innovation.owner.id, ServiceRoleEnum.INNOVATOR),
+              jobTitle: usersInfo.getJobTitleWithFallback(innovation.owner.id, ServiceRoleEnum.INNOVATOR),
               email: ownerInfo?.email ?? '',
               contactByEmail: ownerPreferences.contactByEmail,
               contactByPhone: ownerPreferences.contactByPhone,
@@ -1486,6 +1491,8 @@ export class InnovationsService extends BaseService {
       postcode?: string;
       hasWebsite: string;
       website?: string;
+      hasVideoDemonstration?: string;
+      videoDemonstrationUrl?: string;
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {

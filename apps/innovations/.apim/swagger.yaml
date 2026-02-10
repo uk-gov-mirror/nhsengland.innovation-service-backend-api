@@ -1315,13 +1315,24 @@ paths:
             schema:
               type: object
               properties:
-                name: {}
-                description: {}
-                officeLocation: {}
-                countryLocation: {}
-                postcode: {}
-                hasWebsite: {}
-                website: {}
+                name:
+                  type: string
+                description:
+                  type: string
+                officeLocation:
+                  type: string
+                countryLocation:
+                  type: string
+                postcode:
+                  type: string
+                hasWebsite:
+                  type: string
+                website:
+                  type: string
+                hasVideoDemonstration:
+                  type: string
+                videoDemonstrationUrl:
+                  type: string
               required:
                 - name
                 - description
@@ -2572,6 +2583,9 @@ paths:
                       mobilePhone:
                         type: string
                         nullable: true
+                      jobTitle:
+                        type: string
+                        nullable: true
                       lastLoginAt:
                         type: string
                         format: date-time
@@ -2627,6 +2641,9 @@ paths:
                             type: string
                           userRoleId:
                             type: string
+                          jobTitle:
+                            type: string
+                            nullable: true
                         required:
                           - id
                           - name
@@ -3634,10 +3651,13 @@ paths:
                           format: uuid
                         name:
                           type: string
+                        isActive:
+                          type: boolean
                       required:
                         - id
                         - userRoleId
                         - name
+                        - isActive
                       additionalProperties: false
                 required:
                   - id
@@ -4232,6 +4252,9 @@ paths:
                           type: string
                         displayRole:
                           type: string
+                        jobTitle:
+                          type: string
+                          nullable: true
                     type:
                       type: string
                     params:

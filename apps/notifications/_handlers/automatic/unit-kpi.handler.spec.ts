@@ -16,7 +16,12 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
   const scenario: CompleteScenarioType = testsHelper.getCompleteScenario();
 
   beforeAll(async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-01-05'));
     await testsHelper.init();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
   });
 
   const suggestedMock = jest.spyOn(RecipientsService.prototype, 'suggestedInnovationsWithoutUnitAction');
@@ -35,15 +40,18 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
         ]
       ])
     );
-    unitQAMock
-      .mockClear()
-      // Unit 1
-      .mockResolvedValueOnce([
-        DTOsHelper.getRecipientUser(scenario.users.ingridAccessor),
-        DTOsHelper.getRecipientUser(scenario.users.bartQualifyingAccessor)
-      ])
-      // Unit 2
-      .mockResolvedValueOnce([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)]);
+    unitQAMock.mockClear().mockImplementation(unitIds => {
+      if (unitIds[0] === 'unit1') {
+        return Promise.resolve([
+          DTOsHelper.getRecipientUser(scenario.users.ingridAccessor),
+          DTOsHelper.getRecipientUser(scenario.users.bartQualifyingAccessor)
+        ]);
+      }
+      if (unitIds[0] === 'unit2') {
+        return Promise.resolve([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)]);
+      }
+      return Promise.resolve([]);
+    });
   });
 
   describe.each(['AU04_SUPPORT_KPI_REMINDER', 'AU05_SUPPORT_KPI_OVERDUE'])('%s', template => {

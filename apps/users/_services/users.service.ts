@@ -158,6 +158,7 @@ export class UsersService extends BaseService {
             name: dbOrganisation.name,
             acronym: dbOrganisation.acronym
           },
+          jobTitle: null,
           currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR }
         },
         NotifierTypeEnum.ACCOUNT_CREATION,
@@ -187,6 +188,7 @@ export class UsersService extends BaseService {
         registrationNumber?: null | string;
       };
       howDidYouFindUsAnswers: HowDidYouFindUsAnswersType;
+      jobTitle?: string | null;
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
@@ -196,6 +198,10 @@ export class UsersService extends BaseService {
     });
 
     const em = entityManager ?? this.sqlConnection.manager;
+
+    if (data.jobTitle !== undefined) {
+      await em.getRepository(UserEntity).update(user.id, { jobTitle: data.jobTitle });
+    }
 
     // NOTE: Only innovators can change their organisation, we make a sanity check here.
     if (currentRole === ServiceRoleEnum.INNOVATOR) {
@@ -299,6 +305,7 @@ export class UsersService extends BaseService {
       name: string;
       lockedAt: Date | null;
       roles: UserRoleEntity[];
+      jobTitle: string | null;
       email?: string;
     }[];
   }> {
@@ -368,6 +375,7 @@ export class UsersService extends BaseService {
           isActive: dbUser.status === UserStatusEnum.ACTIVE,
           roles: dbUser.serviceRoles,
           name: identityUser.displayName,
+          jobTitle: dbUser.jobTitle,
           lockedAt: dbUser.lockedAt,
           ...(fieldSet.has('email') ? { email: identityUser.email } : {})
         };

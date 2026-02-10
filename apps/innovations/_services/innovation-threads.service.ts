@@ -749,14 +749,18 @@ export class InnovationThreadsService extends BaseService {
         'messageAuthorRole.id as message_author_role_id',
         'messageAuthorRole.role as message_author_role_role',
         'messageAuthorUnit.id as message_author_unit_id',
-        'messageAuthorUnit.name as message_author_unit_name'
+        'messageAuthorUnit.name as message_author_unit_name',
+        'threadAuthor.jobTitle as thread_author_job_title',
+        'messageAuthor.jobTitle as message_author_job_title'
       ])
       .innerJoin('thread.innovation', 'innovation')
       .leftJoin('thread.authorUserRole', 'threadAuthorRole')
+      .leftJoin('threadAuthorRole.user', 'threadAuthor')
       .leftJoin('threadAuthorRole.organisationUnit', 'threadAuthorUnit')
       // Get the information needed about Message
       .innerJoin('thread.messages', 'message')
       .leftJoin('message.authorUserRole', 'messageAuthorRole')
+      .leftJoin('messageAuthorRole.user', 'messageAuthor')
       .leftJoin('messageAuthorRole.organisationUnit', 'messageAuthorUnit')
       // Get the latest message from the Thread
       .innerJoin(
