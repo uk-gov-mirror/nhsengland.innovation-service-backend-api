@@ -784,7 +784,10 @@ export class DomainInnovationsService {
         id: thread.innovation.owner.id,
         identityId: thread.innovation.owner.identityId,
         name: usersInfo.getDisplayName(thread.innovation.owner.identityId, ServiceRoleEnum.INNOVATOR),
-        locked: !thread.innovation.owner.serviceRoles[0].isActive || thread.innovation.owner.status !== UserStatusEnum.ACTIVE || !!thread.innovation.owner.lockedAt,
+        locked:
+          !thread.innovation.owner.serviceRoles[0].isActive ||
+          thread.innovation.owner.status !== UserStatusEnum.ACTIVE ||
+          !!thread.innovation.owner.lockedAt,
         isOwner: true,
         userRole: { id: thread.innovation.owner.serviceRoles[0].id, role: ServiceRoleEnum.INNOVATOR },
         organisationUnit: null
@@ -797,7 +800,10 @@ export class DomainInnovationsService {
         id: collaboratorUser.id,
         identityId: collaboratorUser.identityId,
         name: usersInfo.getDisplayName(collaboratorUser.identityId, ServiceRoleEnum.INNOVATOR),
-        locked: !collaboratorUser.serviceRoles[0]?.isActive || collaboratorUser.status !== UserStatusEnum.ACTIVE || !!collaboratorUser.lockedAt,
+        locked:
+          !collaboratorUser.serviceRoles[0]?.isActive ||
+          collaboratorUser.status !== UserStatusEnum.ACTIVE ||
+          !!collaboratorUser.lockedAt,
         isOwner: false,
         userRole: { id: collaboratorUser.serviceRoles[0]!.id, role: ServiceRoleEnum.INNOVATOR }, //assuming innovators can only have 1 role
         organisationUnit: null
@@ -809,7 +815,8 @@ export class DomainInnovationsService {
         id: followerRole.user.id,
         identityId: followerRole.user.identityId,
         name: usersInfo.getDisplayName(followerRole.user.identityId),
-        locked: !followerRole.isActive || followerRole.user.status !== UserStatusEnum.ACTIVE || !!followerRole.user.lockedAt,
+        locked:
+          !followerRole.isActive || followerRole.user.status !== UserStatusEnum.ACTIVE || !!followerRole.user.lockedAt,
         isOwner: false,
         userRole: {
           id: followerRole.id,
@@ -1129,7 +1136,7 @@ export class DomainInnovationsService {
   ): Promise<CurrentElasticSearchDocumentType | undefined | CurrentElasticSearchDocumentType[]> {
     let sql = `WITH
       innovations AS (
-        SELECT i.id, i.unique_id, i.status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
+        SELECT i.id, i.unique_id, i.status, i.archive_reason, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
         i.has_been_assessed, last_assessment_request_at, grouped_status, u.id AS owner_id,
         u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
         FROM innovation i
@@ -1163,6 +1170,7 @@ export class DomainInnovationsService {
       i.status,
       i.status_updated_at AS statusUpdatedAt,
       i.grouped_status AS groupedStatus,
+      i.archive_reason AS archiveReason,
       i.has_been_assessed AS hasBeenAssessed,
       i.submitted_at AS submittedAt,
       i.updated_at AS updatedAt,
@@ -1284,6 +1292,7 @@ export class DomainInnovationsService {
         submittedAt: innovation.submittedAt,
         updatedAt: innovation.updatedAt,
         lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
+        archiveReason: innovation.archiveReason,
         document: schema.model.translateDocument(cloneDeep(document)),
         ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
         ...(innovation.engagingOrganisations && {

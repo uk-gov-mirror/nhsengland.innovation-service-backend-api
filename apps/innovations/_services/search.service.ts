@@ -38,7 +38,7 @@ import type {
 } from './innovations.service';
 
 type SearchInnovationListSelectType =
-  // | keyof Omit<CurrentElasticSearchDocumentType, 'assessment' | 'supports'>
+  // | keyof Omit<  ['areas', ['document', 'INNOVATION_DESCRIPTION', 'areas']]CurrentElasticSearchDocumentType, 'assessment' | 'supports'>
   | keyof Omit<InnovationListView, 'assessment' | 'supports' | 'ownerId'> // TODO: should be changed in the future, keeping the same for simplification proccess
   | 'careSettings'
   | 'otherCareSetting'
@@ -49,6 +49,7 @@ type SearchInnovationListSelectType =
   | 'otherCategoryDescription'
   | 'postcode'
   | 'areas'
+  | 'archiveReason'
   | 'assessment.id'
   | 'assessment.updatedAt'
   | 'assessment.assignedTo'
@@ -182,7 +183,6 @@ export class SearchService extends BaseService {
       return { count: 0, data: [] };
     }
     const searchQuery = new ElasticSearchQueryBuilder(this.index);
-
     // Add Permission Guards according with role
     this.addPermissionGuards(domainContext, searchQuery);
 
@@ -263,7 +263,6 @@ export class SearchService extends BaseService {
     }
 
     const response = await this.esService.client.search<CurrentElasticSearchDocumentType>(searchBody);
-
     const handlerMaps: {
       [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>>;
     } = {} as any; // initialization
@@ -525,6 +524,7 @@ export class SearchService extends BaseService {
     ),
     engagingUnits: this.addGenericFilter('engagingUnits', { fieldSelector: 'unitId' }).bind(this),
     groupedStatuses: this.addGenericFilter('groupedStatus').bind(this),
+    archiveReason: this.addGenericFilter('archiveReason').bind(this),
     involvedAACProgrammes: this.addGenericFilter('filters.involvedAACProgrammes').bind(this),
     keyHealthInequalities: this.addGenericFilter('filters.keyHealthInequalities').bind(this),
     locations: this.addLocationFilter.bind(this),
