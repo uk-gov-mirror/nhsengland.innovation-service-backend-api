@@ -88,6 +88,7 @@ export const InnovationListSelectType = [
   'status',
   'statusUpdatedAt',
   'groupedStatus',
+  'archiveReason',
   'submittedAt',
   'updatedAt',
   'lastAssessmentRequestAt',

@@ -49,6 +49,7 @@ type SearchInnovationListSelectType =
   | 'otherCategoryDescription'
   | 'postcode'
   | 'areas'
+  | 'archiveReason'
   | 'assessment.id'
   | 'assessment.updatedAt'
   | 'assessment.assignedTo'
