@@ -4,3 +4,4 @@ export { JoiHelper, PaginationQueryParamsType } from './joi.helper';
 export { SwaggerHelper } from './swagger.helper';
 export { TranslationHelper } from './translation.helper';
 export { ValidationsHelper } from './validations.helper';
+export { TypeORMHelper } from './type-orm.helper';
