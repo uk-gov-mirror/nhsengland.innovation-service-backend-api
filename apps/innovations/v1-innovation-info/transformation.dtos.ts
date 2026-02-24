@@ -111,6 +111,8 @@ export type ResponseDTO = {
   assessment?: null | {
     id: string;
     createdAt: Date;
+    majorVersion: number;
+    minorVersion: number;
     finishedAt: null | Date;
     assignedTo?: { id: string; name: string; userRoleId: string; jobTitle?: string | null };
   };
