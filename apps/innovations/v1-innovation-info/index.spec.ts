@@ -244,8 +244,6 @@ describe('v1-innovation-info Suite', () => {
         ...expectedWithAssessment,
         assessment: omit(expectedWithAssessment.assessment, [
           'currentMajorAssessmentId',
-          'majorVersion',
-          'minorVersion'
         ])
       });
     });
