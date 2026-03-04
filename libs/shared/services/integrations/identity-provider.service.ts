@@ -272,7 +272,8 @@ export class IdentityProviderService {
   private async fetchUserBatchWithRetry(userIds: string[]): Promise<IdentityUserInfo[]> {
     const url = this.buildB2CQueryUrl(userIds);
     let retryCount = 0;
-    const maxRetries = 5;
+    const maxRetries = 20;
+    const maxBackoffMs = 15000; // cap at 15 seconds per retry
 
     while (retryCount < maxRetries) {
       try {
@@ -284,14 +285,17 @@ export class IdentityProviderService {
         if (error.response?.status === 429) {
           retryCount++;
           const retryAfterHeader = error.response.headers['retry-after'];
-          // Default to exponential backoff if header is missing: 2s, 4s, 8s, 16s, 32s
-          const waitTime = retryAfterHeader ? parseInt(retryAfterHeader, 10) * 1000 : Math.pow(2, retryCount) * 1000;
+          // Default to exponential backoff if header is missing: 2s, 4s, 8s, 16s... capped at 15s
+          const backoff = retryAfterHeader
+            ? parseInt(retryAfterHeader, 10) * 1000
+            : Math.min(Math.pow(2, retryCount) * 1000, maxBackoffMs);
 
           this.loggerService.log(
-            `B2C Rate limit hit. Retrying in ${waitTime}ms... (Attempt ${retryCount}/${maxRetries})`
+            `B2C Rate limit hit. Retrying in ${backoff}ms... (Attempt ${retryCount}/${maxRetries})`
           );
-          await sleep(waitTime);
+          await sleep(backoff);
         } else {
+          this.loggerService.error(JSON.stringify(error));
           throw error;
         }
       }

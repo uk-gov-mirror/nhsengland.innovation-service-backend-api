@@ -486,6 +486,57 @@ paths:
           description: The user is not authorized to get terms of use.
         "500":
           description: An error occurred while listing the terms of use.
+  /v1/debug/test-b2c:
+    post:
+      summary: Test B2C rate limit handling
+      description: DEBUG endpoint to compare old vs new B2C fetching logic. Remove
+        before merging to production.
+      operationId: v1-admin-test-b2c
+      tags:
+        - "[v1] debug"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                useOld:
+                  type: boolean
+              required:
+                - userIds
+                - useOld
+              additionalProperties: false
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                    format: float
+                  timeTakenMs:
+                    type: number
+                    format: float
+                  status:
+                    type: string
+                required:
+                  - count
+                  - timeTakenMs
+                  - status
+                additionalProperties: false
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
   /v1/organisations/{organisationId}/units/{organisationUnitId}/activate:
     patch:
       description: Activate an organisation unit.
