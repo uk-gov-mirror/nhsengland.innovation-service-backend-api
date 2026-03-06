@@ -98,7 +98,11 @@ export class RedisCache<T> {
    * @raises an error if the key fails to be deleted
    */
   async delete(key: string): Promise<void> {
-    await this.redis.del(`${this.name}_${key}`);
+    try {
+      await this.redis.del(`${this.name}_${key}`);
+    } catch (e) {
+      this.logger.error(`Error deleting key ${key} from cache ${this.name}: ${e instanceof Error && e.message}`);
+    }
   }
 
   /**
@@ -107,6 +111,14 @@ export class RedisCache<T> {
    * @raises an error if any of the keys fail to be deleted
    */
   async deleteMany(keys: string[]): Promise<void> {
-    await this.redis.del(keys.map(key => `${this.name}_${key}`));
+    if (!keys.length) {
+      return;
+    }
+
+    try {
+      await this.redis.del(keys.map(key => `${this.name}_${key}`));
+    } catch (e) {
+      this.logger.error(`Error deleting many keys from cache ${this.name}: ${e instanceof Error && e.message}`);
+    }
   }
 }
