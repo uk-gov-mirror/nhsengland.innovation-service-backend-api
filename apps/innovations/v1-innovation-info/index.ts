@@ -90,6 +90,8 @@ class V1InnovationInfo {
               assessment: {
                 id: result.assessment.id,
                 createdAt: result.assessment.createdAt,
+                majorVersion: result.assessment.majorVersion,
+                minorVersion: result.assessment.minorVersion,
                 finishedAt: result.assessment.finishedAt,
                 ...(result.assessment.assignedTo && {
                   assignedTo: {
@@ -97,7 +99,7 @@ class V1InnovationInfo {
                     name: result.assessment.assignedTo.name,
                     userRoleId: result.assessment.assignedTo.userRoleId,
                     jobTitle: result.assessment.assignedTo.jobTitle
-                  }
+                  },
                 })
               }
             }),
