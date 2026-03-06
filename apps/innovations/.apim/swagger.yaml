@@ -1525,6 +1525,7 @@ paths:
                 - support.status
                 - support.updatedAt
                 - support.updatedBy
+                - lastSupportGivenAt
                 - owner.id
                 - owner.name
                 - owner.companyName
@@ -6600,6 +6601,7 @@ paths:
                 - support.status
                 - support.updatedAt
                 - support.updatedBy
+                - lastSupportGivenAt
                 - owner.id
                 - owner.name
                 - owner.companyName
