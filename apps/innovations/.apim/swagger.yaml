@@ -1491,6 +1491,7 @@ paths:
                 - status
                 - statusUpdatedAt
                 - groupedStatus
+                - archiveReason
                 - submittedAt
                 - updatedAt
                 - lastAssessmentRequestAt
@@ -6567,6 +6568,7 @@ paths:
                 - status
                 - statusUpdatedAt
                 - groupedStatus
+                - archiveReason
                 - submittedAt
                 - updatedAt
                 - lastAssessmentRequestAt

@@ -1129,7 +1129,7 @@ export class DomainInnovationsService {
   ): Promise<CurrentElasticSearchDocumentType | undefined | CurrentElasticSearchDocumentType[]> {
     let sql = `WITH
       innovations AS (
-        SELECT i.id, i.unique_id, i.status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
+        SELECT i.id, i.unique_id, i.status, i.archive_reason, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
         i.has_been_assessed, last_assessment_request_at, grouped_status, u.id AS owner_id,
         u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
         FROM innovation i
@@ -1163,6 +1163,7 @@ export class DomainInnovationsService {
       i.status,
       i.status_updated_at AS statusUpdatedAt,
       i.grouped_status AS groupedStatus,
+      i.archive_reason AS archiveReason,
       i.has_been_assessed AS hasBeenAssessed,
       i.submitted_at AS submittedAt,
       i.updated_at AS updatedAt,
