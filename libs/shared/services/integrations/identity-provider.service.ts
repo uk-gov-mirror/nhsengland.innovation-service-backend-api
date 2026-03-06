@@ -208,10 +208,12 @@ export class IdentityProviderService {
     }
 
     const res = await this.cache.getMany(uniqueUserIds);
+
     if (res.length !== uniqueUserIds.length) {
       const cachedUserIds = new Set(res.map(user => user.identityId));
       const tempUsers = uniqueUserIds.filter(id => !cachedUserIds.has(id));
       const nonCachedUsers = await this.getUsersListFromB2C(tempUsers);
+
       // Add new users to cache.
       await this.cache.setMany(nonCachedUsers.map(user => ({ key: user.identityId, value: user })));
       res.push(...nonCachedUsers);
@@ -248,7 +250,7 @@ export class IdentityProviderService {
 
     const uniqueUserIds = [...new Set(entityIds)]; // Remove duplicated entries.
     const chunkSize = 15; // B2C has a maximum limit of users that can be requested in 1 call.
-    const maxConcurrentRequests = 3; // More than 3 and we start getting 429 errors.
+    const maxConcurrentRequests = 10; // More than 3 and we start getting 429 errors.
 
     // 1. Chunking
     const userIdsChunks: string[][] = [];
@@ -261,9 +263,20 @@ export class IdentityProviderService {
     // 2. Batch Processing
     for (let i = 0; i < userIdsChunks.length; i += maxConcurrentRequests) {
       const currentBatch = userIdsChunks.slice(i, i + maxConcurrentRequests);
+
       const promises = currentBatch.map(chunk => this.fetchUserBatchWithRetry(chunk));
-      const results = await Promise.all(promises);
-      usersList.push(...results.flat());
+      const settledResults = await Promise.allSettled(promises);
+
+      const successfulResults = settledResults
+        .filter((result): result is PromiseFulfilledResult<IdentityUserInfo[]> => result.status === 'fulfilled')
+        .map(result => result.value);
+
+      const failedCount = settledResults.filter(r => r.status === 'rejected').length;
+      if (failedCount > 0) {
+        this.loggerService.error(`[getUsersListFromB2C] ${failedCount} chunks completely failed and were skipped.`);
+      }
+
+      usersList.push(...successfulResults.flat());
     }
 
     return usersList;
@@ -290,7 +303,7 @@ export class IdentityProviderService {
             ? parseInt(retryAfterHeader, 10) * 1000
             : Math.min(Math.pow(2, retryCount) * 1000, maxBackoffMs);
 
-          this.loggerService.log(
+          this.loggerService.error(
             `B2C Rate limit hit. Retrying in ${backoff}ms... (Attempt ${retryCount}/${maxRetries})`
           );
           await sleep(backoff);
