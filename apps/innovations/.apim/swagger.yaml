@@ -6077,6 +6077,21 @@ paths:
           description: Bad Request
         "404":
           description: Not found
+  /v1/innovation-record/xlsx-template:
+    get:
+      description: Generate xlsx template for the innovation record
+      tags:
+        - "[v1] Innovations"
+      operationId: v1-innovation-record-xlsx-template-export
+      responses:
+        "200":
+          description: XLSX template file download
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+        "400":
+          description: Bad request.
   /v1/{innovationId}/export-requests:
     post:
       operationId: v1-innovations-export-requests-create
