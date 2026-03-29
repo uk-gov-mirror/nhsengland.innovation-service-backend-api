@@ -1,0 +1,13 @@
+{
+  "DEPLOYMENT": {
+    "isDeployed": "YES",
+    "deploymentPlans": [
+      {
+        "organizationDepartment": "NHS Trust A - Cardiology"
+      },
+      {
+        "organizationDepartment": "NHS Trust B - Neurology"
+      }
+    ]
+  }
+}

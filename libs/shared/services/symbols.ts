@@ -13,7 +13,9 @@ export const SHARED_SYMBOLS = {
   ElasticSearchService: Symbol.for('ElasticSearchService'),
   RedisService: Symbol.for('RedisService'),
   IRSchemaService: Symbol.for('IRSchemaService'),
-  IRExportService: Symbol.for('IRExportService')
+  IRExportService: Symbol.for('IRExportService'),
+  ExcelExportService: Symbol.for('ExcelExportService'),
+  ExcelImportService: Symbol.for('ExcelImportService')
 };
 
 export default SHARED_SYMBOLS;

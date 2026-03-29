@@ -1,0 +1,26 @@
+{
+  "TESTING_WITH_USERS": {
+    "userTests": [
+      {
+        "kind": "Test 1",
+        "feedback": "Feedback 1"
+      },
+      {
+        "kind": "Test 2",
+        "feedback": "Feedback 2"
+      },
+      {
+        "kind": "Test 3",
+        "feedback": "Feedback 3"
+      },
+      {
+        "kind": "Test 4",
+        "feedback": "Feedback 4"
+      },
+      {
+        "kind": "Test 5",
+        "feedback": "Feedback 5"
+      }
+    ]
+  }
+}

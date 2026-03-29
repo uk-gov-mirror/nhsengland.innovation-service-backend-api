@@ -17,6 +17,8 @@ import { IRSchemaService } from '../services/storage/ir-schema.service';
 import { RedisService } from '../services/storage/redis.service';
 import { SQLConnectionService } from '../services/storage/sql-connection.service';
 import { IRExportService } from '../services/storage/ir-export.service';
+import { ExcelExportService } from '../services/storage/excel-export.service';
+import { ExcelImportService } from '../services/storage/excel-import.service';
 import SHARED_SYMBOLS from '../services/symbols';
 
 export const container: Container = new Container();
@@ -39,6 +41,8 @@ container.bind<ElasticSearchService>(SHARED_SYMBOLS.ElasticSearchService).to(Ela
 container.bind<RedisService>(SHARED_SYMBOLS.RedisService).to(RedisService).inSingletonScope();
 container.bind<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService).to(IRSchemaService).inSingletonScope();
 container.bind<IRExportService>(SHARED_SYMBOLS.IRExportService).to(IRExportService).inSingletonScope();
+container.bind<ExcelExportService>(SHARED_SYMBOLS.ExcelExportService).to(ExcelExportService).inSingletonScope();
+container.bind<ExcelImportService>(SHARED_SYMBOLS.ExcelImportService).to(ExcelImportService).inSingletonScope();
 
 // Force SQL initialization on startup so that the connection is ready on first request
 container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService);
