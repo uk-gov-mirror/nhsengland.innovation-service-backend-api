@@ -48,7 +48,7 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { TranslationHelper } from '@innovations/shared/helpers';
+import { TranslationHelper, TypeORMHelper } from '@innovations/shared/helpers';
 import { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import {
   type ActivityLogListParamsType,
@@ -88,6 +88,7 @@ export const InnovationListSelectType = [
   'status',
   'statusUpdatedAt',
   'groupedStatus',
+  'archiveReason',
   'submittedAt',
   'updatedAt',
   'lastAssessmentRequestAt',
@@ -125,6 +126,7 @@ export const InnovationListSelectType = [
   'support.status',
   'support.updatedAt',
   'support.updatedBy',
+  'lastSupportGivenAt',
   'owner.id',
   'owner.name',
   'owner.companyName',
@@ -141,6 +143,7 @@ export type InnovationListSelectType =
   | 'assessment.isExempt'
   | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt' | 'updatedBy' | 'closeReason'>}`
   | 'support.isShared'
+  // | 'lastSupportGivenAt'
   | 'owner.id'
   | 'owner.name'
   | 'owner.companyName'
@@ -165,6 +168,7 @@ export type InnovationListFullResponseType = Omit<InnovationListViewFields, 'eng
     closeReason: InnovationSupportCloseReasonEnum | null;
     isShared: boolean;
   } | null;
+  lastSupportGivenAt: Date | null;
   suggestion: {
     suggestedBy: string[];
     suggestedOn: Date;
@@ -293,6 +297,8 @@ export class InnovationsService extends BaseService {
     },
     em?: EntityManager
   ): Promise<{ count: number; data: InnovationListResponseType<S>[] }> {
+    const COMPUTED_FIELDS = ['lastSupportGivenAt'] as const;
+
     // TODO allow selection within JSON fields, ie: only fetch engagingOrganisations.organisationId
 
     // Some sanity checks
@@ -329,13 +335,26 @@ export class InnovationsService extends BaseService {
     );
 
     const connection = em ?? this.sqlConnection.manager;
-    const query = connection
-      .createQueryBuilder(InnovationListView, 'innovation')
-      // currently I'm only handling the root selects here, might change in the future. ie: withSupports add the selects
-      .select(params.fields.filter(item => !item.includes('.')).map(item => `innovation.${item}`));
+
+    const query = connection.createQueryBuilder(InnovationListView, 'innovation');
+    // currently I'm only handling the root selects here, might change in the future. ie: withSupports add the selects
+      // added logic to remove auto-included computed fields to avoid alias duplication
+    query.select(
+      params.fields
+        .filter(item => !item.includes('.') && !COMPUTED_FIELDS.includes(item as any))
+        .map(item => `innovation.${item}`)
+    );
 
     // Special role constraints (maybe make handler in the future)
     if (isAccessorDomainContextType(domainContext)) {
+      // Dynamically add lastSupportGivenAt
+      if (
+        (params.fields as S[]).includes('lastSupportGivenAt' as S) &&
+        !query.expressionMap.selects.some(s => s.aliasName === 'lastSupportGivenAt')
+      ) {
+        TypeORMHelper.addLastSupportGivenAtSubquery(query, domainContext.organisation.organisationUnit.id);
+      }
+
       // support is required for A/QAs access check
       if (!nestedObjects.has('support')) {
         nestedObjects.add('support');
@@ -430,14 +449,33 @@ export class InnovationsService extends BaseService {
             throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
               message: 'Sort by name is not allowed'
             });
-
+          case 'lastSupportGivenAt':
+            query.addOrderBy('lastSupportGivenAt', value);
+            break;
           default:
             query.addOrderBy(key.includes('.') ? key : `innovation.${key}`, value);
         }
       }
     });
 
-    const queryResult = await query.getManyAndCount();
+    let queryResult: [InnovationListView[], number] = [[], 0];
+
+    // if computed fields present, we need to manually map those to the view results
+    if (COMPUTED_FIELDS.length) {
+      const { raw, entities } = await query.getRawAndEntities();
+      // Manually hydrate computed fields
+      entities.forEach((entity, index) => {
+        if ('lastSupportGivenAt' in raw[index]) {
+          (entity as any).lastSupportGivenAt = raw[index].lastSupportGivenAt;
+        }
+      });
+
+      const count = await query.getCount();
+
+      queryResult = [entities, count];
+    } else {
+      queryResult = await query.getManyAndCount();
+    }
 
     // postHandlers - optimize to only fetch once. This means that the fields handled here aren't sortable but it would
     // be really bad performant otherwise and for the names even worse.
@@ -1467,7 +1505,7 @@ export class InnovationsService extends BaseService {
     }
 
     const [innovations, count] = await query.getManyAndCount();
-
+    
     return {
       innovations: innovations.map(innovation => ({
         id: innovation.id,

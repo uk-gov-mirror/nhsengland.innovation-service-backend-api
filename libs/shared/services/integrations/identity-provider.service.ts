@@ -18,6 +18,8 @@ import SHARED_SYMBOLS from '../symbols';
 import type { LoggerService } from './logger.service';
 import { QueuesEnum, StorageQueueService } from './storage-queue.service';
 
+import { sleep } from '../../helpers/misc.helper';
+
 type b2cGetUserInfoByEmailDTO = {
   value: {
     id: string;
@@ -206,10 +208,12 @@ export class IdentityProviderService {
     }
 
     const res = await this.cache.getMany(uniqueUserIds);
+
     if (res.length !== uniqueUserIds.length) {
       const cachedUserIds = new Set(res.map(user => user.identityId));
       const tempUsers = uniqueUserIds.filter(id => !cachedUserIds.has(id));
       const nonCachedUsers = await this.getUsersListFromB2C(tempUsers);
+
       // Add new users to cache.
       await this.cache.setMany(nonCachedUsers.map(user => ({ key: user.identityId, value: user })));
       res.push(...nonCachedUsers);
@@ -242,73 +246,105 @@ export class IdentityProviderService {
     if ((entityIds || []).length === 0) {
       return [];
     }
-
     await this.verifyAccessToken();
 
     const uniqueUserIds = [...new Set(entityIds)]; // Remove duplicated entries.
     const chunkSize = 15; // B2C has a maximum limit of users that can be requested in 1 call.
-    const maxConcurrentRequests = 3; // More than 3 and we start getting 429 errors.
+    const maxConcurrentRequests = 10; // More than 3 and we start getting 429 errors.
 
-    // Prepare array with arrays containing (chunkSize) ids.
-    const userIdsChunks = uniqueUserIds.reduce((acc: string[][], item, index) => {
-      const chunkIndex = Math.floor(index / chunkSize);
-
-      if (!acc[chunkIndex]) {
-        acc.push([]);
-      }
-
-      acc[chunkIndex]?.push(item);
-
-      return acc;
-    }, []);
+    // 1. Chunking
+    const userIdsChunks: string[][] = [];
+    for (let i = 0; i < uniqueUserIds.length; i += chunkSize) {
+      userIdsChunks.push(uniqueUserIds.slice(i, i + chunkSize));
+    }
 
     const usersList: IdentityUserInfo[] = [];
 
-    // Split the chunks into batches based on maxConcurrentRequests
+    // 2. Batch Processing
     for (let i = 0; i < userIdsChunks.length; i += maxConcurrentRequests) {
       const currentBatch = userIdsChunks.slice(i, i + maxConcurrentRequests);
 
-      // Create promises for the current batch
-      const promises = currentBatch.map(async userIdChunk => {
-        const userIds = userIdChunk.map(id => `'${id}'`).join(','); // Wrap each ID in single quotes
-        const odataFilter = `$filter=id in (${userIds})`;
+      const promises = currentBatch.map(chunk => this.fetchUserBatchWithRetry(chunk));
+      const settledResults = await Promise.allSettled(promises);
 
-        const fields = [
-          'displayName',
-          'identities',
-          'email',
-          'mobilePhone',
-          'accountEnabled',
-          'lastPasswordChangeDateTime',
-          'signInActivity'
-        ];
+      const successfulResults = settledResults
+        .filter((result): result is PromiseFulfilledResult<IdentityUserInfo[]> => result.status === 'fulfilled')
+        .map(result => result.value);
 
-        const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`;
+      const failedCount = settledResults.filter(r => r.status === 'rejected').length;
+      if (failedCount > 0) {
+        this.loggerService.error(`[getUsersListFromB2C] ${failedCount} chunks completely failed and were skipped.`);
+      }
 
-        const response = await axios.get<b2cGetUsersListDTO>(url, {
-          headers: { Authorization: `Bearer ${this.sessionData.token}` }
-        });
-
-        return response.data.value.map(u => ({
-          identityId: u.id,
-          displayName: u.displayName,
-          email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
-          mobilePhone: u.mobilePhone,
-          isActive: u.accountEnabled,
-          lastLoginAt:
-            u.signInActivity && u.signInActivity.lastSignInDateTime
-              ? new Date(u.signInActivity.lastSignInDateTime)
-              : null,
-          passwordResetAt: u.lastPasswordChangeDateTime ? new Date(u.lastPasswordChangeDateTime) : null
-        }));
-      });
-
-      // Execute the batch of promises and wait for them to resolve
-      const results = await Promise.all(promises);
-      usersList.push(...results.flat());
+      usersList.push(...successfulResults.flat());
     }
 
     return usersList;
+  }
+
+  private async fetchUserBatchWithRetry(userIds: string[]): Promise<IdentityUserInfo[]> {
+    const url = this.buildB2CQueryUrl(userIds);
+    let retryCount = 0;
+    const maxRetries = 20;
+    const maxBackoffMs = 15000; // cap at 15 seconds per retry
+
+    while (retryCount < maxRetries) {
+      try {
+        const response = await axios.get<b2cGetUsersListDTO>(url, {
+          headers: { Authorization: `Bearer ${this.sessionData.token}` }
+        });
+        return this.mapB2CUsersToDomain(response.data.value);
+      } catch (error: any) {
+        if (error.response?.status === 429) {
+          retryCount++;
+          const retryAfterHeader = error.response.headers['retry-after'];
+          // Default to exponential backoff if header is missing: 2s, 4s, 8s, 16s... capped at 15s
+          const backoff = retryAfterHeader
+            ? parseInt(retryAfterHeader, 10) * 1000
+            : Math.min(Math.pow(2, retryCount) * 1000, maxBackoffMs);
+
+          this.loggerService.error(
+            `B2C Rate limit hit. Retrying in ${backoff}ms... (Attempt ${retryCount}/${maxRetries})`
+          );
+          await sleep(backoff);
+        } else {
+          this.loggerService.error(JSON.stringify(error));
+          throw error;
+        }
+      }
+    }
+
+    throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
+      message: 'B2C Rate limit reached and retries exhausted'
+    });
+  }
+
+  private buildB2CQueryUrl(userIds: string[]): string {
+    const idsFilter = userIds.map(id => `'${id}'`).join(',');
+    const odataFilter = `$filter=id in (${idsFilter})`;
+    const fields = [
+      'displayName',
+      'identities',
+      'email',
+      'mobilePhone',
+      'accountEnabled',
+      'lastPasswordChangeDateTime',
+      'signInActivity'
+    ];
+    return `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`;
+  }
+
+  private mapB2CUsersToDomain(b2cUsers: b2cGetUsersListDTO['value']): IdentityUserInfo[] {
+    return b2cUsers.map(u => ({
+      identityId: u.id,
+      displayName: u.displayName,
+      email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
+      mobilePhone: u.mobilePhone,
+      isActive: u.accountEnabled,
+      lastLoginAt:
+        u.signInActivity && u.signInActivity.lastSignInDateTime ? new Date(u.signInActivity.lastSignInDateTime) : null,
+      passwordResetAt: u.lastPasswordChangeDateTime ? new Date(u.lastPasswordChangeDateTime) : null
+    }));
   }
 
   async createUser(data: { name: string; email: string; password: string }): Promise<string> {

@@ -97,6 +97,9 @@ export class InnovationListView {
   @Column({ name: 'areas' })
   areas: catalogAreas[] | null;
 
+  @Column({ select: false, nullable: true })
+  lastSupportGivenAt?: Date;
+
   @OneToOne(() => InnovationAssessmentEntity)
   @JoinColumn({ name: 'current_assessment_id' })
   currentAssessment: InnovationAssessmentEntity | null;
