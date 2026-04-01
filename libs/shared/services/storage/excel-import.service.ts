@@ -158,21 +158,38 @@ export class ExcelImportService {
 
     private buildRowIndex(sheet: ExcelJS.Worksheet): Map<string, number[]> {
         const index = new Map<string, number[]>();
+        let count = 0;
         sheet.eachRow((row, rowNumber) => {
             const id = this.cellStr(row.getCell(COL_ID));
             if (id) {
                 if (!index.has(id)) index.set(id, []);
                 index.get(id)!.push(rowNumber);
+                count++;
             }
         });
+        console.log(`[ExcelImport] Indexed ${count} total question/option IDs from Column F.`);
         return index;
     }
 
     private cellStr(cell: ExcelJS.Cell): string {
         if (!cell || cell.value === null || cell.value === undefined) return '';
-        if (typeof cell.value === 'object' && 'result' in (cell.value as any)) {
-            return String((cell.value as any).result ?? '').trim();
+        
+        // Handle Formula objects
+        if (typeof cell.value === 'object') {
+            const valObj = cell.value as any;
+            if ('formula' in valObj) {
+                const result = valObj.result;
+                if (result === null || result === undefined) {
+                    console.warn(`[ExcelImport] Unevaluated formula at ${cell.address}. Raw Object: ${JSON.stringify(valObj)}`);
+                    return '';
+                }
+                return String(result).trim();
+            }
+            // If it's some other type of object (like a RichText object), log it
+            console.warn(`[ExcelImport] Unexpected object value at ${cell.address}: ${JSON.stringify(valObj)}`);
         }
+        
+        // Handle Shared Strings / Direct values
         return String(cell.value).trim();
     }
 
@@ -188,6 +205,7 @@ export class ExcelImportService {
 
             if (dt === 'text' || dt === 'textarea') {
                 const val = this.readTextQuestion(sheet, rowIndex, question);
+                console.log(`[ExcelImport] Extracting Text: ID=${question.id}, Value=${val}`);
                 if (val !== undefined) payload[question.id] = val;
 
             } else if (dt === 'radio-group') {
@@ -233,16 +251,57 @@ export class ExcelImportService {
 
     private readTextQuestion(sheet: ExcelJS.Worksheet, rowIndex: Map<string, number[]>, question: Question): string | undefined {
         const rows = rowIndex.get(question.id);
-        if (!rows || rows.length === 0) return undefined;
-        const val = this.cellStr(sheet.getRow(rows[0] as number).getCell(COL_HELPER));
-        return val || undefined;
+        if (!rows || rows.length === 0) {
+            console.warn(`[ExcelImport] Text Question ID=${question.id} NOT FOUND in index.`);
+            return undefined;
+        }
+        const rowNum = rows[0] as number;
+        const row = sheet.getRow(rowNum);
+
+        // 1. Try helper first (Column G)
+        const helperVal = this.cellStr(row.getCell(COL_HELPER));
+        if (helperVal) return helperVal;
+
+        // 2. Try raw answer (Column C)
+        const answerVal = this.cellStr(row.getCell(COL_ANSWER));
+        if (answerVal) {
+            console.log(`[ExcelImport] Text Fallback Success: Found "${answerVal}" in Column C for ${question.id} at row ${rowNum}`);
+            return answerVal;
+        }
+
+        // 3. Try sub-answer (Column D) - some nested questions put data here
+        const subAnswerVal = this.cellStr(row.getCell(COL_SUB));
+        if (subAnswerVal) {
+            console.log(`[ExcelImport] Text Fallback Success: Found "${subAnswerVal}" in Column D for ${question.id} at row ${rowNum}`);
+            return subAnswerVal;
+        }
+
+        console.warn(`[ExcelImport] Text Question ${question.id} (row ${rowNum}) is empty in G, C, and D.`);
+        return undefined;
     }
 
     private readRadioQuestion(sheet: ExcelJS.Worksheet, rowIndex: Map<string, number[]>, question: Question): string | undefined {
         const rows = rowIndex.get(question.id);
         if (!rows || rows.length === 0) return undefined;
-        const val = this.cellStr(sheet.getRow(rows[0] as number).getCell(COL_HELPER));
-        return val || undefined;
+        const row = sheet.getRow(rows[0] as number);
+        
+        // 1. Try helper first (Column G) - This has the UUID from VLOOKUP
+        const val = this.cellStr(row.getCell(COL_HELPER));
+        if (val) return val;
+
+        // 2. Fallback: If VLOOKUP failed (unevaluated), try to match the label in Column C
+        const label = this.cellStr(row.getCell(COL_ANSWER));
+        if (label) {
+            const resolvedItems = resolveQuestionItems(question as any);
+            const found = resolvedItems.find((i: any) => (i.label || i.id) === label);
+            if (found) {
+                console.log(`[ExcelImport] Radio Fallback Success: Matched label "${label}" to ID "${found.id || found.label}" for question ${question.id}`);
+                return found.id || found.label;
+            }
+            // If no match in schema, return the raw label
+            return label;
+        }
+        return undefined;
     }
 
     private readCheckboxQuestion(

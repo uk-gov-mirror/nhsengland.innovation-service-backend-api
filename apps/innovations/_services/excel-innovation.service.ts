@@ -26,7 +26,7 @@ export class ExcelInnovationService {
    */
   async generateTemplate(): Promise<Buffer> {
     const schema = await this.irSchemaService.getSchema();
-    const workbook = this.excelExportService.generateTemplateWorkbook(schema);
+    const workbook = this.excelExportService.generateTemplateWorkbook(schema.model.schema);
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer as ArrayBuffer);
   }
@@ -36,7 +36,7 @@ export class ExcelInnovationService {
    */
   async generateExport(payload: any): Promise<Buffer> {
     const schema = await this.irSchemaService.getSchema();
-    const workbook = this.excelExportService.generateTemplateWorkbook(schema, payload);
+    const workbook = this.excelExportService.generateTemplateWorkbook(schema.model.schema, payload);
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer as ArrayBuffer);
   }
@@ -50,13 +50,24 @@ export class ExcelInnovationService {
     await workbook.xlsx.load(buffer as any);
 
     const schema = await this.irSchemaService.getSchema();
+    console.log(`[ExcelImport] Starting import with schema version: ${schema.version}`);
 
     // 1. Extract Registration (INNOVATION_DESCRIPTION) first to create the record.
-    const { payload: regPayload } = this.excelImportService.parseRegistrationPayload(
+    const { payload: regPayload, validationIssues } = this.excelImportService.parseRegistrationPayload(
       workbook,
-      schema,
+      schema.model.schema,
       schema.model
     );
+
+    console.log('[ExcelImport] Registration Payload Extracted:', JSON.stringify(regPayload, null, 2));
+    if (validationIssues.length > 0) {
+      console.warn('[ExcelImport] Registration Validation Issues:', validationIssues);
+    }
+
+    if (!regPayload['name'] || !regPayload['description']) {
+      console.error('[ExcelImport] Missing required fields. Name:', regPayload['name'], 'Description:', regPayload['description']);
+      throw new Error('Incomplete Excel file: The "Innovation Name" and "Innovation Overview" are required to register.');
+    }
 
     // 2. Create the Innovation (returns the new ID)
     const { id: innovationId } = await this.innovationsService.createInnovation(
@@ -65,13 +76,13 @@ export class ExcelInnovationService {
     );
 
     // 3. Extract all sections and perform updates for everything else
-    const importResult = this.excelImportService.parseWorkbook(workbook, schema, schema.model);
+    const importResult = this.excelImportService.parseWorkbook(workbook, schema.model.schema, schema.model);
     
     // Process sections sequentially to maintain sanity (though parallel would likely work)
     for (const section of importResult.sections) {
-      // Skip the registration section as it's already handled by 'createInnovation'
-      if (section.sectionKey === 'INNOVATION_DESCRIPTION') continue;
-
+      // Even though INNOVATION_DESCRIPTION was used for createInnovation, we MUST update it 
+      // here as well because createInnovation only saves a tiny subset of its fields (name, desc, etc).
+      // The rest of the fields (categories, areas, careSettings) need to be saved via updateInnovationSectionInfo.
       await this.sectionsService.updateInnovationSectionInfo(
         domainContext,
         innovationId,
