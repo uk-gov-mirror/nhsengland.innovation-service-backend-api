@@ -13,7 +13,7 @@ import type { SchemaModel } from '../../models/schema-engine/schema.model';
 import { buildQuestionMap, resolveQuestionItems } from './excel-schema-helpers';
 
 // ──────────────────────────────────────────────────────────────
-// COLUMN LAYOUT  (must match generate-template.ts exactly)
+// COLUMN LAYOUT
 // ──────────────────────────────────────────────────────────────
 const COL_ANSWER  = 3; // C — user-visible answer
 const COL_SUB     = 4; // D — sub-answer for addQuestion
@@ -156,6 +156,20 @@ export class ExcelImportService {
         return { payload, validationIssues };
     }
 
+    /**
+     * Scans the entire Excel sheet once to build a lookup index of Question IDs to Row Numbers.
+     * 
+     * Our strategy relies on **Machine-Readable Metadata**: we don't assume data is at a fixed row.
+     * Instead, we look at **Column F (ID)** for every row. If we find a Question or Option ID, 
+     * we record that row number. This allows the parser to find data even if the user inserted 
+     * extra rows or if the layout shifted.
+     * 
+     * @example
+     * // If row 10 has "IR_FIELD_NAME" in Column F, the map will contain: { "IR_FIELD_NAME": [10] }
+     * 
+     * @param sheet - The Excel worksheet to scan.
+     * @returns A Map where keys are Question IDs and values are arrays of row numbers where they appear.
+     */
     private buildRowIndex(sheet: ExcelJS.Worksheet): Map<string, number[]> {
         const index = new Map<string, number[]>();
         let count = 0;
@@ -171,6 +185,24 @@ export class ExcelImportService {
         return index;
     }
 
+    /**
+     * Safely extracts and cleans the string value from an Excel cell.
+     * 
+     * This method handles various Excel data types:
+     * 1. **Empty Cells:** Returns an empty string if the cell is null or undefined.
+     * 2. **Formulas:** If the cell contains a formula (e.g., `=VLOOKUP(...)`), it attempts to read the 
+     *    cached `.result`. If the result is missing (unevaluated), it logs a warning and returns an empty string.
+     * 3. **Static Values:** Converts numbers, dates, or shared strings directly to a trimmed string.
+     * 4. **Complex Objects:** Logs a warning if an unexpected object (like RichText) is encountered.
+     * 
+     * @example
+     * // Direct text "  England  " -> "England"
+     * // Formula { formula: "A1", result: "Yes" } -> "Yes"
+     * // Formula { formula: "A1", result: undefined } -> "" (with console warning)
+     * 
+     * @param cell - The ExcelJS cell object to read from.
+     * @returns The cleaned string content of the cell.
+     */
     private cellStr(cell: ExcelJS.Cell): string {
         if (!cell || cell.value === null || cell.value === undefined) return '';
         
@@ -193,6 +225,29 @@ export class ExcelImportService {
         return String(cell.value).trim();
     }
 
+    /**
+     * Recursively walks through a list of questions and extracts their values from the Excel sheet.
+     * 
+     * This is the "brain" of the extraction process. It identifies the data type of each question
+     * and delegates to the appropriate reader method (e.g., `readTextQuestion`, `readRadioQuestion`). 
+     * It also handles **Conditional Logic**: if a `radio-group` answer triggers a sub-question, 
+     * this method calls itself recursively to extract those nested answers.
+     * 
+     * Supported Data Types:
+     * - `text` / `textarea`: Standard text input.
+     * - `radio-group`: Single choice dropdown (with conditional recursion).
+     * - `autocomplete-array`: Multi-select or single-choice depending on validations.
+     * - `checkbox-array`: Multi-select with optional sub-answers (`addQuestion`).
+     * - `fields-group`: Repeating blocks of data.
+     * 
+     * @example
+     * // If "Has Website" is "YES", it will recursively extract the "Website URL" field.
+     * 
+     * @param sheet - The Excel worksheet being parsed.
+     * @param rowIndex - A map of Question IDs to their physical row numbers in the Excel file.
+     * @param questions - The list of question definitions from the schema to extract.
+     * @param payload - The accumulator object where extracted key-value pairs are stored.
+     */
     private extractQuestions(
         sheet: ExcelJS.Worksheet,
         rowIndex: Map<string, number[]>,
@@ -249,6 +304,22 @@ export class ExcelImportService {
         }
     }
 
+    /**
+     * Extracts the string value for a text-based question (text or textarea).
+     * 
+     * This method is highly resilient and uses a three-tier fallback strategy:
+     * 1. **Column G (Helper):** Tries to read the hidden formula result.
+     * 2. **Column C (Your Answer):** If the formula isn't evaluated, it looks directly at the primary input cell.
+     * 3. **Column D (Sub-Answer):** If still empty, it checks the sub-answer column (used for some nested text questions).
+     * 
+     * @example
+     * // If "My Innovation" is typed in row 4, Column C, this returns "My Innovation".
+     * 
+     * @param sheet - The Excel worksheet.
+     * @param rowIndex - The row lookup index.
+     * @param question - The text question definition.
+     * @returns The extracted string, or undefined if the row is completely empty.
+     */
     private readTextQuestion(sheet: ExcelJS.Worksheet, rowIndex: Map<string, number[]>, question: Question): string | undefined {
         const rows = rowIndex.get(question.id);
         if (!rows || rows.length === 0) {
@@ -280,6 +351,24 @@ export class ExcelImportService {
         return undefined;
     }
 
+    /**
+     * Extracts and maps the value for a single-choice question (radio-group).
+     * 
+     * This method ensures the human-readable label in Excel is mapped back to the 
+     * machine-readable ID/UUID required by the backend:
+     * 1. **Column G (Helper):** Tries to read the UUID resolved by Excel's `VLOOKUP` formula.
+     * 2. **Manual Match Fallback:** If the formula isn't evaluated, it takes the raw text from 
+     *    Column C and searches the schema definitions for a matching label to find the correct ID.
+     * 
+     * @example
+     * // User selects "England" in Column C. 
+     * // This method returns "England" (the ID) even if the VLOOKUP formula failed.
+     * 
+     * @param sheet - The Excel worksheet.
+     * @param rowIndex - The row lookup index.
+     * @param question - The radio group question definition.
+     * @returns The resolved ID string, or undefined if nothing was selected.
+     */
     private readRadioQuestion(sheet: ExcelJS.Worksheet, rowIndex: Map<string, number[]>, question: Question): string | undefined {
         const rows = rowIndex.get(question.id);
         if (!rows || rows.length === 0) return undefined;
@@ -304,6 +393,26 @@ export class ExcelImportService {
         return undefined;
     }
 
+    /**
+     * Extracts values for multi-select questions (checkbox-array or autocomplete-array).
+     * 
+     * Since multi-select questions span multiple rows in Excel (one row per option), 
+     * this method:
+     * 1. Iterates through all possible options defined in the schema.
+     * 2. Checks Column C for the string "Selected".
+     * 3. Collects the IDs of all selected options into an array.
+     * 4. **Nested Sub-Answers:** If the question has an `addQuestion` (e.g., "Yes, explain why"), 
+     *    it also extracts the text from Column D (or Helper Column H) and maps it to the option ID.
+     * 
+     * @example
+     * // User marks "Medical Device" and "AI" as "Selected".
+     * // Returns: { answers: ["MEDICAL_DEVICE", "AI"], subAnswers: {} }
+     * 
+     * @param sheet - The Excel worksheet.
+     * @param rowIndex - The row lookup index.
+     * @param question - The checkbox array question definition.
+     * @returns An object containing the list of selected IDs and any associated sub-answers.
+     */
     private readCheckboxQuestion(
         sheet: ExcelJS.Worksheet,
         rowIndex: Map<string, number[]>,
@@ -335,6 +444,25 @@ export class ExcelImportService {
         return { answers, subAnswers };
     }
 
+    /**
+     * Extracts values for repeating blocks of questions (fields-group).
+     * 
+     * In Excel, a `fields-group` is rendered as a series of 5 pre-allocated blocks. 
+     * Depending on the schema, each block uses 1 or 2 rows. This method:
+     * 1. Identifies all rows associated with the `fields-group` ID.
+     * 2. Iterates through the rows in steps (step size 1 or 2).
+     * 3. Extracts values for both the main field (`field`) and the optional sub-field (`addQuestion`).
+     * 4. Collects only non-empty entries into an array of objects.
+     * 
+     * @example
+     * // For a "User Tests" group, it might return:
+     * // [ { "kind": "Alpha", "feedback": "Good" }, { "kind": "Beta", "feedback": "Stable" } ]
+     * 
+     * @param sheet - The Excel worksheet.
+     * @param rowIndex - The row lookup index.
+     * @param question - The fields group question definition.
+     * @returns An array of objects representing the extracted repeating data entries.
+     */
     private readFieldsGroupQuestion(
         sheet: ExcelJS.Worksheet,
         rowIndex: Map<string, number[]>,

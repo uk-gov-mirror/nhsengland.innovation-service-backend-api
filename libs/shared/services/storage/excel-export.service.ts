@@ -30,9 +30,28 @@ const TEXTAREA_LENGTH_LIMIT: Record<string, number> = {
 @injectable()
 export class ExcelExportService {
     // State encapsulated per instance
+    /** 
+     * Initial priority for conditional formatting rules. 
+     * Incremented for every 'Required' field to ensure rules evaluate in order. 
+     */
     private redPriority = 5000;
+
+    /** 
+     * A map of Question IDs to their Absolute Excel addresses (e.g., "$C$10"). 
+     * Used to build dynamic formulas that depend on other cells.
+     */
     private cellRegistry: Record<string, string> = {};
+
+    /** 
+     * Current column index in the 'ReferenceData' sheet. 
+     * Incremented as dropdown lists are generated. 
+     */
     private refDataColIdx = 1;
+
+    /** 
+     * The address of the most recently rendered 'Required' field. 
+     * Used for 'Cascading Validation': a field only turns Red if the one before it is filled.
+     */
     private previousRequiredCellAddr: string | null = null;
     /**
      * Generates a complete ExcelJS Workbook strictly from the provided schema.
@@ -98,9 +117,14 @@ export class ExcelExportService {
     }
 
     /**
-     * Initializes the worksheet columns, widths, and header styles.
-     * Column C is the primary answer field for users.
-     * Column F-I are hidden and used for machine-readability.
+     * Initializes the worksheet layout, column widths, and visual header styles.
+     * 
+     * This defines the "Architecture" of the spreadsheet:
+     * - **Columns A-E:** Human-readable (Questions, Answers, Guidance).
+     * - **Columns F-I:** Machine-readable (Hidden IDs and helper formulas).
+     * - **NHS Branding:** Applies the NHS Blue theme to the header row.
+     * 
+     * @param sheet - The Excel worksheet to configure.
      */
     private setupColumns(sheet: ExcelJS.Worksheet) {
         sheet.columns = [
@@ -128,6 +152,17 @@ export class ExcelExportService {
         });
     }
 
+    /**
+     * Renders a top-level section header (e.g., "1. About your innovation").
+     * 
+     * Styling:
+     * - Spans all five primary columns (A-E).
+     * - Black background with Large White Bold text.
+     * - Increased row height for high visual impact and clear separation.
+     * 
+     * @param sheet - The Excel worksheet.
+     * @param title - The human-readable title of the section.
+     */
     private renderSectionHeader(sheet: ExcelJS.Worksheet, title: string) {
         const row = sheet.addRow([title, '', '', '', '', '', '']);
         sheet.mergeCells(`A${row.number}:E${row.number}`);
@@ -137,6 +172,17 @@ export class ExcelExportService {
         row.getCell(1).alignment = { vertical: 'middle' };
     }
 
+    /**
+     * Renders a secondary sub-section header (e.g., "1.1. Description").
+     * 
+     * Styling:
+     * - Spans all five primary columns (A-E).
+     * - Light Gray background with Black Bold text.
+     * - Provides visual hierarchy within a major section.
+     * 
+     * @param sheet - The Excel worksheet.
+     * @param title - The human-readable title of the sub-section.
+     */
     private renderSubSectionHeader(sheet: ExcelJS.Worksheet, title: string) {
         const row = sheet.addRow([title, '', '', '', '', '', '']);
         sheet.mergeCells(`A${row.number}:E${row.number}`);
@@ -146,13 +192,37 @@ export class ExcelExportService {
         row.getCell(1).alignment = { vertical: 'middle' };
     }
 
+    /**
+     * Converts a relative Excel address to an absolute one.
+     * 
+     * Used for building formulas that must always point to a specific cell, 
+     * even if the formula is copied or moved.
+     * 
+     * @example
+     * // "C10" -> "$C$10"
+     * 
+     * @param addr - The relative cell address (e.g., "C10").
+     * @returns The absolute cell address (e.g., "$C$10").
+     */
     private toAbsolute(addr: string): string {
         return '$' + addr.replace(/(\d+)/, '$$$1');
     }
 
     /**
-     * Selects the correct rendering method based on the question's dataType.
-     * @returns The Excel cell address of the primary answer (for registry/mapping).
+     * Orchestrates the rendering of a single question based on its dataType.
+     * 
+     * This is the central routing method for the Export engine. It:
+     * 1. Appends conditional warnings to the label if the question is part of a dependency.
+     * 2. Delegates to specific rendering methods (`renderTextQuestion`, `renderRadioGroupQuestion`, etc.).
+     * 3. Registers the resulting cell address in the `cellRegistry` for formula lookups.
+     * 
+     * @param sheet - The primary "Innovation Record" sheet.
+     * @param refSheet - The hidden "ReferenceData" sheet for dropdowns.
+     * @param qObj - The question definition from the schema.
+     * @param isIndented - Whether to apply visual indentation (tree-branch symbol).
+     * @param ssPayload - Optional pre-fill data for the current sub-section.
+     * @param condition - Optional dependency metadata (parent value that triggers this question).
+     * @returns The Excel cell address of the primary answer, or null if not applicable.
      */
     private renderQuestionDispatcher(sheet: ExcelJS.Worksheet, refSheet: ExcelJS.Worksheet, qObj: Question, isIndented: boolean, ssPayload?: any, condition?: { requiredValue: string }): string | null {
         let mainCellAddr: string | null = null;
@@ -193,6 +263,22 @@ export class ExcelExportService {
         return mainCellAddr;
     }
 
+    /**
+     * Renders a single-row text input question (text or textarea).
+     * 
+     * Actions:
+     * 1. Creates a row with Label, Input Cell, and Guidance.
+     * 2. Pre-fills the cell if a value exists in the payload.
+     * 3. Applies NHS Blue borders to the input cell.
+     * 4. **Cascading Validation:** Highlights the cell Red if it's required and the user is up to this step.
+     * 5. **Native Validation:** Applies an Excel "Text Length" rule based on the schema's limits.
+     * 
+     * @param sheet - The Excel worksheet.
+     * @param question - The text question definition.
+     * @param isIndented - Whether to indent the label.
+     * @param ssPayload - Optional pre-fill data.
+     * @returns The Excel address of the input cell.
+     */
     private renderTextQuestion(sheet: ExcelJS.Worksheet, question: Question, isIndented: boolean, ssPayload?: any): string {
         const isRequired = !!question.validations?.isRequired;
         const maxLength = this.getMaxLength(question);
@@ -210,6 +296,25 @@ export class ExcelExportService {
         return cell.address;
     }
 
+    /**
+     * Renders a single-choice dropdown question (radio-group).
+     * 
+     * Actions:
+     * 1. Creates a row with Label, Dropdown Cell (Column C), and Guidance.
+     * 2. **Robust Dropdown:** Adds the options to the hidden 'ReferenceData' sheet and 
+     *    configures an Excel Data Validation list in Column C.
+     * 3. **Machine Mapping:** Injects a hidden `VLOOKUP` formula in Column G to map 
+     *    the human-selected label back to its machine-readable ID/UUID.
+     * 4. **Recursion:** If an option has a `conditional` sub-question, it calls the 
+     *    dispatcher to render it immediately below.
+     * 
+     * @param sheet - The primary worksheet.
+     * @param refSheet - The hidden data sheet.
+     * @param question - The radio group definition.
+     * @param isIndented - Whether to indent the label.
+     * @param ssPayload - Optional pre-fill data.
+     * @returns The Excel address of the hidden helper cell (Column G).
+     */
     private renderRadioGroupQuestion(sheet: ExcelJS.Worksheet, refSheet: ExcelJS.Worksheet, question: RadioGroup, isIndented: boolean, ssPayload?: any): string {
         const isRequired = !!question.validations?.isRequired;
         const row = sheet.addRow(['', this.getLabel(question, isIndented), '', '', this.getGuidance(question, isRequired), question.id]);
@@ -246,6 +351,28 @@ export class ExcelExportService {
         return helperCell.address;
     }
 
+    /**
+     * Renders a multi-select question (checkbox-array) as a vertical list of options.
+     * 
+     * Strategy:
+     * 1. Creates a header row for the group.
+     * 2. Renders one row per option with a "Selected/Not Selected" dropdown in Column C.
+     * 3. **Machine Aggregation:** Injects a hidden `TEXTJOIN` formula in Column F of the header row.
+     *    This formula automatically aggregates all "Selected" option IDs into a semicolon-separated 
+     *    string for the parser to read.
+     * 4. **Exclusive Options:** If an option is marked as `exclusive: true` (e.g., "None"), it 
+     *    applies conditional formatting to turn the range Red if both "None" and another option 
+     *    are selected.
+     * 5. **Nested Sub-Answers:** If the question has an `addQuestion` (e.g., "Explain why"), 
+     *    it renders an additional input cell in Column D for each option.
+     * 
+     * @param sheet - The Excel worksheet.
+     * @param refSheet - The data sheet.
+     * @param question - The checkbox array definition.
+     * @param isIndented - Whether to indent labels.
+     * @param ssPayload - Optional pre-fill data.
+     * @returns The Excel address of the aggregated results cell (Column F).
+     */
     private renderCheckboxArrayQuestion(sheet: ExcelJS.Worksheet, refSheet: ExcelJS.Worksheet, question: CheckboxArray, isIndented: boolean, ssPayload?: any): string | null {
         sheet.addRow(['']); 
         const groupLabelRow = sheet.addRow(['', this.getLabel(question, isIndented), '', '', this.getGuidance(question), question.id]);
@@ -311,9 +438,22 @@ export class ExcelExportService {
     }
 
     /**
-     * Renders a FieldsGroup (repeating set of questions) in a vertical layout.
-     * Each entry uses 1 or 2 rows depending on whether a sub-question exists.
-     * Uses Excel Formula interpolation for the second label if applicable.
+     * Renders a repeating block of questions (fields-group).
+     * 
+     * Architecture:
+     * 1. Pre-allocates a fixed block of 5 entries to allow for offline data entry.
+     * 2. Depending on the schema, each entry uses either 1 row or 2 rows (stacked).
+     * 3. **Live Interpolation:** For questions like "Entry {{item}} details", it injects an 
+     *    Excel formula into the label cell that updates in real-time as the user types 
+     *    in the main field.
+     * 4. Pre-fills existing data from the payload if provided.
+     * 
+     * @param sheet - The Excel worksheet.
+     * @param refSheet - The data sheet.
+     * @param question - The fields group definition.
+     * @param isIndented - Whether to indent labels.
+     * @param ssPayload - Optional pre-fill data.
+     * @returns Always returns null (data is extracted via ID-based row scanning).
      */
     private renderFieldsGroupQuestion(sheet: ExcelJS.Worksheet, refSheet: ExcelJS.Worksheet, question: FieldsGroup, isIndented: boolean, ssPayload?: any): string | null {
         sheet.addRow(['']);
@@ -374,6 +514,16 @@ export class ExcelExportService {
         return null;
     }
 
+    /**
+     * Applies the standard NHS visual style to an input cell.
+     * 
+     * Styling includes:
+     * - Thin borders on all sides using the NHS Blue color.
+     * - Black font color for user visibility.
+     * - This style signals to the user that the cell is interactive and expects an answer.
+     * 
+     * @param cell - The Excel cell to style.
+     */
     private applyInputStyle(cell: ExcelJS.Cell) {
         cell.font = { color: { argb: BLACK } };
         cell.border = {
@@ -385,8 +535,20 @@ export class ExcelExportService {
     }
 
     /**
-     * Creates a dropdown in Excel (Column C) using data from the ReferenceData sheet.
-     * Also sets up a hidden VLOOKUP in Column G to map labels back to UUIDs.
+     * Creates a high-reliability dropdown list in Excel.
+     * 
+     * Mechanism:
+     * 1. **Data Separation:** Instead of hardcoding options in the validation rule (which has a 
+     *    character limit), it writes the options to the hidden 'ReferenceData' sheet.
+     * 2. **Native List:** Creates an Excel Data Validation rule that points to that hidden range.
+     * 3. **ID Mapping:** If a `helperCell` is provided, it injects an Excel `VLOOKUP` formula.
+     *    This formula maps the user's friendly selection (e.g., "Yes") to the backend ID 
+     *    (e.g., "YES") in real-time.
+     * 
+     * @param cell - The user-visible input cell where the dropdown appears.
+     * @param refSheet - The hidden sheet used to store the dropdown data.
+     * @param options - An array of label/id pairs to populate the dropdown.
+     * @param helperCell - Optional hidden cell to store the machine-readable ID.
      */
     private applyRobustDropdown(cell: ExcelJS.Cell, refSheet: ExcelJS.Worksheet, options: {label: string, id: string}[], helperCell?: ExcelJS.Cell) {
         const colIdx = this.refDataColIdx;
@@ -407,6 +569,20 @@ export class ExcelExportService {
         this.refDataColIdx += 2;
     }
 
+    /**
+     * Applies native Excel data validation rules to a cell based on the question definition.
+     * 
+     * Actions:
+     * 1. **Character Limits:** Applies 'textLength' validation if `maxLength` is defined.
+     * 2. **Dropdown Lists:** If the question is a `radio-group`, it delegates to `applyRobustDropdown`.
+     * 3. **Fallback Helper:** For standard text fields, it injects a simple `IF(ISBLANK...)` 
+     *    formula in the helper column to ensure the parser can read the value.
+     * 
+     * @param cell - The Excel cell to validate.
+     * @param refSheet - The data sheet for lists.
+     * @param q - The question definition.
+     * @param helperCell - The hidden cell for machine-readable data.
+     */
     private applyValidationToCell(cell: ExcelJS.Cell, refSheet: ExcelJS.Worksheet, q: Question, helperCell?: ExcelJS.Cell) {
         const maxLength = this.getMaxLength(q);
         if (maxLength) cell.dataValidation = { type: 'textLength', operator: 'lessThanOrEqual', formulae: [maxLength.toString()], showErrorMessage: true, errorTitle: 'Too Long', error: `Limit: ${maxLength}` };
@@ -422,6 +598,20 @@ export class ExcelExportService {
         }
     }
 
+    /**
+     * Converts a 1-based column index to its Excel alphabetical name.
+     * 
+     * Essential for building dynamic formulas (like `VLOOKUP` or `IF`) that 
+     * reference specific columns in the spreadsheet.
+     * 
+     * @example
+     * // 1 -> "A"
+     * // 3 -> "C"
+     * // 27 -> "AA"
+     * 
+     * @param col - The 1-based column index.
+     * @returns The alphabetical name of the column.
+     */
     private getExcelColumnName(col: number): string {
         let name = "";
         while (col > 0) {
@@ -432,6 +622,22 @@ export class ExcelExportService {
         return name;
     }
 
+    /**
+     * Converts raw HTML strings into clean, readable plain text for Excel.
+     * 
+     * Since schema descriptions often contain HTML tags (like `<p>`, `<br>`, or `<a>`), 
+     * this method:
+     * 1. Replaces line-break tags with actual newlines.
+     * 2. Strips all other HTML tags.
+     * 3. Decodes common HTML entities (e.g., `&amp;` -> `&`).
+     * 4. Trims leading/trailing whitespace.
+     * 
+     * @example
+     * // "<p>Hello<br/>World</p>" -> "Hello\n\nWorld"
+     * 
+     * @param html - The raw HTML string from the schema.
+     * @returns A clean plain-text string.
+     */
     private cleanHtmlText(html: string): string {
         if (!html) return '';
         let text = html.replace(/<\/p>|<br\s*\/?>/gi, '\n\n');
@@ -441,7 +647,20 @@ export class ExcelExportService {
         return text.trim();
     }
 
-    private getLabel(q: Question, isIndented: boolean): string { 
+    /**
+     * Formats the human-readable label for a question.
+     * 
+     * Actions:
+     * 1. **Indentation:** If `isIndented` is true, prepends a tree-branch symbol (" └─ ") 
+     *    to visually signal a nested dependency.
+     * 2. **Fallback:** Uses the `label` property from the schema, falling back to 
+     *    the technical `id` if the label is missing.
+     * 
+     * @param q - The question definition.
+     * @param isIndented - Whether to apply nesting symbols.
+     * @returns The formatted label string.
+     */
+    private getLabel(q: Question, isIndented: boolean): string {
         return (isIndented ? '   └─ ' : '') + ((q as any).label || q.id); 
     }
 
