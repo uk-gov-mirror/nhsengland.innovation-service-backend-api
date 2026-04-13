@@ -8,7 +8,8 @@ import type {
   Question,
   RadioGroup,
   Textarea,
-  Text
+  Text,
+  InputArray
 } from './question.types';
 import { cloneDeep } from 'lodash';
 
@@ -124,16 +125,19 @@ export class CheckboxArrayValidator implements QuestionTypeValidator<CheckboxArr
       }
     }
 
-    // This means its an array of objects (e.g., standards)
-    if (question.addQuestion) {
-      const objectTypeSchema = Joi.object({
+    // This means it's an array of objects (e.g. standards)
+    if (question.addQuestions?.length) {
+      const objectSchemaDefinition: Record<string, Joi.Schema> = {
         [question.checkboxAnswerId ?? question.id]: JoiHelper.AppCustomJoi()
           .string()
-          .valid(...validItems),
-        // "Optional" added due to the nature of this type of question and save per question. The question is just answered after the selection of the checkbox.
-        [question.addQuestion.id]: QuestionValidatorFactory.validate(question.addQuestion).optional()
+          .valid(...validItems)
+      };
+
+      question.addQuestions.forEach(aq => {
+        objectSchemaDefinition[aq.id] = QuestionValidatorFactory.validate(aq).optional();
       });
-      return Joi.array().items(objectTypeSchema).min(1);
+
+      return Joi.array().items(Joi.object(objectSchemaDefinition)).min(1);
     }
 
     let checkboxValidation = JoiHelper.AppCustomJoi().stringArray();
@@ -158,10 +162,48 @@ export class CheckboxArrayValidator implements QuestionTypeValidator<CheckboxArr
   }
 }
 
+export class InputArrayValidator implements QuestionTypeValidator<InputArray> {
+  validate(question: InputArray): Joi.Schema {
+    const objectSchemaDefinition: Record<string, Joi.Schema> = {};
+
+    for (const item of question.items ?? []) {
+      if (!item.id) continue;
+
+      let itemValidation = JoiHelper.AppCustomJoi().string();
+
+      if (item.validations?.maxLength) {
+        itemValidation = itemValidation.max(item.validations.maxLength);
+      }
+
+      if (item.validations?.minLength) {
+        itemValidation = itemValidation.min(item.validations.minLength);
+      }
+
+      if (item.validations?.isRequired) {
+        itemValidation = itemValidation.required();
+      } else {
+        itemValidation = itemValidation.allow('', null).optional();
+      }
+
+      objectSchemaDefinition[item.id] = itemValidation;
+    }
+
+    let inputArrayValidation = Joi.object(objectSchemaDefinition);
+
+    if (question.validations?.isRequired) {
+      inputArrayValidation = inputArrayValidation.required();
+    } else {
+      inputArrayValidation = inputArrayValidation.optional();
+    }
+
+    return inputArrayValidation;
+  }
+}
+
 export class FieldGroupValidator implements QuestionTypeValidator<FieldsGroup> {
   validate(question: FieldsGroup): Joi.Schema {
     // When addQuestion is not defined the payload is a string array.
-    if (!question.addQuestion) {
+    if (!question.addQuestions) {
       return JoiHelper.AppCustomJoi().stringArray().items(JoiHelper.AppCustomJoi().string()).required();
     }
 
@@ -170,10 +212,12 @@ export class FieldGroupValidator implements QuestionTypeValidator<FieldsGroup> {
     if (question.field) {
       obj[question.field.id] = QuestionValidatorFactory.validate(question.field);
     }
-    if (question.addQuestion) {
+    if (question.addQuestions) {
       // Since we have step by step, the first time the question is answered it doesn't have "yet" the answer for this
       // question. To prevent the validator to fail we make it optional.
-      obj[question.addQuestion.id] = QuestionValidatorFactory.validate(question.addQuestion).optional();
+      question.addQuestions.forEach(aq => {
+        obj[aq.id] = QuestionValidatorFactory.validate(aq).optional();
+      });
     }
     if (Object.keys(obj).length) {
       validation = validation.items(Joi.object(obj));
@@ -200,9 +244,9 @@ export class QuestionValidatorFactory {
         return new RadioGroupValidator().validate(question);
       case 'checkbox-array':
         // If it's true we just care about the answer so we remove the addQuestion from here
-        if (multipleAnswers && question.addQuestion) {
+        if (multipleAnswers && question.addQuestions) {
           const clonedQuestion = cloneDeep(question);
-          delete clonedQuestion.addQuestion;
+          delete clonedQuestion.addQuestions;
           return new CheckboxArrayValidator().validate(clonedQuestion);
         }
         return new CheckboxArrayValidator().validate(question);
@@ -210,6 +254,8 @@ export class QuestionValidatorFactory {
         return new AutocompleteArrayValidator().validate(question);
       case 'fields-group':
         return new FieldGroupValidator().validate(question);
+      case 'input-array':
+        return new InputArrayValidator().validate(question);
       default:
         throw new Error('QuestionValidator is not defined');
     }

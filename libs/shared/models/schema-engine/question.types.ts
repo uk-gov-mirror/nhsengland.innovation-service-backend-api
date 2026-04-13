@@ -48,8 +48,18 @@ export type CheckboxArray = Base & {
     | { id: string; label: string; group?: string; conditional?: string; exclusive?: boolean }
   )[];
   size?: 'small' | 'normal';
-  addQuestion?: Question;
+  addQuestions?: Question[];
   checkboxAnswerId?: string;
+};
+
+export type InputArray = Base & {
+  dataType: 'input-array';
+  items: {
+    id: string,
+    label:string
+    itemConditionOptions?:ItemConditionOptionsType,
+    validations?: Validations;
+  }[]
 };
 
 export type AutocompleteArray = Base & {
@@ -60,11 +70,17 @@ export type AutocompleteArray = Base & {
 export type FieldsGroup = Base & {
   dataType: 'fields-group';
   field: Question;
-  addQuestion?: Question;
+  addQuestions?: Question[];
   addNewLabel: string;
 };
 
-export type Question = Text | Textarea | RadioGroup | CheckboxArray | AutocompleteArray | FieldsGroup;
+export type Question = Text | Textarea | RadioGroup | CheckboxArray | AutocompleteArray | FieldsGroup | InputArray;
+
+export type ItemConditionOptionsType = {
+  relativeToId?: string;
+  forceExpandAndDisableToggleIf?: string[] /* forcing expand and disable toggle to make it mandatory */;
+  displayIf?: string[] /* show item depending on previous answer */;
+};
 
 // Others
 export const TEXTAREA_LENGTH_LIMIT = {

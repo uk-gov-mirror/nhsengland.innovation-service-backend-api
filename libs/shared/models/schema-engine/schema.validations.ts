@@ -71,6 +71,55 @@ const autocompleteArray = Joi.object({
     .required()
 });
 
+const checkboxConditionalInputArray = Joi.object({
+  dataType: JoiHelper.AppCustomJoi().string().valid('checkbox-conditional-input-array').required(),
+  id,
+  label: JoiHelper.AppCustomJoi().string().min(1).required(),
+  description: JoiHelper.AppCustomJoi().string().min(1).optional(),
+  validations: Joi.object({ isRequired, max, min }),
+  checkboxAnswerId: id.optional(),
+  items: Joi.array()
+    .items(
+      Joi.object({ type: 'separator' }),
+      Joi.object({
+        id,
+        label: JoiHelper.AppCustomJoi().string().min(1),
+        group: JoiHelper.AppCustomJoi().string().min(1).optional(),
+        exclusive: Joi.bool().valid(true),
+        conditional: Joi.alternatives(text, textArea).optional(),
+        itemConditionOptions: Joi.object({
+          relativeToId: Joi.string().optional(),
+          forceExpandAndDisableToggleIf: Joi.array().items(Joi.string()).optional(),
+          displayIf: Joi.array().items(Joi.string()).optional()
+        }).optional()
+      })
+    )
+    .required(),
+  addQuestions: Joi.array().items(Joi.alternatives(text, textArea, radioGroup))
+});
+
+const inputArray = Joi.object({
+  id,
+  dataType: JoiHelper.AppCustomJoi().string().valid('input-array').required(),
+  label: JoiHelper.AppCustomJoi().string().min(1).required(),
+  description: JoiHelper.AppCustomJoi().string().min(1).optional(),
+  validations: Joi.object({ isRequired, max, min }),
+  items: Joi.array()
+    .items(
+      Joi.object({
+        id,
+        label: JoiHelper.AppCustomJoi().string().min(1),
+        itemConditionOptions: Joi.object({
+          relativeToId: Joi.string().optional(),
+          forceExpandAndDisableToggleIf: Joi.array().items(Joi.string()).optional(),
+          displayIf: Joi.array().items(Joi.string()).optional()
+        }).optional(),
+        validations: Joi.object({ isRequired, max, min }).optional(),
+      })
+    )
+    .required(),
+});
+
 const checkboxArray = Joi.object({
   dataType: JoiHelper.AppCustomJoi().string().valid('checkbox-array').required(),
   id,
@@ -90,8 +139,9 @@ const checkboxArray = Joi.object({
       })
     )
     .required(),
-  addQuestion: Joi.alternatives(text, textArea, radioGroup)
+  addQuestions: Joi.array().items(Joi.alternatives(text, textArea, radioGroup, inputArray))
 });
+
 
 const fieldsGroup = Joi.object({
   dataType: JoiHelper.AppCustomJoi().string().valid('fields-group').required(),
@@ -101,10 +151,10 @@ const fieldsGroup = Joi.object({
   validations: Joi.object({ isRequired, max }),
   addNewLabel: JoiHelper.AppCustomJoi().string().min(1),
   field: text.required(),
-  addQuestion: Joi.alternatives(text, textArea).optional()
+  addQuestions: Joi.array().items(Joi.alternatives(text, textArea).optional())
 });
 
-const questions = Joi.array().items(text, textArea, radioGroup, autocompleteArray, checkboxArray, fieldsGroup);
+const questions = Joi.array().items(text, textArea, radioGroup, autocompleteArray, checkboxArray, checkboxConditionalInputArray, inputArray, fieldsGroup);
 
 const subSection = Joi.object({
   id,

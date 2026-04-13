@@ -305,7 +305,7 @@ describe('models / schema-engine / schema.model.ts', () => {
     expect(errors).toHaveLength(1);
   });
 
-  it('should give error when the addQuestion question is not valid', () => {
+  it('should give error when the addQuestions question is not valid', () => {
     const body: IRSchemaType = {
       sections: [
         {
@@ -324,7 +324,7 @@ describe('models / schema-engine / schema.model.ts', () => {
                       label: 'Question 1',
                       description: 'description 1',
                       field: { id: 'q2', dataType: 'text', label: 'Question 2' },
-                      addQuestion: { id: 'q1', dataType: 'text', label: 'Question 2' },
+                      addQuestions: [{ id: 'q1', dataType: 'text', label: 'Question 2' }],
                       addNewLabel: 'New label'
                     }
                   ]

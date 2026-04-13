@@ -133,21 +133,23 @@ export class SchemaModel {
         if (!config) continue;
 
         const question = config.question;
-        if (question.dataType === 'checkbox-array' && question.addQuestion) {
-          const addQuestion = this.getQuestionAndItemTranslations(question.addQuestion.id);
-          if (!addQuestion) continue;
-
-          // Checkbox-array + addQuestion is an array of objects
-          if (Array.isArray(value)) {
-            document[subSection][questionId] = value.map(v => {
-              const fieldKey = question.checkboxAnswerId ?? question.id;
-              const addQuestionKey = addQuestion.question.id;
-              return {
-                [fieldKey]: config.translations.get(v[fieldKey]) ?? v[fieldKey],
-                [addQuestionKey]: addQuestion.translations.get(v[addQuestionKey]) ?? v[addQuestionKey]
-              };
-            });
-          }
+        if (question.dataType === 'checkbox-array' && question.addQuestions) {
+          question.addQuestions.forEach(aq=>{
+            const addQuestion = this.getQuestionAndItemTranslations(aq.id);
+            if (!addQuestion) return;
+  
+            // Checkbox-array + addQuestion is an array of objects
+            if (Array.isArray(value)) {
+              document[subSection][questionId] = value.map(v => {
+                const fieldKey = question.checkboxAnswerId ?? question.id;
+                const addQuestionKey = addQuestion.question.id;
+                return {
+                  [fieldKey]: config.translations.get(v[fieldKey]) ?? v[fieldKey],
+                  [addQuestionKey]: addQuestion.translations.get(v[addQuestionKey]) ?? v[addQuestionKey]
+                };
+              });
+            }
+          })
         } else {
           if (Array.isArray(value)) {
             document[subSection][questionId] = value.map(v => config.translations.get(v) ?? v);
@@ -340,8 +342,10 @@ export class SchemaModel {
       this.validateQuestion(subSectionId, question.field, `${path}.field`, idList);
     }
 
-    if ('addQuestion' in question && question.addQuestion) {
-      this.validateQuestion(subSectionId, question.addQuestion, `${path}.addQuestion`, idList);
+    if ('addQuestions' in question && question.addQuestions) {
+      question.addQuestions.forEach(aq=>{
+        this.validateQuestion(subSectionId, aq, `${path}.addQuestion`, idList);
+      })
     }
   }
 
