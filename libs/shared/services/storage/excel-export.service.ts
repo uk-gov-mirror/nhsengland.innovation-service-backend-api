@@ -57,7 +57,7 @@ export class ExcelExportService {
      * Generates a complete ExcelJS Workbook strictly from the provided schema.
      * If a payload is provided, it pre-fills the answers.
      */
-    public generateTemplateWorkbook(schema: any, payload?: Record<string, any>): ExcelJS.Workbook {
+    public generateTemplateWorkbook(schema: any, payload?: Record<string, any>, schemaVersion?: number): ExcelJS.Workbook {
         // Reset state for safety if instance is reused
         this.redPriority = 5000;
         this.cellRegistry = {};
@@ -70,6 +70,11 @@ export class ExcelExportService {
         const formSheet = workbook.addWorksheet('Innovation Record');
         const refSheet = workbook.addWorksheet('ReferenceData');
         refSheet.state = 'hidden';
+        
+        if (schemaVersion) {
+            refSheet.getCell('Z1').value = 'SCHEMA_VERSION';
+            refSheet.getCell('Z2').value = schemaVersion;
+        }
 
         this.setupColumns(formSheet);
 

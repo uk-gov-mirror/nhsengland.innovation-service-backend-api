@@ -26,7 +26,7 @@ export class ExcelInnovationService {
    */
   async generateTemplate(): Promise<Buffer> {
     const schema = await this.irSchemaService.getSchema();
-    const workbook = this.excelExportService.generateTemplateWorkbook(schema.model.schema);
+    const workbook = this.excelExportService.generateTemplateWorkbook(schema.model.schema, undefined, schema.version);
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer as ArrayBuffer);
   }
@@ -36,7 +36,7 @@ export class ExcelInnovationService {
    */
   async generateExport(payload: any): Promise<Buffer> {
     const schema = await this.irSchemaService.getSchema();
-    const workbook = this.excelExportService.generateTemplateWorkbook(schema.model.schema, payload);
+    const workbook = this.excelExportService.generateTemplateWorkbook(schema.model.schema, payload, schema.version);
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer as ArrayBuffer);
   }
@@ -44,13 +44,26 @@ export class ExcelInnovationService {
   /**
    * Parses an uploaded Excel file (base64) and creates a new Innovation + its sections.
    */
-  async importInnovation(domainContext: DomainContextType, base64Xlsx: string): Promise<{ id: string }> {
+  async importInnovation(domainContext: DomainContextType, base64Xlsx: string): Promise<{ id: string; validationIssues: Record<string, string[]> }> {
     const buffer = Buffer.from(base64Xlsx, 'base64');
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer as any);
 
     const schema = await this.irSchemaService.getSchema();
-    console.log(`[ExcelImport] Starting import with schema version: ${schema.version}`);
+    console.log(`[ExcelImport] Starting import with DB schema version: ${schema.version}`);
+
+    const allValidationIssues: Record<string, string[]> = {};
+    
+    // --- SCHEMA VERSION CHECK ---
+    const extractedVersion = this.excelImportService.extractSchemaVersion(workbook);
+    console.log(`[ExcelImport] Uploaded file schema version: ${extractedVersion || 'Unknown'}`);
+    
+    if (!extractedVersion || extractedVersion < schema.version) {
+      allValidationIssues['GLOBAL_WARNING'] = [
+        `Warning: You uploaded an outdated Excel template (Version ${extractedVersion || 'Unknown'}). Some fields may not have imported correctly because the system rules have been updated.`
+      ];
+      console.warn(`[ExcelImport] Schema drift detected! Added global warning.`);
+    }
 
     // 1. Extract Registration (INNOVATION_DESCRIPTION) first to create the record.
     const { payload: regPayload, validationIssues } = this.excelImportService.parseRegistrationPayload(
@@ -61,6 +74,7 @@ export class ExcelInnovationService {
 
     console.log('[ExcelImport] Registration Payload Extracted:', JSON.stringify(regPayload, null, 2));
     if (validationIssues.length > 0) {
+      allValidationIssues['INNOVATION_DESCRIPTION'] = validationIssues;
       console.warn('[ExcelImport] Registration Validation Issues:', validationIssues);
     }
 
@@ -78,8 +92,95 @@ export class ExcelInnovationService {
     // 3. Extract all sections and perform updates for everything else
     const importResult = this.excelImportService.parseWorkbook(workbook, schema.model.schema, schema.model);
     
-    // Process sections sequentially to maintain sanity (though parallel would likely work)
     for (const section of importResult.sections) {
+      if (section.validationIssues && section.validationIssues.length > 0) {
+        allValidationIssues[section.sectionKey] = section.validationIssues;
+      }
+    }
+
+    await this.saveImportedSections(domainContext, innovationId, importResult.sections);
+
+    return { id: innovationId, validationIssues: allValidationIssues };
+  }
+
+  /**
+   * Parses a raw JSON payload and creates a new Innovation + its sections.
+   */
+  async importInnovationFromJson(domainContext: DomainContextType, jsonPayload: Record<string, Record<string, any>>): Promise<{ id: string; validationIssues: Record<string, string[]> }> {
+    const schema = await this.irSchemaService.getSchema();
+    console.log(`[JsonImport] Starting import with schema version: ${schema.version}`);
+
+    const allValidationIssues: Record<string, string[]> = {};
+
+    // 1. Extract Registration (INNOVATION_DESCRIPTION) first to create the record.
+    const rawRegPayload = jsonPayload['INNOVATION_DESCRIPTION'] || {};
+    
+    const regCalculatedFields = schema.model.getCalculatedFields('INNOVATION_DESCRIPTION', rawRegPayload);
+    const regPayload = { ...rawRegPayload, ...regCalculatedFields };
+
+    const validationIssues: string[] = [];
+    try {
+        const joiSchema = schema.model.getSubSectionPayloadValidation('INNOVATION_DESCRIPTION', rawRegPayload);
+        const { error } = joiSchema.validate(rawRegPayload, { abortEarly: false, allowUnknown: true });
+        if (error) error.details.forEach(d => validationIssues.push(d.message));
+    } catch (err: any) {
+        validationIssues.push(`Validation error: ${err?.message}`);
+    }
+
+    console.log('[JsonImport] Registration Payload Extracted:', JSON.stringify(regPayload, null, 2));
+    if (validationIssues.length > 0) {
+      allValidationIssues['INNOVATION_DESCRIPTION'] = validationIssues;
+      console.warn('[JsonImport] Registration Validation Issues:', validationIssues);
+    }
+
+    if (!regPayload['name'] || !regPayload['description']) {
+      console.error('[JsonImport] Missing required fields. Name:', regPayload['name'], 'Description:', regPayload['description']);
+      throw new Error('Incomplete payload: The "Innovation Name" and "Innovation Overview" are required to register.');
+    }
+
+    // 2. Create the Innovation (returns the new ID)
+    const { id: innovationId } = await this.innovationsService.createInnovation(
+      domainContext,
+      regPayload as any
+    );
+
+    // 3. Extract all sections and perform updates for everything else
+    const sections: any[] = [];
+    for (const section of schema.model.schema.sections) {
+      for (const subSection of section.subSections) {
+        const sectionKey = subSection.id as string;
+        const rawPayload = jsonPayload[sectionKey] || {};
+
+        if (Object.keys(rawPayload).length === 0) continue;
+
+        const secValidationIssues: string[] = [];
+        try {
+            const joiSchema = schema.model.getSubSectionPayloadValidation(sectionKey, rawPayload);
+            const { error } = joiSchema.validate(rawPayload, { abortEarly: false, allowUnknown: true });
+            if (error) error.details.forEach(d => secValidationIssues.push(d.message));
+        } catch (err: any) {
+            secValidationIssues.push(`Schema validation error: ${err?.message}`);
+        }
+
+        if (secValidationIssues.length > 0) {
+            allValidationIssues[sectionKey] = secValidationIssues;
+        }
+
+        const calculatedFields = schema.model.getCalculatedFields(sectionKey, rawPayload);
+        const finalPayload = { ...rawPayload, ...calculatedFields };
+
+        sections.push({ sectionKey, rawPayload, calculatedFields, finalPayload, validationIssues: secValidationIssues });
+      }
+    }
+    
+    await this.saveImportedSections(domainContext, innovationId, sections);
+
+    return { id: innovationId, validationIssues: allValidationIssues };
+  }
+
+  private async saveImportedSections(domainContext: DomainContextType, innovationId: string, sections: any[]): Promise<void> {
+    // Process sections sequentially to maintain sanity (though parallel would likely work)
+    for (const section of sections) {
       // Even though INNOVATION_DESCRIPTION was used for createInnovation, we MUST update it 
       // here as well because createInnovation only saves a tiny subset of its fields (name, desc, etc).
       // The rest of the fields (categories, areas, careSettings) need to be saved via updateInnovationSectionInfo.
@@ -90,7 +191,5 @@ export class ExcelInnovationService {
         section.finalPayload
       );
     }
-
-    return { id: innovationId };
   }
 }

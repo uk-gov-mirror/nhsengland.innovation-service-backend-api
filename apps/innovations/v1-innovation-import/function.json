@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["post"],
-      "route": "v1/innovations/xlsx"
+      "route": "v1/innovations/import"
     },
     {
       "type": "http",

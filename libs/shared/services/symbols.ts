@@ -15,7 +15,8 @@ export const SHARED_SYMBOLS = {
   IRSchemaService: Symbol.for('IRSchemaService'),
   IRExportService: Symbol.for('IRExportService'),
   ExcelExportService: Symbol.for('ExcelExportService'),
-  ExcelImportService: Symbol.for('ExcelImportService')
+  ExcelImportService: Symbol.for('ExcelImportService'),
+  SchemaDocGeneratorService: Symbol.for('SchemaDocGeneratorService'),
 };
 
 export default SHARED_SYMBOLS;

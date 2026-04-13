@@ -52,6 +52,22 @@ export interface ExcelImportResult {
 @injectable()
 export class ExcelImportService {
     /**
+     * Extracts the schema version from the uploaded Excel workbook, if present.
+     */
+    public extractSchemaVersion(workbook: ExcelJS.Workbook): number | undefined {
+        const refSheet = workbook.getWorksheet('ReferenceData');
+        if (!refSheet) return undefined;
+        
+        const versionLabel = this.cellStr(refSheet.getCell('Z1'));
+        if (versionLabel === 'SCHEMA_VERSION') {
+            const versionVal = this.cellStr(refSheet.getCell('Z2'));
+            const parsed = parseInt(versionVal, 10);
+            return isNaN(parsed) ? undefined : parsed;
+        }
+        return undefined;
+    }
+
+    /**
      * Parse a filled-in Excel workbook and extract section payloads.
      */
     public parseWorkbook(

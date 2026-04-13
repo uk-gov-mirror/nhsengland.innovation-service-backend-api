@@ -12,7 +12,7 @@ import SYMBOLS from '../_services/symbols';
 import type { ExcelInnovationService } from '../_services/excel-innovation.service';
 import { BodySchema, type BodyType } from './validation.schemas';
 
-class V1InnovationXlsxImport {
+class V1InnovationImport {
   @JwtDecoder()
   @Audit({
     action: ActionEnum.CREATE,
@@ -25,16 +25,24 @@ class V1InnovationXlsxImport {
     const excelInnovationService = container.get<ExcelInnovationService>(SYMBOLS.ExcelInnovationService);
 
     try {
-      const { file: base64Xlsx } = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+      const parsedBody = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
       const auth = await authorizationService
         .validate(context)
         .checkInnovatorType()
+        .checkAdminType()
         .verify();
 
-      const result = await excelInnovationService.importInnovation(auth.getContext(), base64Xlsx);
+      let result: { id: string; validationIssues: Record<string, string[]> };
+      if (parsedBody.format === 'excel' && parsedBody.file) {
+        result = await excelInnovationService.importInnovation(auth.getContext(), parsedBody.file);
+      } else if (parsedBody.format === 'json' && parsedBody.payload) {
+        result = await excelInnovationService.importInnovationFromJson(auth.getContext(), parsedBody.payload);
+      } else {
+        throw new Error('Invalid format or missing payload.');
+      }
       
-      context.res = ResponseHelper.Ok<{ id: string }>(result);
+      context.res = ResponseHelper.Ok<{ id: string; validationIssues: Record<string, string[]> }>(result);
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -43,23 +51,30 @@ class V1InnovationXlsxImport {
   }
 }
 
-export default openapi(V1InnovationXlsxImport.httpTrigger as AzureFunction, '/v1/innovations/xlsx', {
+export default openapi(V1InnovationImport.httpTrigger as AzureFunction, '/v1/innovations/import', {
   post: {
-    description: 'Create a new innovation record as DRAFT by importing a filled-in Excel file.',
+    description: 'Create a new innovation record as DRAFT by importing a filled-in Excel file or JSON payload.',
     tags: ['[v1] Innovations'],
-    operationId: 'v1-innovation-xlsx-import',
+    operationId: 'v1-innovation-import',
     requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
-      description: 'The Excel file content (base64 string).'
+      description: 'The import payload containing either base64 Excel file or JSON object.'
     }),
     responses: {
       200: {
-        description: 'New innovation record ID',
+        description: 'New innovation record ID with any validation warnings.',
         content: {
           'application/json': {
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string', format: 'uuid' }
+                id: { type: 'string', format: 'uuid' },
+                validationIssues: {
+                  type: 'object',
+                  additionalProperties: {
+                    type: 'array',
+                    items: { type: 'string' }
+                  }
+                }
               }
             }
           }
