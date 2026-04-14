@@ -44,7 +44,7 @@ export class ExcelInnovationService {
   /**
    * Parses an uploaded Excel file (base64) and creates a new Innovation + its sections.
    */
-  async importInnovation(domainContext: DomainContextType, base64Xlsx: string): Promise<{ id: string; validationIssues: Record<string, string[]> }> {
+  async importInnovation(domainContext: DomainContextType, base64Xlsx: string): Promise<{ id: string; validationIssues: Record<string, string[]>; skippedSections: string[] }> {
     const buffer = Buffer.from(base64Xlsx, 'base64');
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer as any);
@@ -100,17 +100,18 @@ export class ExcelInnovationService {
 
     await this.saveImportedSections(domainContext, innovationId, importResult.sections);
 
-    return { id: innovationId, validationIssues: allValidationIssues };
+    return { id: innovationId, validationIssues: allValidationIssues, skippedSections: importResult.skippedSections };
   }
 
   /**
    * Parses a raw JSON payload and creates a new Innovation + its sections.
    */
-  async importInnovationFromJson(domainContext: DomainContextType, jsonPayload: Record<string, Record<string, any>>): Promise<{ id: string; validationIssues: Record<string, string[]> }> {
+  async importInnovationFromJson(domainContext: DomainContextType, jsonPayload: Record<string, Record<string, any>>): Promise<{ id: string; validationIssues: Record<string, string[]>; skippedSections: string[] }> {
     const schema = await this.irSchemaService.getSchema();
     console.log(`[JsonImport] Starting import with schema version: ${schema.version}`);
 
     const allValidationIssues: Record<string, string[]> = {};
+    const skippedSections: string[] = [];
 
     // 1. Extract Registration (INNOVATION_DESCRIPTION) first to create the record.
     const rawRegPayload = jsonPayload['INNOVATION_DESCRIPTION'] || {};
@@ -151,7 +152,10 @@ export class ExcelInnovationService {
         const sectionKey = subSection.id as string;
         const rawPayload = jsonPayload[sectionKey] || {};
 
-        if (Object.keys(rawPayload).length === 0) continue;
+        if (Object.keys(rawPayload).length === 0) {
+            skippedSections.push(sectionKey);
+            continue;
+        }
 
         const secValidationIssues: string[] = [];
         try {
@@ -175,7 +179,7 @@ export class ExcelInnovationService {
     
     await this.saveImportedSections(domainContext, innovationId, sections);
 
-    return { id: innovationId, validationIssues: allValidationIssues };
+    return { id: innovationId, validationIssues: allValidationIssues, skippedSections };
   }
 
   private async saveImportedSections(domainContext: DomainContextType, innovationId: string, sections: any[]): Promise<void> {

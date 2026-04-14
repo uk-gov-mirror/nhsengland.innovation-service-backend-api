@@ -33,7 +33,7 @@ class V1InnovationImport {
         .checkAdminType()
         .verify();
 
-      let result: { id: string; validationIssues: Record<string, string[]> };
+      let result: { id: string; validationIssues: Record<string, string[]>; skippedSections: string[] };
       if (parsedBody.format === 'excel' && parsedBody.file) {
         result = await excelInnovationService.importInnovation(auth.getContext(), parsedBody.file);
       } else if (parsedBody.format === 'json' && parsedBody.payload) {
@@ -42,7 +42,7 @@ class V1InnovationImport {
         throw new Error('Invalid format or missing payload.');
       }
       
-      context.res = ResponseHelper.Ok<{ id: string; validationIssues: Record<string, string[]> }>(result);
+      context.res = ResponseHelper.Ok<{ id: string; validationIssues: Record<string, string[]>; skippedSections: string[] }>(result);
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -74,6 +74,10 @@ export default openapi(V1InnovationImport.httpTrigger as AzureFunction, '/v1/inn
                     type: 'array',
                     items: { type: 'string' }
                   }
+                },
+                skippedSections: {
+                  type: 'array',
+                  items: { type: 'string' }
                 }
               }
             }
