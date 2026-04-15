@@ -44,7 +44,7 @@ export class ExcelInnovationService {
   /**
    * Parses an uploaded Excel file (base64) and creates a new Innovation + its sections.
    */
-  async importInnovation(domainContext: DomainContextType, base64Xlsx: string): Promise<{ id: string; validationIssues: Record<string, string[]>; skippedSections: string[] }> {
+  async importInnovation(domainContext: DomainContextType, base64Xlsx: string): Promise<{ id: string; validationIssues: Record<string, string[]>; emptySections: string[] }> {
     const buffer = Buffer.from(base64Xlsx, 'base64');
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer as any);
@@ -98,20 +98,25 @@ export class ExcelInnovationService {
       }
     }
 
+    // Identify missing required fields in empty sections
+    for (const sectionKey of importResult.emptySections) {
+      this.validateRequiredFieldsInEmptySection(sectionKey, schema.model, allValidationIssues);
+    }
+
     await this.saveImportedSections(domainContext, innovationId, importResult.sections);
 
-    return { id: innovationId, validationIssues: allValidationIssues, skippedSections: importResult.skippedSections };
+    return { id: innovationId, validationIssues: allValidationIssues, emptySections: importResult.emptySections };
   }
 
   /**
    * Parses a raw JSON payload and creates a new Innovation + its sections.
    */
-  async importInnovationFromJson(domainContext: DomainContextType, jsonPayload: Record<string, Record<string, any>>): Promise<{ id: string; validationIssues: Record<string, string[]>; skippedSections: string[] }> {
+  async importInnovationFromJson(domainContext: DomainContextType, jsonPayload: Record<string, Record<string, any>>): Promise<{ id: string; validationIssues: Record<string, string[]>; emptySections: string[] }> {
     const schema = await this.irSchemaService.getSchema();
     console.log(`[JsonImport] Starting import with schema version: ${schema.version}`);
 
     const allValidationIssues: Record<string, string[]> = {};
-    const skippedSections: string[] = [];
+    const emptySections: string[] = [];
 
     // 1. Extract Registration (INNOVATION_DESCRIPTION) first to create the record.
     const rawRegPayload = jsonPayload['INNOVATION_DESCRIPTION'] || {};
@@ -153,7 +158,8 @@ export class ExcelInnovationService {
         const rawPayload = jsonPayload[sectionKey] || {};
 
         if (Object.keys(rawPayload).length === 0) {
-            skippedSections.push(sectionKey);
+            emptySections.push(sectionKey);
+            this.validateRequiredFieldsInEmptySection(sectionKey, schema.model, allValidationIssues);
             continue;
         }
 
@@ -179,7 +185,44 @@ export class ExcelInnovationService {
     
     await this.saveImportedSections(domainContext, innovationId, sections);
 
-    return { id: innovationId, validationIssues: allValidationIssues, skippedSections };
+    return { id: innovationId, validationIssues: allValidationIssues, emptySections };
+  }
+
+  /**
+   * Performs validation on an empty section to identify missing required fields.
+   * 
+   * This logic is used when a section is completely missing from the import (Excel or JSON).
+   * Since our validation engine is payload-driven, it won't report missing fields unless
+   * we provide a mock payload containing the field keys.
+   * 
+   * @example
+   * // If 'UNDERSTANDING_OF_NEEDS' is empty but requires 'problemsTackled':
+   * validateRequiredFieldsInEmptySection('UNDERSTANDING_OF_NEEDS', schemaModel, allValidationIssues);
+   * // Result: allValidationIssues['UNDERSTANDING_OF_NEEDS'] = ["'problemsTackled' is required"]
+   * 
+   * @param sectionKey - The unique ID of the section to validate.
+   * @param schemaModel - The SchemaModel instance containing business rules.
+   * @param allValidationIssues - The accumulator object for reporting errors.
+   */
+  private validateRequiredFieldsInEmptySection(
+    sectionKey: string,
+    schemaModel: any,
+    allValidationIssues: Record<string, string[]>
+  ): void {
+    try {
+      const questions = schemaModel.getSubsectionQuestions(sectionKey);
+      // Create a mock payload with all possible keys set to null to trigger 'required' checks
+      const mockPayload = questions.reduce((acc: any, q: any) => ({ ...acc, [q.id]: null }), {});
+
+      const joiSchema = schemaModel.getSubSectionPayloadValidation(sectionKey, mockPayload);
+      const { error } = joiSchema.validate({}, { abortEarly: false, allowUnknown: true });
+
+      if (error) {
+        allValidationIssues[sectionKey] = error.details.map((d: any) => d.message);
+      }
+    } catch {
+      // Silently skip if the validation factory fails for an empty context
+    }
   }
 
   private async saveImportedSections(domainContext: DomainContextType, innovationId: string, sections: any[]): Promise<void> {

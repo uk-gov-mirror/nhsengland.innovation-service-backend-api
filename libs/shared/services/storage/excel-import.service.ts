@@ -45,8 +45,8 @@ export interface ExcelImportResult {
     indexedIds: number;
     /** Parsed sections with data. */
     sections: ParsedSection[];
-    /** Section keys that were skipped because they had no data. */
-    skippedSections: string[];
+    /** Section keys that were found to be completely empty in the source. */
+    emptySections: string[];
 }
 
 @injectable()
@@ -69,6 +69,19 @@ export class ExcelImportService {
 
     /**
      * Parse a filled-in Excel workbook and extract section payloads.
+     *
+     * This is the single entry point for all callers. It:
+     *   1. Builds a row index from Column F (question IDs)
+     *   2. Walks the schema section by section
+     *   3. Extracts answers by dataType (text, radio, checkbox, fields-group)
+     *   4. Validates each section against SchemaModel
+     *   5. Merges calculated fields
+     *   6. Returns structured results — NO side effects, NO database writes
+     *
+     * @param workbook   An already-loaded ExcelJS workbook
+     * @param schema     The raw IR schema (IR_SCHEMA or from DB)
+     * @param schemaModel  A SchemaModel instance for validation & calculated fields
+     * @returns ExcelImportResult with all parsed sections
      */
     public parseWorkbook(
         workbook: ExcelJS.Workbook,
@@ -88,7 +101,7 @@ export class ExcelImportService {
         const rowIndex = this.buildRowIndex(sheet);
 
         const sections: ParsedSection[] = [];
-        const skippedSections: string[] = [];
+        const emptySections: string[] = [];
 
         for (const section of schema.sections) {
             for (const subSection of section.subSections) {
@@ -100,7 +113,7 @@ export class ExcelImportService {
                 this.extractQuestions(sheet, rowIndex, allQuestions, rawPayload);
 
                 if (Object.keys(rawPayload).length === 0) {
-                    skippedSections.push(sectionKey);
+                    emptySections.push(sectionKey);
                     continue;
                 }
 
@@ -127,12 +140,13 @@ export class ExcelImportService {
         return {
             indexedIds: rowIndex.size,
             sections,
-            skippedSections
+            emptySections
         };
     }
 
     /**
      * Convenience method: extract only the INNOVATION_DESCRIPTION section from a workbook.
+     * Used for CREATE mode where we need the registration payload before creating the innovation.
      */
     public parseRegistrationPayload(
         workbook: ExcelJS.Workbook,
