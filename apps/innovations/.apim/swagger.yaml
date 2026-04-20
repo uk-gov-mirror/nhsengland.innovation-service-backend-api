@@ -2023,6 +2023,7 @@ paths:
                         - INNOVATION_MESSAGE
                         - INNOVATION_PROGRESS_UPDATE
                         - INNOVATION_SECTION
+                        - INNOVATION_REGULATIONS
                   required:
                     - id
                     - type
@@ -2151,6 +2152,7 @@ paths:
                 - INNOVATION_MESSAGE
                 - INNOVATION_PROGRESS_UPDATE
                 - INNOVATION_SECTION
+                - INNOVATION_REGULATIONS
         - name: contextId
           in: query
           required: false
@@ -2226,6 +2228,7 @@ paths:
                                 - INNOVATION_MESSAGE
                                 - INNOVATION_PROGRESS_UPDATE
                                 - INNOVATION_SECTION
+                                - INNOVATION_REGULATIONS
                         name:
                           type: string
                         description:
@@ -2346,6 +2349,7 @@ paths:
                           - INNOVATION_MESSAGE
                           - INNOVATION_PROGRESS_UPDATE
                           - INNOVATION_SECTION
+                          - INNOVATION_REGULATIONS
                       name:
                         type: string
                     required:

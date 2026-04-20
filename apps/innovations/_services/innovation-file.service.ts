@@ -669,6 +669,9 @@ export class InnovationFileService extends BaseService {
       InnovationFileContextTypeEnum.INNOVATION_SECTION
     ),
     [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE]: this.evidenceContextMapper,
-    [InnovationFileContextTypeEnum.INNOVATION_MESSAGE]: this.messageContextMapper
+    [InnovationFileContextTypeEnum.INNOVATION_MESSAGE]: this.messageContextMapper,
+    [InnovationFileContextTypeEnum.INNOVATION_REGULATIONS]: this.defaultContextMapper(
+      InnovationFileContextTypeEnum.INNOVATION_REGULATIONS
+    )
   };
 }
