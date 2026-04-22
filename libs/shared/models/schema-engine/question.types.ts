@@ -2,6 +2,7 @@ type Validations = {
   isRequired?: boolean | string;
   min?: { length: number; errorMessage?: string };
   max?: { length: number; errorMessage?: string };
+  equalToLength?: { length: number; errorMessage?: string };
   minLength?: number;
   maxLength?: number;
   postcodeFormat?: boolean | string;
@@ -55,11 +56,11 @@ export type CheckboxArray = Base & {
 export type InputArray = Base & {
   dataType: 'input-array';
   items: {
-    id: string,
-    label:string
-    itemConditionOptions?:ItemConditionOptionsType,
+    id: string;
+    label: string;
+    itemConditionOptions?: ItemConditionOptionsType;
     validations?: Validations;
-  }[]
+  }[];
 };
 
 export type AutocompleteArray = Base & {
@@ -78,7 +79,7 @@ export type Question = Text | Textarea | RadioGroup | CheckboxArray | Autocomple
 
 export type ItemConditionOptionsType = {
   relativeToId?: string;
-  forceExpandAndDisableToggleIf?: string[] /* forcing expand and disable toggle to make it mandatory */;
+  mandatoryIf?: string[] /* mark as mandatory if on list */;
   displayIf?: string[] /* show item depending on previous answer */;
 };
 

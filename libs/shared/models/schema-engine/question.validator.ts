@@ -169,7 +169,7 @@ export class InputArrayValidator implements QuestionTypeValidator<InputArray> {
     for (const item of question.items ?? []) {
       if (!item.id) continue;
 
-      let itemValidation = JoiHelper.AppCustomJoi().string();
+      let itemValidation = JoiHelper.AppCustomJoi().string().allow(null);
 
       if (item.validations?.maxLength) {
         itemValidation = itemValidation.max(item.validations.maxLength);
@@ -181,6 +181,7 @@ export class InputArrayValidator implements QuestionTypeValidator<InputArray> {
 
       if (item.validations?.isRequired) {
         itemValidation = itemValidation.required();
+        // itemValidation = itemValidation.optional();
       } else {
         itemValidation = itemValidation.allow('', null).optional();
       }
@@ -189,12 +190,6 @@ export class InputArrayValidator implements QuestionTypeValidator<InputArray> {
     }
 
     let inputArrayValidation = Joi.object(objectSchemaDefinition);
-
-    if (question.validations?.isRequired) {
-      inputArrayValidation = inputArrayValidation.required();
-    } else {
-      inputArrayValidation = inputArrayValidation.optional();
-    }
 
     return inputArrayValidation;
   }
@@ -216,7 +211,7 @@ export class FieldGroupValidator implements QuestionTypeValidator<FieldsGroup> {
       // Since we have step by step, the first time the question is answered it doesn't have "yet" the answer for this
       // question. To prevent the validator to fail we make it optional.
       question.addQuestions.forEach(aq => {
-        obj[aq.id] = QuestionValidatorFactory.validate(aq).optional();
+        obj[aq.id] = QuestionValidatorFactory.validate(aq).optional().allow(null);
       });
     }
     if (Object.keys(obj).length) {
