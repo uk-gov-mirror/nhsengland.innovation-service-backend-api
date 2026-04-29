@@ -9,14 +9,19 @@ const StringSchema = JoiHelper.AppCustomJoi().string().max(100);
 const id = JoiHelper.AppCustomJoi().string().max(250).required();
 const isRequired = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
 const postcodeFormat = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
-const urlFormat = Joi.object({ message: StringSchema, maxLength: Joi.number().integer() });
+const urlFormat = Joi.object({
+  message: StringSchema.optional(),
+  errorMessage: StringSchema.optional(),
+  maxLength: Joi.number().integer()
+});
 const max = Joi.object({ length: Joi.number().integer().min(1), errorMessage: StringSchema });
 const min = Joi.object({ length: Joi.number().integer().min(1), errorMessage: StringSchema });
 const maxLength = Joi.number().integer().min(1);
 const condition = Joi.object({ id: StringSchema.required(), options: Joi.array().items(StringSchema).required() });
 const equalToLength = Joi.object({
   length: Joi.number().integer().min(1).required(),
-  message: StringSchema.optional()
+  message: StringSchema.optional(),
+  errorMessage: StringSchema.optional()
 });
 
 const textLimit = JoiHelper.AppCustomJoi().string().valid('xs');
@@ -118,7 +123,7 @@ const inputArray = Joi.object({
           mandatoryIf: Joi.array().items(Joi.string()).optional(),
           displayIf: Joi.array().items(Joi.string()).optional()
         }).optional(),
-        validations: Joi.object({ isRequired, max, min, equalToLength }).optional()
+        validations: Joi.object({ isRequired, max, min, equalToLength, urlFormat, postcodeFormat }).optional()
       })
     )
     .required()
