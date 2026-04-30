@@ -1,6 +1,7 @@
 import { inject, injectable } from 'inversify';
 import * as ExcelJS from 'exceljs';
 
+import { InnovationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 import type { IRSchemaService } from '@innovations/shared/services';
@@ -78,9 +79,9 @@ export class ExcelInnovationService {
       console.warn('[ExcelImport] Registration Validation Issues:', validationIssues);
     }
 
-    if (!regPayload['name'] || !regPayload['description']) {
-      console.error('[ExcelImport] Missing required fields. Name:', regPayload['name'], 'Description:', regPayload['description']);
-      throw new Error('Incomplete Excel file: The "Innovation Name" and "Innovation Overview" are required to register.');
+    if (!regPayload['name'] || !regPayload['description'] || !regPayload['officeLocation']) {
+      console.error('[ExcelImport] Missing required fields. Name:', regPayload['name'], 'Description:', regPayload['description'], 'Location:', regPayload['officeLocation']);
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_INFO_EMPTY_INPUT);
     }
 
     // 2. Create the Innovation (returns the new ID)
@@ -139,9 +140,9 @@ export class ExcelInnovationService {
       console.warn('[JsonImport] Registration Validation Issues:', validationIssues);
     }
 
-    if (!regPayload['name'] || !regPayload['description']) {
-      console.error('[JsonImport] Missing required fields. Name:', regPayload['name'], 'Description:', regPayload['description']);
-      throw new Error('Incomplete payload: The "Innovation Name" and "Innovation Overview" are required to register.');
+    if (!regPayload['name'] || !regPayload['description'] || !regPayload['officeLocation']) {
+      console.error('[JsonImport] Missing required fields. Name:', regPayload['name'], 'Description:', regPayload['description'], 'Location:', regPayload['officeLocation']);
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_INFO_EMPTY_INPUT);
     }
 
     // 2. Create the Innovation (returns the new ID)
