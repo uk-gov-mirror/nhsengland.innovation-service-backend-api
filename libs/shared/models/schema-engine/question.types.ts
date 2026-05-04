@@ -78,9 +78,20 @@ export type FieldsGroup = Base & {
 export type Question = Text | Textarea | RadioGroup | CheckboxArray | AutocompleteArray | FieldsGroup | InputArray;
 
 export type ItemConditionOptionsType = {
-  relativeToId?: string;
-  mandatoryIf?: string[] /* mark as mandatory if on list */;
-  displayIf?: string[] /* show item depending on previous answer */;
+  mandatoryIf?: ConditionGroupType[] /* mark as mandatory if on list */;
+  displayIf?: ConditionGroupType[] /* show item depending on previous answer */;
+};
+
+export type ConditionType = {
+  list: string[];
+  logic?: 'inclusive' | 'exclusive';
+  id?: string;
+  relation?: 'parent' | 'sibling';
+};
+
+export type ConditionGroupType = {
+  groupLogic: 'AND' | 'OR';
+  conditions: ConditionType[];
 };
 
 // Others
