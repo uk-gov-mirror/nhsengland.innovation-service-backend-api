@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import * as ExcelJS from 'exceljs';
 
-import { InnovationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
+import { InnovationErrorsEnum, UnprocessableEntityError, BadRequestError } from '@innovations/shared/errors';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 import type { IRSchemaService } from '@innovations/shared/services';
@@ -48,7 +48,13 @@ export class ExcelInnovationService {
   async importInnovation(domainContext: DomainContextType, base64Xlsx: string): Promise<{ id: string; validationIssues: Record<string, string[]>; emptySections: string[] }> {
     const buffer = Buffer.from(base64Xlsx, 'base64');
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer as any);
+    
+    try {
+      await workbook.xlsx.load(buffer as any);
+    } catch (err) {
+      console.error('[ExcelImport] Failed to load Excel workbook:', err);
+      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_RECORD_INVALID_EXCEL_FILE);
+    }
 
     const schema = await this.irSchemaService.getSchema();
     console.log(`[ExcelImport] Starting import with DB schema version: ${schema.version}`);

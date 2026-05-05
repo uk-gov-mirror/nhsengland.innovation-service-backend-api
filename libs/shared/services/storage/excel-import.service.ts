@@ -8,6 +8,7 @@
 
 import { injectable } from 'inversify';
 import type * as ExcelJS from 'exceljs';
+import { InnovationErrorsEnum, BadRequestError } from '../../errors';
 import type { Question, RadioGroup, CheckboxArray, FieldsGroup } from '../../models/schema-engine/question.types';
 import type { SchemaModel } from '../../models/schema-engine/schema.model';
 import { buildQuestionMap, resolveQuestionItems } from './excel-schema-helpers';
@@ -94,7 +95,7 @@ export class ExcelImportService {
         // Find the "Innovation Record" worksheet
         const sheet = workbook.getWorksheet('Innovation Record');
         if (!sheet) {
-            throw new Error('Worksheet "Innovation Record" not found in the workbook.');
+            throw new BadRequestError(InnovationErrorsEnum.INNOVATION_RECORD_INVALID_EXCEL_FILE);
         }
 
         // Build the row index from Column F
@@ -156,7 +157,7 @@ export class ExcelImportService {
         buildQuestionMap(schema.sections);
 
         const sheet = workbook.getWorksheet('Innovation Record');
-        if (!sheet) throw new Error('Worksheet "Innovation Record" not found.');
+        if (!sheet) throw new BadRequestError(InnovationErrorsEnum.INNOVATION_RECORD_INVALID_EXCEL_FILE);
 
         const rowIndex = this.buildRowIndex(sheet);
 
