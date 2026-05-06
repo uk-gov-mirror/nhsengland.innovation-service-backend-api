@@ -108,7 +108,15 @@ const inputArray = Joi.object({
           mandatoryIf: conditionGroup.optional(),
           displayIf: conditionGroup.optional()
         }).optional(),
-        validations: Joi.object({ isRequired, max, min, equalToLength, urlFormat, postcodeFormat }).optional()
+        validations: Joi.object({
+          isRequired,
+          maxLength,
+          max,
+          min,
+          equalToLength,
+          urlFormat,
+          postcodeFormat
+        }).optional()
       })
     )
     .required()

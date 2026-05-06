@@ -3155,7 +3155,7 @@
                               }
                             },
                             validations: {
-                              equalToLength: { length: 50, errorMessage: "Must be 50 characters long" }
+                              maxLength: 50
                             }
                           },
                           {
@@ -3217,7 +3217,7 @@
                               }
                             },
                             validations: {
-                              equalToLength: { length: 50, errorMessage: "Must be 50 characters long" }
+                              maxLength: 50
                             }
                           },
                           {
@@ -3270,13 +3270,13 @@
                               displayIf: { conditions: [{ id: "standards", list: ["MARKETING_AUTHORISATION"] }] }
                             },
                             validations: {
-                              equalToLength: { length: 15, errorMessage: "Must be 15 characters long" }
+                              maxLength: 15
                             }
                           },
                           {
                             id: "CQC",
                             label: "CQC registration number",
-                            description: "Up to 10 characters",
+                            description: "Must be 10 characters long",
                             itemConditionOptions: {
                               mandatoryIf: {
                                 groupLogic: "AND",
@@ -3304,7 +3304,7 @@
                           {
                             id: "ICO",
                             label: "ICO registration number",
-                            description: "Up to 8 characters",
+                            description: "Must be 8 characters long",
                             itemConditionOptions: {
                               mandatoryIf: {
                                 groupLogic: "AND",
@@ -3440,10 +3440,6 @@
                         id: "EU_IVDR_IVD_CLASS_D",
                         label: "EU IVDR IVD Class D (Northern Ireland & EU)",
                         group: "In-vitro diagnostics regulations"
-                      },
-                      {
-                        id: "IONISING_RADIATION",
-                        label: "Ionising Radiation (Medical Exposure) Regulations"
                       },
                       {
                         id: "DTAC",
