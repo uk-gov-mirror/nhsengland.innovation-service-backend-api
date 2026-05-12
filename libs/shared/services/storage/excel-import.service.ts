@@ -11,7 +11,7 @@ import type * as ExcelJS from 'exceljs';
 import { InnovationErrorsEnum, BadRequestError } from '../../errors';
 import type { Question, RadioGroup, CheckboxArray, FieldsGroup } from '../../models/schema-engine/question.types';
 import type { SchemaModel } from '../../models/schema-engine/schema.model';
-import { buildQuestionMap, resolveQuestionItems } from './excel-schema-helpers';
+import { buildQuestionMap, resolveQuestionItems, getSmartMockPayload } from './excel-schema-helpers';
 
 // ──────────────────────────────────────────────────────────────
 // COLUMN LAYOUT
@@ -121,7 +121,13 @@ export class ExcelImportService {
                 // Validate
                 const validationIssues: string[] = [];
                 try {
-                    const joiSchema = schemaModel.getSubSectionPayloadValidation(sectionKey, rawPayload);
+                    // Create a 'smart' mock payload that only includes questions from steps 
+                    // whose conditions are met. This ensures we catch missing required fields
+                    // without flagging hidden conditional fields.
+                    const mockPayload = getSmartMockPayload(subSection, rawPayload);
+
+                    const joiSchema = schemaModel.getSubSectionPayloadValidation(sectionKey, mockPayload);
+                    
                     const { error } = joiSchema.validate(rawPayload, { abortEarly: false, allowUnknown: true });
                     if (error) {
                         error.details.forEach(d => validationIssues.push(d.message));
@@ -177,7 +183,13 @@ export class ExcelImportService {
 
         const validationIssues: string[] = [];
         try {
-            const joiSchema = schemaModel.getSubSectionPayloadValidation('INNOVATION_DESCRIPTION', rawPayload);
+            // Create a 'smart' mock payload that only includes questions from steps 
+            // whose conditions are met. This ensures we catch missing required fields
+            // without flagging hidden conditional fields.
+            const mockPayload = getSmartMockPayload(descSection, rawPayload);
+
+            const joiSchema = schemaModel.getSubSectionPayloadValidation('INNOVATION_DESCRIPTION', mockPayload);
+            
             const { error } = joiSchema.validate(rawPayload, { abortEarly: false, allowUnknown: true });
             if (error) error.details.forEach(d => validationIssues.push(d.message));
         } catch (err: any) {

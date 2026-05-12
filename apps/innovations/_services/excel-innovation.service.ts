@@ -11,6 +11,7 @@ import type { ExcelImportService } from '@innovations/shared/services/storage/ex
 import type { InnovationsService } from './innovations.service';
 import type { InnovationSectionsService } from './innovation-sections.service';
 import SYMBOLS from './symbols';
+import { getSmartMockPayload } from '../../../libs/shared/services/storage/excel-schema-helpers';
 
 @injectable()
 export class ExcelInnovationService {
@@ -133,9 +134,20 @@ export class ExcelInnovationService {
 
     const validationIssues: string[] = [];
     try {
-        const joiSchema = schema.model.getSubSectionPayloadValidation('INNOVATION_DESCRIPTION', rawRegPayload);
-        const { error } = joiSchema.validate(rawRegPayload, { abortEarly: false, allowUnknown: true });
-        if (error) error.details.forEach(d => validationIssues.push(d.message));
+        const descSection = schema.model.schema.sections
+            .flatMap((s: any) => s.subSections)
+            .find((ss: any) => ss.id === 'INNOVATION_DESCRIPTION');
+if (!descSection) throw new Error('INNOVATION_DESCRIPTION section not found in schema.');
+
+// Smart mock payload for registration
+const mockPayload = getSmartMockPayload(descSection, rawRegPayload);
+
+const joiSchema = schema.model.getSubSectionPayloadValidation('INNOVATION_DESCRIPTION', mockPayload);
+const { error } = joiSchema.validate(rawRegPayload, { abortEarly: false, allowUnknown: true });
+if (error) {
+    error.details.forEach(d => validationIssues.push(d.message));
+}
+
     } catch (err: any) {
         validationIssues.push(`Validation error: ${err?.message}`);
     }
@@ -172,7 +184,11 @@ export class ExcelInnovationService {
 
         const secValidationIssues: string[] = [];
         try {
-            const joiSchema = schema.model.getSubSectionPayloadValidation(sectionKey, rawPayload);
+            // Smart mock payload for JSON subsections
+            const mockPayload = getSmartMockPayload(subSection, rawPayload);
+
+            const joiSchema = schema.model.getSubSectionPayloadValidation(sectionKey, mockPayload);
+
             const { error } = joiSchema.validate(rawPayload, { abortEarly: false, allowUnknown: true });
             if (error) error.details.forEach(d => secValidationIssues.push(d.message));
         } catch (err: any) {
@@ -217,9 +233,15 @@ export class ExcelInnovationService {
     allValidationIssues: Record<string, string[]>
   ): void {
     try {
-      const questions = schemaModel.getSubsectionQuestions(sectionKey);
-      // Create a mock payload with all possible keys set to null to trigger 'required' checks
-      const mockPayload = questions.reduce((acc: any, q: any) => ({ ...acc, [q.id]: null }), {});
+      const subSection = schemaModel.schema.sections
+          .flatMap((s: any) => s.subSections)
+          .find((ss: any) => ss.id === sectionKey);
+
+      if (!subSection) return;
+
+      // Smart mock payload for empty section: 
+      // Only includes questions from steps without conditions (top-level) when data is empty.
+      const mockPayload = getSmartMockPayload(subSection, {});
 
       const joiSchema = schemaModel.getSubSectionPayloadValidation(sectionKey, mockPayload);
       const { error } = joiSchema.validate({}, { abortEarly: false, allowUnknown: true });
@@ -227,7 +249,8 @@ export class ExcelInnovationService {
       if (error) {
         allValidationIssues[sectionKey] = error.details.map((d: any) => d.message);
       }
-    } catch {
+    } catch (err: any) {
+      console.error(`[validateRequiredFieldsInEmptySection] Failed to validate section ${sectionKey}:`, err?.message);
       // Silently skip if the validation factory fails for an empty context
     }
   }

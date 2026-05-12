@@ -59,3 +59,37 @@ export function resolveQuestionItems(q: Question): any[] {
     }
     return [];
 }
+
+/**
+ * Creates a "Smart Mock Payload" for a subsection based on the current data.
+ * It iterates through steps and only adds question IDs to the mock if the step's
+ * condition is met (or if it has no condition).
+ *
+ * This mock is then used to generate a Joi schema that correctly identifies
+ * missing required fields for "active" questions while ignoring "hidden" ones.
+ *
+ * @param subSection The subsection containing steps and conditions
+ * @param currentData The current data extracted from Excel or JSON
+ * @returns A record of question IDs mapped to null, representing the "expected" keys
+ */
+export function getSmartMockPayload(subSection: any, currentData: Record<string, any>): Record<string, null> {
+    const mockPayload: Record<string, null> = {};
+
+    if (!subSection || !subSection.steps) return mockPayload;
+
+    subSection.steps.forEach((step: any) => {
+        let isStepActive = true;
+        if (step.condition) {
+            const parentValue = currentData[step.condition.id];
+            isStepActive = Array.isArray(step.condition.options) && step.condition.options.includes(parentValue);
+        }
+
+        if (isStepActive && step.questions) {
+            step.questions.forEach((q: any) => {
+                mockPayload[q.id] = null;
+            });
+        }
+    });
+
+    return mockPayload;
+}
