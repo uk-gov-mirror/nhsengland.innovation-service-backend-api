@@ -2466,6 +2466,63 @@ paths:
           description: Invalid payload
         "404":
           description: Innovation not found
+  /v1/innovations/import:
+    post:
+      description: Create a new innovation record as DRAFT by importing a filled-in
+        Excel file or JSON payload.
+      tags:
+        - "[v1] Innovations"
+      operationId: v1-innovation-import
+      requestBody:
+        description: The import payload containing either base64 Excel file or JSON object.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                format:
+                  type: string
+                  enum:
+                    - excel
+                    - json
+                file:
+                  oneOf:
+                    - type: string
+                      x-required: true
+                payload:
+                  oneOf:
+                    - type: object
+                      properties: {}
+                      x-required: true
+              required:
+                - format
+              additionalProperties: false
+      responses:
+        "200":
+          description: New innovation record ID with any validation warnings.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  validationIssues:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+                  emptySections:
+                    type: array
+                    items:
+                      type: string
+        "400":
+          description: Invalid payload
+        "422":
+          description: Unprocessable entity
   /v1/{innovationId}:
     get:
       operationId: v1-innovation-info
@@ -6115,41 +6172,6 @@ paths:
                 type: string
         "401":
           description: Unauthorized
-  /v1/innovations/xlsx:
-    post:
-      description: Create a new innovation record as DRAFT by importing a filled-in
-        Excel file.
-      tags:
-        - "[v1] Innovations"
-      operationId: v1-innovation-xlsx-import
-      requestBody:
-        description: The Excel file content (base64 string).
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-              required:
-                - file
-              additionalProperties: false
-      responses:
-        "200":
-          description: New innovation record ID
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-        "400":
-          description: Invalid payload
-        "422":
-          description: Unprocessable entity
   /v1/{innovationId}/export-requests:
     post:
       operationId: v1-innovations-export-requests-create

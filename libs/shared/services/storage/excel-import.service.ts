@@ -56,12 +56,12 @@ export class ExcelImportService {
      * Extracts the schema version from the uploaded Excel workbook, if present.
      */
     public extractSchemaVersion(workbook: ExcelJS.Workbook): number | undefined {
-        const refSheet = workbook.getWorksheet('ReferenceData');
-        if (!refSheet) return undefined;
+        const metaSheet = workbook.getWorksheet('_Metadata');
+        if (!metaSheet) return undefined;
         
-        const versionLabel = this.cellStr(refSheet.getCell('Z1'));
+        const versionLabel = this.cellStr(metaSheet.getCell('A1'));
         if (versionLabel === 'SCHEMA_VERSION') {
-            const versionVal = this.cellStr(refSheet.getCell('Z2'));
+            const versionVal = this.cellStr(metaSheet.getCell('A2'));
             const parsed = parseInt(versionVal, 10);
             return isNaN(parsed) ? undefined : parsed;
         }

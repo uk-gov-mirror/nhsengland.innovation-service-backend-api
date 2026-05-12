@@ -70,10 +70,13 @@ export class ExcelExportService {
         const formSheet = workbook.addWorksheet('Innovation Record');
         const refSheet = workbook.addWorksheet('ReferenceData');
         refSheet.state = 'hidden';
+
+        const metaSheet = workbook.addWorksheet('_Metadata');
+        metaSheet.state = 'hidden';
         
         if (schemaVersion) {
-            refSheet.getCell('Z1').value = 'SCHEMA_VERSION';
-            refSheet.getCell('Z2').value = schemaVersion;
+            metaSheet.getCell('A1').value = 'SCHEMA_VERSION';
+            metaSheet.getCell('A2').value = schemaVersion;
         }
 
         this.setupColumns(formSheet);
