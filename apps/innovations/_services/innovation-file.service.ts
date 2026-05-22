@@ -1,43 +1,43 @@
-import { inject, injectable } from 'inversify';
-import { basename, extname } from 'path';
+import { inject, injectable } from "inversify";
+import { basename, extname } from "path";
 
-import { randomUUID } from 'crypto';
-import { Brackets, type EntityManager } from 'typeorm';
+import { randomUUID } from "crypto";
+import { Brackets, type EntityManager } from "typeorm";
 
-import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
-import { InnovationFileEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
+import { MAX_FILES_ALLOWED } from "@innovations/shared/constants";
+import { InnovationFileEntity, InnovationThreadMessageEntity } from "@innovations/shared/entities";
 import {
   InnovationFileContextTypeEnum,
   InnovationStatusEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
   UserStatusEnum
-} from '@innovations/shared/enums';
+} from "@innovations/shared/enums";
 import {
   ConflictError,
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError
-} from '@innovations/shared/errors';
-import { TranslationHelper, type PaginationQueryParamsType } from '@innovations/shared/helpers';
-import type { DomainService, FileStorageService, IRSchemaService, NotifierService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+} from "@innovations/shared/errors";
+import { TranslationHelper, type PaginationQueryParamsType } from "@innovations/shared/helpers";
+import type { DomainService, FileStorageService, IRSchemaService, NotifierService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
 import {
   isAccessorDomainContextType,
   isAssessmentDomainContextType,
   type DomainContextType
-} from '@innovations/shared/types';
+} from "@innovations/shared/types";
 
-import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
+import { AuthErrorsEnum } from "@innovations/shared/services/auth/authorization-validation.model";
 import type {
   InnovationFileOutputContextType,
   InnovationFileOutputType,
   InnovationFileTypeWithContext
-} from '../_types/innovation.types';
-import { BaseService } from './base.service';
-import type { InnovationDocumentService } from './innovation-document.service';
-import SYMBOLS from './symbols';
+} from "../_types/innovation.types";
+import { BaseService } from "./base.service";
+import type { InnovationDocumentService } from "./innovation-document.service";
+import SYMBOLS from "./symbols";
 
 @injectable()
 export class InnovationFileService extends BaseService {
@@ -61,13 +61,13 @@ export class InnovationFileService extends BaseService {
       contextId?: string;
       units?: string[];
       dateFilter?: {
-        field: 'createdAt';
+        field: "createdAt";
         startDate?: Date;
         endDate?: Date;
       }[];
-      fields?: 'description'[];
+      fields?: "description"[];
     },
-    pagination: PaginationQueryParamsType<'name' | 'createdAt' | 'contextType'>,
+    pagination: PaginationQueryParamsType<"name" | "createdAt" | "contextType">,
     entityManager?: EntityManager
   ): Promise<{
     count: number;
@@ -85,59 +85,59 @@ export class InnovationFileService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const query = connection
-      .createQueryBuilder(InnovationFileEntity, 'file')
+      .createQueryBuilder(InnovationFileEntity, "file")
       .select([
-        'file.id',
-        'file.storageId',
-        'file.contextId',
-        'file.contextType',
-        'file.name',
-        'file.description',
-        'file.createdAt',
-        'file.filename',
-        'file.filesize',
-        'file.extension',
-        'createdByUserRole.id',
-        'createdByUserRole.role',
-        'createdByUser.id',
-        'createdByUser.identityId',
-        'createdByUser.status',
-        'createdByUserOrgUnit.id',
-        'createdByUserOrgUnit.name',
-        'innovation.id',
-        'innovationOwner.id'
+        "file.id",
+        "file.storageId",
+        "file.contextId",
+        "file.contextType",
+        "file.name",
+        "file.description",
+        "file.createdAt",
+        "file.filename",
+        "file.filesize",
+        "file.extension",
+        "createdByUserRole.id",
+        "createdByUserRole.role",
+        "createdByUser.id",
+        "createdByUser.identityId",
+        "createdByUser.status",
+        "createdByUserOrgUnit.id",
+        "createdByUserOrgUnit.name",
+        "innovation.id",
+        "innovationOwner.id"
       ])
-      .innerJoin('file.createdByUserRole', 'createdByUserRole')
-      .innerJoin('createdByUserRole.user', 'createdByUser')
-      .leftJoin('createdByUserRole.organisationUnit', 'createdByUserOrgUnit')
-      .innerJoin('file.innovation', 'innovation')
-      .leftJoin('innovation.owner', 'innovationOwner')
-      .where('file.innovation_id = :innovationId', { innovationId });
+      .innerJoin("file.createdByUserRole", "createdByUserRole")
+      .innerJoin("createdByUserRole.user", "createdByUser")
+      .leftJoin("createdByUserRole.organisationUnit", "createdByUserOrgUnit")
+      .innerJoin("file.innovation", "innovation")
+      .leftJoin("innovation.owner", "innovationOwner")
+      .where("file.innovation_id = :innovationId", { innovationId });
 
     if (filters.name) {
-      query.andWhere('file.name LIKE :fileName', { fileName: `%${filters.name}%` });
+      query.andWhere("file.name LIKE :fileName", { fileName: `%${filters.name}%` });
     }
 
     if (filters.uploadedBy && filters.uploadedBy.length > 0) {
-      query.andWhere('createdByUserRole.role IN (:...uploadedBy)', { uploadedBy: filters.uploadedBy });
+      query.andWhere("createdByUserRole.role IN (:...uploadedBy)", { uploadedBy: filters.uploadedBy });
     }
 
     if (filters.contextTypes) {
-      query.andWhere('file.context_type IN (:...contextTypes)', { contextTypes: filters.contextTypes });
+      query.andWhere("file.context_type IN (:...contextTypes)", { contextTypes: filters.contextTypes });
     }
 
     if (filters.contextId) {
-      query.andWhere('file.context_id = :contextId', { contextId: filters.contextId });
+      query.andWhere("file.context_id = :contextId", { contextId: filters.contextId });
     }
 
     if (filters.units) {
-      query.andWhere('createdByUserOrgUnit.id IN (:...units)', {
+      query.andWhere("createdByUserOrgUnit.id IN (:...units)", {
         units: filters.units
       });
     }
 
     if (filters.dateFilter && filters.dateFilter.length > 0) {
-      const dateFilterKeyMap = new Map([['createdAt', 'file.created_at']]);
+      const dateFilterKeyMap = new Map([["createdAt", "file.created_at"]]);
 
       for (const dateFilter of filters.dateFilter) {
         const filterKey = dateFilterKeyMap.get(dateFilter.field);
@@ -164,8 +164,8 @@ export class InnovationFileService extends BaseService {
     if (isAccessorDomainContextType(domainContext) || isAssessmentDomainContextType(domainContext)) {
       query.andWhere(
         new Brackets(qb => {
-          qb.where('innovation.status <> :archivedStatus', { archivedStatus: InnovationStatusEnum.ARCHIVED }).orWhere(
-            'file.createdAt < innovation.statusUpdatedAt'
+          qb.where("innovation.status <> :archivedStatus", { archivedStatus: InnovationStatusEnum.ARCHIVED }).orWhere(
+            "file.createdAt < innovation.statusUpdatedAt"
           );
         })
       );
@@ -178,17 +178,17 @@ export class InnovationFileService extends BaseService {
     for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
-        case 'name':
-          field = 'file.name';
+        case "name":
+          field = "file.name";
           break;
-        case 'createdAt':
-          field = 'file.createdAt';
+        case "createdAt":
+          field = "file.createdAt";
           break;
-        case 'contextType':
-          field = 'file.contextType';
+        case "contextType":
+          field = "file.contextType";
           break;
         default:
-          field = 'file.name';
+          field = "file.name";
           break;
       }
       query.addOrderBy(field, order);
@@ -222,7 +222,7 @@ export class InnovationFileService extends BaseService {
           id: file.contextId
         },
         name: file.name,
-        ...(filters.fields?.includes('description') && { description: file.description ?? undefined }),
+        ...(filters.fields?.includes("description") && { description: file.description ?? undefined }),
         createdAt: file.createdAt,
         createdBy: {
           name: usersInfo.getDisplayName(file.createdByUserRole.user.identityId),
@@ -267,36 +267,36 @@ export class InnovationFileService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const file = await connection
-      .createQueryBuilder(InnovationFileEntity, 'file')
+      .createQueryBuilder(InnovationFileEntity, "file")
       .select([
-        'file.id',
-        'file.storageId',
-        'file.contextId',
-        'file.contextType',
-        'file.name',
-        'file.description',
-        'file.createdAt',
-        'file.filename',
-        'file.filesize',
-        'file.extension',
-        'createdByUserRole.id',
-        'createdByUserRole.role',
-        'createdByUser.id',
-        'createdByUser.identityId',
-        'createdByUser.status',
-        'createdByUserOrgUnit.id',
-        'createdByUserOrgUnit.name',
-        'innovation.id',
-        'innovationOwner.id',
-        'innovation.status'
+        "file.id",
+        "file.storageId",
+        "file.contextId",
+        "file.contextType",
+        "file.name",
+        "file.description",
+        "file.createdAt",
+        "file.filename",
+        "file.filesize",
+        "file.extension",
+        "createdByUserRole.id",
+        "createdByUserRole.role",
+        "createdByUser.id",
+        "createdByUser.identityId",
+        "createdByUser.status",
+        "createdByUserOrgUnit.id",
+        "createdByUserOrgUnit.name",
+        "innovation.id",
+        "innovationOwner.id",
+        "innovation.status"
       ])
-      .innerJoin('file.createdByUserRole', 'createdByUserRole')
-      .innerJoin('createdByUserRole.user', 'createdByUser')
-      .leftJoin('createdByUserRole.organisationUnit', 'createdByUserOrgUnit')
-      .innerJoin('file.innovation', 'innovation')
-      .leftJoin('innovation.owner', 'innovationOwner')
-      .where('file.innovation_id = :innovationId', { innovationId })
-      .andWhere('file.id = :fileId', { fileId })
+      .innerJoin("file.createdByUserRole", "createdByUserRole")
+      .innerJoin("createdByUserRole.user", "createdByUser")
+      .leftJoin("createdByUserRole.organisationUnit", "createdByUserOrgUnit")
+      .innerJoin("file.innovation", "innovation")
+      .leftJoin("innovation.owner", "innovationOwner")
+      .where("file.innovation_id = :innovationId", { innovationId })
+      .andWhere("file.id = :fileId", { fileId })
       .getOne();
 
     if (!file) {
@@ -389,8 +389,8 @@ export class InnovationFileService extends BaseService {
     }
 
     const nFiles = await connection
-      .createQueryBuilder(InnovationFileEntity, 'file')
-      .where('file.innovation_id = :innovationId', { innovationId })
+      .createQueryBuilder(InnovationFileEntity, "file")
+      .where("file.innovation_id = :innovationId", { innovationId })
       .getCount();
 
     if (nFiles >= MAX_FILES_ALLOWED) {
@@ -426,7 +426,7 @@ export class InnovationFileService extends BaseService {
     }
 
     if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-      await this.notifierService.sendNotifyMe(domainContext, innovationId, 'DOCUMENT_UPLOADED', {
+      await this.notifierService.sendNotifyMe(domainContext, innovationId, "DOCUMENT_UPLOADED", {
         documentName: file.name
       });
     }
@@ -441,16 +441,16 @@ export class InnovationFileService extends BaseService {
     entityManager: EntityManager
   ): Promise<void> {
     const query = entityManager
-      .createQueryBuilder(InnovationFileEntity, 'file')
-      .select(['file.id'])
-      .where('file.innovation_id = :innovationId', { innovationId });
+      .createQueryBuilder(InnovationFileEntity, "file")
+      .select(["file.id"])
+      .where("file.innovation_id = :innovationId", { innovationId });
 
     if (filters.contextType) {
-      query.andWhere('file.context_type = :contextType', { contextType: filters.contextType });
+      query.andWhere("file.context_type = :contextType", { contextType: filters.contextType });
     }
 
     if (filters.contextId) {
-      query.andWhere('file.context_id = :contextId', { contextId: filters.contextId });
+      query.andWhere("file.context_id = :contextId", { contextId: filters.contextId });
     }
 
     const files = await query.getMany();
@@ -463,20 +463,20 @@ export class InnovationFileService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const file = await connection
-      .createQueryBuilder(InnovationFileEntity, 'file')
+      .createQueryBuilder(InnovationFileEntity, "file")
       .select([
-        'file.id',
-        'file.storageId',
-        'file.contextType',
-        'createdByRole.id',
-        'createdByRole.role',
-        'createdByUserOrgUnit.id',
-        'innovation.status'
+        "file.id",
+        "file.storageId",
+        "file.contextType",
+        "createdByRole.id",
+        "createdByRole.role",
+        "createdByUserOrgUnit.id",
+        "innovation.status"
       ])
-      .innerJoin('file.createdByUserRole', 'createdByRole')
-      .innerJoin('file.innovation', 'innovation')
-      .leftJoin('createdByRole.organisationUnit', 'createdByUserOrgUnit')
-      .where('file.id = :fileId', { fileId })
+      .innerJoin("file.createdByUserRole", "createdByRole")
+      .innerJoin("file.innovation", "innovation")
+      .leftJoin("createdByRole.organisationUnit", "createdByUserOrgUnit")
+      .where("file.id = :fileId", { fileId })
       .getOne();
 
     if (!file) {
@@ -627,7 +627,7 @@ export class InnovationFileService extends BaseService {
     return ids.map(id => ({
       id: id,
       type: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE as const,
-      name: evidenceMap.get(id) ?? '' // this should never be undefined since all evidence files must have an evidence (not throwing error though )
+      name: evidenceMap.get(id) ?? "" // this should never be undefined since all evidence files must have an evidence (not throwing error though )
     }));
   };
 
@@ -641,10 +641,10 @@ export class InnovationFileService extends BaseService {
     const messagesMap = new Map(
       (
         await entityManager
-          .createQueryBuilder(InnovationThreadMessageEntity, 'message')
-          .select(['message.id', 'thread.id', 'thread.subject'])
-          .innerJoin('message.thread', 'thread')
-          .where('message.id IN (:...ids)', { ids })
+          .createQueryBuilder(InnovationThreadMessageEntity, "message")
+          .select(["message.id", "thread.id", "thread.subject"])
+          .innerJoin("message.thread", "thread")
+          .where("message.id IN (:...ids)", { ids })
           .getMany()
       ).map(m => [m.id, { threadId: m.thread.id, name: m.thread.subject }])
     );
@@ -652,8 +652,8 @@ export class InnovationFileService extends BaseService {
     return ids.map(id => ({
       id,
       type: InnovationFileContextTypeEnum.INNOVATION_MESSAGE as const,
-      name: messagesMap.get(id)?.name ?? '', // this should never be undefined since all message files must have a message (not throwing error though )
-      threadId: messagesMap.get(id)?.threadId ?? ''
+      name: messagesMap.get(id)?.name ?? "", // this should never be undefined since all message files must have a message (not throwing error though )
+      threadId: messagesMap.get(id)?.threadId ?? ""
     }));
   };
 

@@ -1,4 +1,4 @@
-import Joi from 'joi';
+import Joi from "joi";
 
 import {
   InnovationGroupedStatusEnum,
@@ -6,27 +6,27 @@ import {
   MaturityLevelCatalogueType,
   ProgressAreasCatalogType,
   ServiceRoleEnum
-} from '@innovations/shared/enums';
-import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { JoiHelper } from '@innovations/shared/helpers';
+} from "@innovations/shared/enums";
+import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
+import { JoiHelper } from "@innovations/shared/helpers";
 
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import { InnovationLocationEnum } from '../_enums/innovation.enums';
-import type { InnovationListFilters } from '../_services/innovations.service';
-import { DateFilterFieldsType, InnovationListSelectType } from '../_services/innovations.service';
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
+import { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
+import { InnovationLocationEnum } from "../_enums/innovation.enums";
+import type { InnovationListFilters } from "../_services/innovations.service";
+import { DateFilterFieldsType, InnovationListSelectType } from "../_services/innovations.service";
 
-export type QueryParamsType = PaginationQueryParamsType<InnovationListSelectType & 'relevance'> &
+export type QueryParamsType = PaginationQueryParamsType<InnovationListSelectType & "relevance"> &
   InnovationListFilters & {
     fields: InnovationListSelectType[];
-    type?: 'csv';
+    type?: "csv";
   };
 
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
-  orderKeys: ['relevance', ...Object.values(InnovationListSelectType)]
+  orderKeys: ["relevance", ...Object.values(InnovationListSelectType)]
 })
   .append<QueryParamsType>({
-    type: Joi.string().valid('csv').optional(),
+    type: Joi.string().valid("csv").optional(),
     careSettings: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(
@@ -103,7 +103,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
           .valid(...Object.values(InnovationLocationEnum))
       )
       .optional(),
-    search: JoiHelper.AppCustomJoi().decodeURIString().trim().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional(),
+    search: JoiHelper.AppCustomJoi().decodeURIString().trim().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, "").optional(),
     areas: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(
@@ -120,7 +120,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
           .valid(...MaturityLevelCatalogueType)
       )
       .optional(),
-      progressAreas: JoiHelper.AppCustomJoi()
+    progressAreas: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(
         JoiHelper.AppCustomJoi()
@@ -129,7 +129,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       )
       .optional()
   })
-  .when('$userType', {
+  .when("$userType", {
     switch: [
       // {
       //   is: ServiceRoleEnum.INNOVATOR,
@@ -199,7 +199,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
                 .valid(...Object.values(InnovationSupportStatusEnum))
             )
             .optional(),
-          supportUnit: Joi.when('supportStatuses', {
+          supportUnit: Joi.when("supportStatuses", {
             is: Joi.exist(),
             then: JoiHelper.AppCustomJoi().string().uuid().required()
           })

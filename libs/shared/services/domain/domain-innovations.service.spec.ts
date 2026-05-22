@@ -1,7 +1,13 @@
 import { randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { container } from '../../config/inversify.config';
-import { InnovationDocumentEntity, InnovationEntity, InnovationThreadEntity, UserEntity, UserRoleEntity } from '../../entities';
+import {
+  InnovationDocumentEntity,
+  InnovationEntity,
+  InnovationThreadEntity,
+  UserEntity,
+  UserRoleEntity
+} from '../../entities';
 import { InnovationGroupedStatusEnum, UserStatusEnum } from '../../enums';
 import { BadRequestError, InnovationErrorsEnum } from '../../errors';
 import { TestsHelper } from '../../tests';
@@ -260,13 +266,16 @@ describe('Shared / services / innovations suite', () => {
       await em.getRepository(UserEntity).update(user.id, { status: UserStatusEnum.LOCKED });
 
       // Create a thread
-      const thread = await em.save(InnovationThreadEntity, InnovationThreadEntity.new({
-        subject: 'Test Thread',
-        innovation: InnovationEntity.new({ id: user.innovations.johnInnovation.id }),
-        author: UserEntity.new({ id: user.id }),
-        authorUserRole: UserRoleEntity.new({ id: user.roles.innovatorRole.id }),
-        followers: []
-      }));
+      const thread = await em.save(
+        InnovationThreadEntity,
+        InnovationThreadEntity.new({
+          subject: 'Test Thread',
+          innovation: InnovationEntity.new({ id: user.innovations.johnInnovation.id }),
+          author: UserEntity.new({ id: user.id }),
+          authorUserRole: UserRoleEntity.new({ id: user.roles.innovatorRole.id }),
+          followers: []
+        })
+      );
 
       const result = await sut.threadFollowers(thread.id, true, em);
       const follower = result.find(x => x.id === user.id);

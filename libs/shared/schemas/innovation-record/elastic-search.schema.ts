@@ -157,7 +157,7 @@ export const ElasticSearchSchema: CreateIndexParams = {
           assignedToIdentityId: { type: 'keyword' },
           updatedAt: { type: 'date' },
           isExempt: { type: 'boolean' },
-          maturityLevel:{ type: 'keyword' },
+          maturityLevel: { type: 'keyword' },
           finishedAt: { type: 'date' }
         }
       },

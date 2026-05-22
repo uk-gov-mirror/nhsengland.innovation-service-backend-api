@@ -338,6 +338,9 @@ export class OrganisationsService extends BaseService {
       })
     );
 
-    return { count: data.length, data: data.sort((a, b) => a.needsAssessorUserName.localeCompare(b.needsAssessorUserName)) };
+    return {
+      count: data.length,
+      data: data.sort((a, b) => a.needsAssessorUserName.localeCompare(b.needsAssessorUserName))
+    };
   }
 }

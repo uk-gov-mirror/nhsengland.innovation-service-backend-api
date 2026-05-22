@@ -1,8 +1,8 @@
-import azureFunction from '.';
+import azureFunction from ".";
 
-import { RedisService } from '@innovations/shared/services';
-import { TestsHelper } from '@innovations/shared/tests';
-import { SearchService } from '../_services/search.service';
+import { RedisService } from "@innovations/shared/services";
+import { TestsHelper } from "@innovations/shared/tests";
+import { SearchService } from "../_services/search.service";
 
 const testsHelper = new TestsHelper();
 
@@ -11,11 +11,11 @@ beforeAll(async () => {
 });
 
 const popFromSetSpy = jest
-  .spyOn(RedisService.prototype, 'popFromSet')
-  .mockResolvedValueOnce('1111')
+  .spyOn(RedisService.prototype, "popFromSet")
+  .mockResolvedValueOnce("1111")
   .mockResolvedValueOnce(null);
-const upsertDocumentSpy = jest.spyOn(SearchService.prototype, 'upsertDocument').mockResolvedValue();
-const addToSetSpy = jest.spyOn(RedisService.prototype, 'addToSet').mockResolvedValue();
+const upsertDocumentSpy = jest.spyOn(SearchService.prototype, "upsertDocument").mockResolvedValue();
+const addToSetSpy = jest.spyOn(RedisService.prototype, "addToSet").mockResolvedValue();
 
 afterEach(() => {
   popFromSetSpy.mockClear();
@@ -23,14 +23,14 @@ afterEach(() => {
   addToSetSpy.mockClear();
 });
 
-describe('v1-innovation-update-index-cron', () => {
-  it('should reindex documents that are on redis', async () => {
+describe("v1-innovation-update-index-cron", () => {
+  it("should reindex documents that are on redis", async () => {
     await azureFunction();
     expect(popFromSetSpy).toHaveBeenCalledTimes(2);
     expect(upsertDocumentSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should add to redis set again in case of error', async () => {
+  it("should add to redis set again in case of error", async () => {
     upsertDocumentSpy.mockRejectedValue(new Error());
     try {
       await azureFunction();

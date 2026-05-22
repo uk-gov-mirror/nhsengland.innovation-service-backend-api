@@ -1,4 +1,4 @@
-import type { IRSchemaType} from './schema.model';
+import type { IRSchemaType } from './schema.model';
 import { SchemaModel } from './schema.model';
 import { requiredSectionsAndQuestions } from '../../schemas/innovation-record';
 import { randCountry, randText } from '@ngneat/falso';
@@ -583,7 +583,7 @@ describe('models / schema-engine / schema.model.ts', () => {
           categories: ['IN_VITRO_DIAGNOSTIC'],
           mainCategory: 'IN_VITRO_DIAGNOSTIC',
           areas: ['DATA_ANALYTICS_AND_RESEARCH', 'DIGITALISING_SYSTEM', 'IMPROVING_SYSTEM_FLOW'],
-          careSettings: [ 'END_LIFE_CARE', 'INDUSTRY', 'LOCAL_AUTHORITY_EDUCATION', 'OTHER' ],
+          careSettings: ['END_LIFE_CARE', 'INDUSTRY', 'LOCAL_AUTHORITY_EDUCATION', 'OTHER'],
           otherCareSetting: 'I want another',
           mainPurpose: 'ENABLING_CARE',
           involvedAACProgrammes: [
@@ -696,7 +696,7 @@ describe('models / schema-engine / schema.model.ts', () => {
             'Innovation for Healthcare Inequalities Programme'
           ],
           mainPurpose: 'Enabling care, services or communication',
-          careSettings: [ 'End of life care (EOLC)', 'Industry', 'Local authority - education', 'Other' ]
+          careSettings: ['End of life care (EOLC)', 'Industry', 'Local authority - education', 'Other']
         },
         UNDERSTANDING_OF_NEEDS: {
           diseasesConditionsImpact: ['Blood and immune system conditions - Allergies'],
@@ -771,7 +771,7 @@ describe('models / schema-engine / schema.model.ts', () => {
           hasCostKnowledge: 'Yes, I have a detailed estimate',
           costComparison:
             'My innovation costs more to purchase, but has greater benefits that will lead to overall cost savings',
-          patientsRange: 'More than half a million per year',
+          patientsRange: 'More than half a million per year'
         },
         DEPLOYMENT: {},
         version: '6',
