@@ -504,10 +504,11 @@ export function generateDocumentContent(schema: IRSchemaType): Paragraph[] {
 
             // Format the answer based on data type
             switch (question.dataType) {
-              case 'checkbox-array':
+              case 'checkbox-array': {
                 const items = processQuestionItems(question.addQuestion);
                 paragraphs.push(...items);
                 break;
+              }
               case 'fields-group':
               default:
                 paragraphs.push(basicParagraph('[Write your answer here]'));
@@ -530,6 +531,31 @@ export function processQuestionItems(question: Question): Paragraph[] {
   }
 
   const items = question.items || [];
+
+  const processConditionalQuestion = (conditional: Question): void => {
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: conditional.label,
+            bold: true,
+            size: 24,
+            font: DOCUMENT_FONT
+          })
+        ],
+        spacing: { before: 400 }
+      })
+    );
+
+    switch (conditional.dataType) {
+      case 'radio-group':
+      case 'checkbox-array':
+        paragraphs.push(...processQuestionItems(conditional));
+        break;
+      default:
+        paragraphs.push(basicParagraph('[Write your answer here]'));
+    }
+  };
 
   items.forEach(item => {
     if ('type' in item && item.type === 'separator') {
@@ -555,6 +581,10 @@ export function processQuestionItems(question: Question): Paragraph[] {
             spacing: { before: 100, after: 200 }
           })
         );
+      }
+
+      if ('conditional' in item && item.conditional && typeof item.conditional !== 'string') {
+        processConditionalQuestion(item.conditional);
       }
     } else {
       paragraphs.push(basicParagraph('[Write your answer here]'));
