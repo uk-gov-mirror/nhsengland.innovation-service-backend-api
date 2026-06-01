@@ -134,22 +134,52 @@ export class SchemaModel {
 
         const question = config.question;
         if (question.dataType === 'checkbox-array' && question.addQuestions) {
-          question.addQuestions.forEach(aq=>{
-            const addQuestion = this.getQuestionAndItemTranslations(aq.id);
-            if (!addQuestion) return;
-  
-            // Checkbox-array + addQuestion is an array of objects
+          let toReturn: Record<string, any>[] = [];
+
+          if (Array.isArray(value)) {
+            const fieldKey = question.checkboxAnswerId ?? question.id;
+            value.forEach(v => {
+              let translatedAnswer: Record<string, string> = {};
+              // add parent value
+              translatedAnswer[fieldKey] = config.translations.get(v[fieldKey]) ?? v[fieldKey];
+
+              // add addQuestions values
+              question.addQuestions &&
+                question.addQuestions!.forEach(aq => {
+                  const addQuestion = this.getQuestionAndItemTranslations(aq.id);
+                  if (!addQuestion) return;
+
+                  const addQuestionKey = addQuestion?.question.id;
+
+                  let addQuestionAnswer = v[addQuestionKey];
+                  let addQuestionTranslatedAnswer: any;
+
+                  // check if answer is a single item or an object, and parse value appropriately
+                  if (typeof addQuestionAnswer === 'object' && addQuestionAnswer !== null) {
+                    addQuestionTranslatedAnswer = Object.fromEntries(
+                      Object.entries(addQuestionAnswer).map(([key, value]) => [
+                        addQuestion.translations.get(key) ?? key,
+                        value
+                      ])
+                    );
+                  } else {
+                    addQuestionTranslatedAnswer = addQuestion.translations.get(v[addQuestionKey]) ?? v[addQuestionKey];
+                  }
+
+                  translatedAnswer[addQuestionKey] = addQuestionTranslatedAnswer;
+                });
+              toReturn.push(translatedAnswer);
+            });
+
+            document[subSection][questionId] = toReturn;
+          } else {
             if (Array.isArray(value)) {
-              document[subSection][questionId] = value.map(v => {
-                const fieldKey = question.checkboxAnswerId ?? question.id;
-                const addQuestionKey = addQuestion.question.id;
-                return {
-                  [fieldKey]: config.translations.get(v[fieldKey]) ?? v[fieldKey],
-                  [addQuestionKey]: addQuestion.translations.get(v[addQuestionKey]) ?? v[addQuestionKey]
-                };
-              });
+              document[subSection][questionId] = value.map(v => config.translations.get(v) ?? v);
+            } else if (typeof value === 'string') {
+              document[subSection][questionId] = config.translations.get(value) ?? value;
             }
-          })
+          }
+          document[subSection][questionId] = toReturn;
         } else {
           if (Array.isArray(value)) {
             document[subSection][questionId] = value.map(v => config.translations.get(v) ?? v);
@@ -343,9 +373,9 @@ export class SchemaModel {
     }
 
     if ('addQuestions' in question && question.addQuestions) {
-      question.addQuestions.forEach(aq=>{
+      question.addQuestions.forEach(aq => {
         this.validateQuestion(subSectionId, aq, `${path}.addQuestion`, idList);
-      })
+      });
     }
   }
 

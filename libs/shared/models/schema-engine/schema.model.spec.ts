@@ -1,4 +1,4 @@
-import type { IRSchemaType} from './schema.model';
+import type { IRSchemaType } from './schema.model';
 import { SchemaModel } from './schema.model';
 import { requiredSectionsAndQuestions } from '../../schemas/innovation-record';
 import { randCountry, randText } from '@ngneat/falso';
@@ -583,7 +583,7 @@ describe('models / schema-engine / schema.model.ts', () => {
           categories: ['IN_VITRO_DIAGNOSTIC'],
           mainCategory: 'IN_VITRO_DIAGNOSTIC',
           areas: ['DATA_ANALYTICS_AND_RESEARCH', 'DIGITALISING_SYSTEM', 'IMPROVING_SYSTEM_FLOW'],
-          careSettings: [ 'END_LIFE_CARE', 'INDUSTRY', 'LOCAL_AUTHORITY_EDUCATION', 'OTHER' ],
+          careSettings: ['END_LIFE_CARE', 'INDUSTRY', 'LOCAL_AUTHORITY_EDUCATION', 'OTHER'],
           otherCareSetting: 'I want another',
           mainPurpose: 'ENABLING_CARE',
           involvedAACProgrammes: [
@@ -639,10 +639,40 @@ describe('models / schema-engine / schema.model.ts', () => {
         REGULATIONS_AND_STANDARDS: {
           hasRegulationKnowledge: 'YES_ALL',
           standards: [
-            { type: 'CE_UKCA_NON_MEDICAL', hasMet: 'YES' },
-            { type: 'CE_UKCA_CLASS_I', hasMet: 'YES' },
-            { type: 'IVD_GENERAL', hasMet: 'IN_PROGRESS' },
-            { type: 'IVD_SELF_TEST', hasMet: 'IN_PROGRESS' }
+            {
+              type: 'UKR_MDR_GENERAL_IVD',
+              hasMet: 'YES',
+              certifications: {
+                GMDN: '12345',
+                UDI: null,
+                'UDI-DI': null
+              }
+            },
+            {
+              type: 'UK_MDR_CLASS_I',
+              hasMet: 'YES',
+              certifications: {
+                GMDN: '12345',
+                UDI: null,
+                UDI_DI: null
+              }
+            },
+            {
+              type: 'CQC',
+              hasMet: 'IN_PROGRESS',
+              certifications: {
+                CQC: null
+              }
+            },
+            {
+              type: 'UKR_MDR_IVD_SELF_TEST',
+              hasMet: 'IN_PROGRESS',
+              certifications: {
+                GMDN: null,
+                UDI: null,
+                UDI_DI: null
+              }
+            }
           ]
         },
         REVENUE_MODEL: {
@@ -696,7 +726,7 @@ describe('models / schema-engine / schema.model.ts', () => {
             'Innovation for Healthcare Inequalities Programme'
           ],
           mainPurpose: 'Enabling care, services or communication',
-          careSettings: [ 'End of life care (EOLC)', 'Industry', 'Local authority - education', 'Other' ]
+          careSettings: ['End of life care (EOLC)', 'Industry', 'Local authority - education', 'Other']
         },
         UNDERSTANDING_OF_NEEDS: {
           diseasesConditionsImpact: ['Blood and immune system conditions - Allergies'],
@@ -747,10 +777,40 @@ describe('models / schema-engine / schema.model.ts', () => {
         },
         REGULATIONS_AND_STANDARDS: {
           standards: [
-            { hasMet: 'Yes', type: 'Non-medical device' },
-            { hasMet: 'Yes', type: 'Class I medical device' },
-            { hasMet: 'I am actively working towards it', type: 'IVD general' },
-            { hasMet: 'I am actively working towards it', type: 'IVD self-test' }
+            {
+              hasMet: 'Yes',
+              type: 'UK MDR General IVD (Great Britain)',
+              certifications: {
+                GMDN: '12345',
+                'Basic UDI': null,
+                'UDI-DI': null
+              }
+            },
+            {
+              hasMet: 'Yes',
+              type: 'UK MDR Class I (Great Britain)',
+              certifications: {
+                GMDN: '12345',
+                'Basic UDI': null,
+                'UDI-DI': null
+              }
+            },
+            {
+              hasMet: 'I am actively working towards it',
+              type: 'Care Quality Commission (CQC) registration, as I am providing a regulated activity',
+              certifications: {
+                'CQC registration number': null
+              }
+            },
+            {
+              hasMet: 'I am actively working towards it',
+              type: 'UK MDR IVD for self test (Great Britain)',
+              certifications: {
+                GMDN: null,
+                'Basic UDI': null,
+                'UDI-DI': null
+              }
+            }
           ],
           hasRegulationKnowledge: 'Yes, I know all of them'
         },
@@ -771,7 +831,7 @@ describe('models / schema-engine / schema.model.ts', () => {
           hasCostKnowledge: 'Yes, I have a detailed estimate',
           costComparison:
             'My innovation costs more to purchase, but has greater benefits that will lead to overall cost savings',
-          patientsRange: 'More than half a million per year',
+          patientsRange: 'More than half a million per year'
         },
         DEPLOYMENT: {},
         version: '6',
