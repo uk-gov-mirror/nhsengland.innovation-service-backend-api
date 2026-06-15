@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { injectable } from 'inversify';
+import { injectable, unmanaged } from 'inversify';
 import { LoggerService } from '@admin/shared/services';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import type { StorageQueueService } from '@admin/shared/services/integrations/storage-queue.service';
@@ -126,7 +126,7 @@ export class AlertManagerService {
   private readonly store: AlertManagerThrottleStore;
   private readonly sendManagerEmail: (alert: NormalizedAlertPayload, recipients: string[]) => Promise<void>;
 
-  constructor(options: AlertManagerServiceOptions = {}) {
+  constructor(@unmanaged() options: AlertManagerServiceOptions = {}) {
     this.environment = options.environment ?? process.env['ALERT_MANAGER_ENVIRONMENT'] ?? 'local';
     this.throttleMinutes = options.throttleMinutes ?? Number(process.env['ALERT_MANAGER_THROTTLE_MINUTES'] || 4);
     this.retentionDays = options.retentionDays ?? Number(process.env['ALERT_MANAGER_RETENTION_DAYS'] || 90);
