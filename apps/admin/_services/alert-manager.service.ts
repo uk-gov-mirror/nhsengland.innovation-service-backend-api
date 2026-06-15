@@ -27,11 +27,13 @@ export type AlertManagerThrottleEntity = {
   lastResolvedEmailAt?: string;
   lastSeverity: string;
   lastPayloadSummary: string;
+  lastUpdatedAt?: string;
 };
 
 export type AlertManagerThrottleStore = {
   get(partitionKey: string, rowKey: string): Promise<AlertManagerThrottleEntity | null>;
   upsert(entity: AlertManagerThrottleEntity): Promise<void>;
+  deleteOldEntities(partitionKey: string, retentionDays: number): Promise<void>;
 };
 
 export type AlertManagerResult = {
@@ -42,6 +44,7 @@ export type AlertManagerResult = {
 type AlertManagerServiceOptions = {
   environment?: string;
   throttleMinutes?: number;
+  retentionDays?: number;
   managerRecipients?: string[];
   now?: () => Date;
   store?: AlertManagerThrottleStore;
@@ -95,19 +98,37 @@ export class AzureTableAlertManagerThrottleStore implements AlertManagerThrottle
     });
     await this.tableClient.upsertEntity(entity, 'Merge');
   }
+
+  async deleteOldEntities(partitionKey: string, retentionDays: number): Promise<void> {
+    const cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000).toISOString();
+    console.log('[AlertManager] Deleting entities older than', { cutoffDate });
+
+    const entities = this.tableClient.listEntities<AlertManagerThrottleEntity>({
+      queryOptions: { filter: `PartitionKey eq '${partitionKey}' and lastUpdatedAt lt '${cutoffDate}'` }
+    });
+
+    for await (const entity of entities) {
+      if (entity.rowKey !== '__cleanup__') {
+        console.log('[AlertManager] Deleting old throttle entity', { rowKey: entity.rowKey });
+        await this.tableClient.deleteEntity(partitionKey, entity.rowKey);
+      }
+    }
+  }
 }
 
 export class AlertManagerService {
   private readonly environment: string;
   private readonly throttleMinutes: number;
+  private readonly retentionDays: number;
   private readonly managerRecipients: string[];
   private readonly now: () => Date;
   private readonly store: AlertManagerThrottleStore;
   private readonly sendManagerEmail: (alert: NormalizedAlertPayload, recipients: string[]) => Promise<void>;
 
   constructor(options: AlertManagerServiceOptions = {}) {
-    this.environment = options.environment ?? process.env['ALERT_MANAGER_ENVIRONMENT'] ?? 'dev';
+    this.environment = options.environment ?? process.env['ALERT_MANAGER_ENVIRONMENT'] ?? 'local';
     this.throttleMinutes = options.throttleMinutes ?? Number(process.env['ALERT_MANAGER_THROTTLE_MINUTES'] || 4);
+    this.retentionDays = options.retentionDays ?? Number(process.env['ALERT_MANAGER_RETENTION_DAYS'] || 90);
     this.managerRecipients =
       options.managerRecipients ??
       (process.env['ALERT_MANAGER_EMAIL_RECIPIENTS'] || '')
@@ -189,12 +210,14 @@ export class AlertManagerService {
         severity: alert.severity,
         monitorCondition: alert.monitorCondition,
         firedDateTime: alert.firedDateTime
-      })
+      }),
+      lastUpdatedAt: nowIso
     };
 
     if (alert.monitorCondition === 'Resolved') {
       console.log('[AlertManager] Resolved alert recorded without manager email', { rowKey });
       await this.store.upsert({ ...baseEntity, lastResolvedEmailAt: nowIso });
+      await this.runOpportunisticCleanup(partitionKey);
       return { action: 'resolved_recorded', reason: 'Resolved alert recorded without manager email' };
     }
 
@@ -205,6 +228,7 @@ export class AlertManagerService {
         throttleMinutes: this.throttleMinutes
       });
       await this.store.upsert(baseEntity);
+      await this.runOpportunisticCleanup(partitionKey);
       return { action: 'suppressed', reason: 'Manager email suppressed by throttle window' };
     }
 
@@ -215,8 +239,41 @@ export class AlertManagerService {
     });
     await this.sendManagerEmail(alert, this.managerRecipients);
     await this.store.upsert({ ...baseEntity, lastFiredEmailAt: nowIso });
+    await this.runOpportunisticCleanup(partitionKey);
 
     return { action: 'sent', reason: 'Manager email sent' };
+  }
+
+  private async runOpportunisticCleanup(partitionKey: string): Promise<void> {
+    try {
+      const cleanupMarker = await this.store.get(partitionKey, '__cleanup__');
+      const now = this.now();
+
+      if (cleanupMarker?.lastUpdatedAt) {
+        const lastCleanup = new Date(cleanupMarker.lastUpdatedAt);
+        const hoursSinceLastCleanup = (now.getTime() - lastCleanup.getTime()) / (1000 * 60 * 60);
+        if (hoursSinceLastCleanup < 24) {
+          return;
+        }
+      }
+
+      console.log('[AlertManager] Running opportunistic cleanup for older entities');
+      await this.store.deleteOldEntities(partitionKey, this.retentionDays);
+
+      await this.store.upsert({
+        partitionKey,
+        rowKey: '__cleanup__',
+        alertRuleName: '__cleanup__',
+        resourceId: '__cleanup__',
+        currentMonitorCondition: 'Resolved',
+        incidentStartedAt: now.toISOString(),
+        lastSeverity: 'Unknown',
+        lastPayloadSummary: '{}',
+        lastUpdatedAt: now.toISOString()
+      });
+    } catch (error) {
+      console.error('[AlertManager] Opportunistic cleanup failed', error);
+    }
   }
 
   private shouldSuppress(lastFiredEmailAt?: string): boolean {

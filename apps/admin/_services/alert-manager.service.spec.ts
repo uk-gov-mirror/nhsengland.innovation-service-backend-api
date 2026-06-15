@@ -1,9 +1,32 @@
 import {
   AlertManagerService,
+  AzureTableAlertManagerThrottleStore,
   type AlertManagerThrottleEntity,
   type AlertManagerThrottleStore,
   type NormalizedAlertPayload
 } from './alert-manager.service';
+
+jest.mock('@azure/data-tables', () => {
+  return {
+    AzureNamedKeyCredential: jest.fn(),
+    TableClient: Object.assign(
+      jest.fn().mockImplementation(() => ({
+        getEntity: jest.fn(),
+        upsertEntity: jest.fn(),
+        listEntities: jest.fn(),
+        deleteEntity: jest.fn()
+      })),
+      {
+        fromConnectionString: jest.fn().mockReturnValue({
+          getEntity: jest.fn(),
+          upsertEntity: jest.fn(),
+          listEntities: jest.fn(),
+          deleteEntity: jest.fn()
+        })
+      }
+    )
+  };
+});
 
 const alertRule = 'Innovation Service Main Website';
 const alertRuleId =
@@ -47,7 +70,8 @@ const createStore = (existingEntity?: Partial<AlertManagerThrottleEntity>): Aler
     get: jest.fn(async () => (entity as AlertManagerThrottleEntity | undefined) ?? null),
     upsert: jest.fn(async updatedEntity => {
       entity = updatedEntity;
-    })
+    }),
+    deleteOldEntities: jest.fn(async () => undefined)
   };
 };
 
@@ -268,6 +292,39 @@ describe('AlertManagerService', () => {
       expect(sendManagerEmail).toHaveBeenCalledTimes(1);
     });
 
+    it('records lastUpdatedAt on every alert handled', async () => {
+      const store = createStore();
+      const { service } = createService(store);
+
+      await service.handleAlert(buildPayload());
+
+      expect(store.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          lastUpdatedAt: fixedNow.toISOString()
+        })
+      );
+    });
+
+    it('triggers opportunistic cleanup if the last cleanup was more than 24 hours ago', async () => {
+      const store = createStore();
+      // Provide a get mock that returns null for __cleanup__ to simulate it never having run
+      store.get = jest.fn(async (_pk, rk) => {
+        if (rk === '__cleanup__') return null;
+        return null;
+      });
+      const { service } = createService(store);
+
+      await service.handleAlert(buildPayload());
+
+      expect(store.deleteOldEntities).toHaveBeenCalledWith('prd', 90);
+      expect(store.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rowKey: '__cleanup__',
+          lastUpdatedAt: fixedNow.toISOString()
+        })
+      );
+    });
+
     it('starts a new incident at the fired date time when there is no existing state', async () => {
       const store = createStore();
       const { service } = createService(store);
@@ -301,6 +358,42 @@ describe('AlertManagerService', () => {
       expect(result.action).toBe('ignored');
       expect(store.upsert).not.toHaveBeenCalled();
       expect(sendManagerEmail).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('AzureTableAlertManagerThrottleStore', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('deleteOldEntities', () => {
+    it('queries table for old entities and deletes them, excluding the cleanup marker', async () => {
+      const store = new AzureTableAlertManagerThrottleStore();
+      
+      const mockTableClient = (store as any).tableClient;
+      mockTableClient.listEntities.mockReturnValue([
+        { rowKey: 'old-record-1' },
+        { rowKey: '__cleanup__' },
+        { rowKey: 'old-record-2' }
+      ]);
+
+      await store.deleteOldEntities('prd', 90);
+
+      // Verify listEntities was called with a filter looking for older than ~90 days
+      expect(mockTableClient.listEntities).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryOptions: expect.objectContaining({
+            filter: expect.stringMatching(/PartitionKey eq 'prd' and lastUpdatedAt lt '\d{4}-\d{2}-\d{2}T/)
+          })
+        })
+      );
+
+      // Verify deleteEntity was called only for the old records, not the marker
+      expect(mockTableClient.deleteEntity).toHaveBeenCalledTimes(2);
+      expect(mockTableClient.deleteEntity).toHaveBeenCalledWith('prd', 'old-record-1');
+      expect(mockTableClient.deleteEntity).toHaveBeenCalledWith('prd', 'old-record-2');
+      expect(mockTableClient.deleteEntity).not.toHaveBeenCalledWith('prd', '__cleanup__');
     });
   });
 });
