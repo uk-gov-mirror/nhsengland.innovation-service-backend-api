@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["post"],
-      "route": "v1/admin/alert-manager/webhook"
+      "route": "v1/alert-manager/webhook"
     },
     { "type": "http", "direction": "out", "name": "res" }
   ]
