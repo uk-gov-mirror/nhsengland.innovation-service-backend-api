@@ -64,7 +64,7 @@ const MANAGER_ALERT_ALLOW_LIST = new Set([
   'Innovation Service Informational CPU',
   'Innovation Service Informational Memory',
   'Innovation Service App Gateway Unhealthy Hosts'
-]);
+].map(s => s.toLowerCase()));
 
 export class AzureTableAlertManagerThrottleStore implements AlertManagerThrottleStore {
   private readonly tableClient: TableClient;
@@ -187,7 +187,7 @@ export class AlertManagerService {
       resourceId: alert.resourceId
     });
 
-    if (!MANAGER_ALERT_ALLOW_LIST.has(alert.alertRule)) {
+    if (!MANAGER_ALERT_ALLOW_LIST.has((alert.alertRule || '').toLowerCase())) {
       return { action: 'ignored', reason: 'Alert is not manager-approved' };
     }
 
