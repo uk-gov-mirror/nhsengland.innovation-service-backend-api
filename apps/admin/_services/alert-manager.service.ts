@@ -1,5 +1,10 @@
 import crypto from 'crypto';
+import { injectable } from 'inversify';
 import { LoggerService } from '@admin/shared/services';
+import SHARED_SYMBOLS from '@admin/shared/services/symbols';
+import type { StorageQueueService } from '@admin/shared/services/integrations/storage-queue.service';
+import { QueuesEnum } from '@admin/shared/services/integrations/storage-queue.service';
+import { container } from '../_config';
 
 import { AzureNamedKeyCredential, TableClient } from '@azure/data-tables';
 
@@ -48,6 +53,7 @@ type AlertManagerServiceOptions = {
   retentionDays?: number;
   managerRecipients?: string[];
   logger?: LoggerService;
+  storageQueue?: StorageQueueService;
   now?: () => Date;
   store?: AlertManagerThrottleStore;
   sendManagerEmail?: (alert: NormalizedAlertPayload, recipients: string[]) => Promise<void>;
@@ -108,12 +114,14 @@ export class AzureTableAlertManagerThrottleStore implements AlertManagerThrottle
   }
 }
 
+@injectable()
 export class AlertManagerService {
   private readonly environment: string;
   private readonly throttleMinutes: number;
   private readonly retentionDays: number;
   private readonly managerRecipients: string[];
   private readonly logger: LoggerService;
+  private readonly storageQueue: StorageQueueService;
   private readonly now: () => Date;
   private readonly store: AlertManagerThrottleStore;
   private readonly sendManagerEmail: (alert: NormalizedAlertPayload, recipients: string[]) => Promise<void>;
@@ -129,9 +137,10 @@ export class AlertManagerService {
         .map(email => email.trim())
         .filter(Boolean);
     this.logger = options.logger ?? new LoggerService();
+    this.storageQueue = options.storageQueue ?? container.get<StorageQueueService>(SHARED_SYMBOLS.StorageQueueService);
     this.now = options.now ?? (() => new Date());
     this.store = options.store ?? new AzureTableAlertManagerThrottleStore();
-    this.sendManagerEmail = options.sendManagerEmail ?? this.logManagerEmail;
+    this.sendManagerEmail = options.sendManagerEmail ?? this.sendManagerEmailNotify.bind(this);
   }
 
   normalizePayload(payload: any): NormalizedAlertPayload {
@@ -269,16 +278,28 @@ export class AlertManagerService {
     return elapsedMs < this.throttleMinutes * 60 * 1000;
   }
 
-  private async logManagerEmail(alert: NormalizedAlertPayload, recipients: string[]): Promise<void> {
-    this.logger.log('[AlertManager] Manager email would be sent', {
-      recipients,
-      subject: `[${this.environment.toUpperCase()} Alert] ${alert.alertRule}`,
-      alertRule: alert.alertRule,
-      status: alert.monitorCondition,
-      severity: alert.severity,
-      resourceId: alert.resourceId,
-      firedDateTime: alert.firedDateTime,
-      description: alert.description
-    });
+  private async sendManagerEmailNotify(alert: NormalizedAlertPayload, recipients: string[]): Promise<void> {
+    for (const recipient of recipients) {
+      try {
+        await this.storageQueue.sendMessage(QueuesEnum.EMAIL, {
+          data: {
+            type: 'ADMIN_ALERT_MANAGER',
+            to: recipient,
+            params: {
+              environment: this.environment.toUpperCase(),
+              alertRule: alert.alertRule,
+              status: alert.monitorCondition,
+              severity: alert.severity,
+              resourceId: alert.resourceId,
+              firedDateTime: alert.firedDateTime,
+              description: alert.description || 'No description provided'
+            }
+          }
+        });
+        this.logger.log(`Alert manager email queued via Storage Queue`, { recipient, alertRule: alert.alertRule });
+      } catch (error) {
+        this.logger.error(`Failed to queue alert manager email for ${recipient}`, error);
+      }
+    }
   }
 }

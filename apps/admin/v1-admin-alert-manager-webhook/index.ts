@@ -5,6 +5,8 @@ import { ResponseHelper } from '@admin/shared/helpers';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { AlertManagerService } from '../_services/alert-manager.service';
+import { container } from '../_config';
+import SYMBOLS from '../_services/symbols';
 
 class V1AdminAlertManagerWebhook {
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -14,7 +16,7 @@ class V1AdminAlertManagerWebhook {
     });
 
     try {
-      const service = new AlertManagerService();
+      const service = container.get<AlertManagerService>(SYMBOLS.AlertManagerService);
       const result = await service.handleAlert(request.body);
 
       console.log('[AlertManagerWebhook] Request handled', result);

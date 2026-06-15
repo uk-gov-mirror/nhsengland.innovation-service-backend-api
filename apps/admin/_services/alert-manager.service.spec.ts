@@ -81,6 +81,7 @@ const createService = (
 ) => {
   const sendManagerEmail = jest.fn(async (_alert: NormalizedAlertPayload, _recipients: string[]) => undefined);
   const logger = { log: jest.fn(), error: jest.fn(), info: jest.fn() } as any;
+  const storageQueue = { sendMessage: jest.fn(async () => ({})) } as any;
   const service = new AlertManagerService({
     environment: 'prd',
     throttleMinutes: 4,
@@ -88,7 +89,8 @@ const createService = (
     now: () => now,
     store,
     sendManagerEmail,
-    logger
+    logger,
+    storageQueue
   });
 
   return { service, store, sendManagerEmail, logger };
