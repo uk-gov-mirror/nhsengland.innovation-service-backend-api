@@ -38,7 +38,7 @@ class V1AdminAlertManagerWebhook {
   }
 }
 
-export default openApi(V1AdminAlertManagerWebhook.httpTrigger as AzureFunction, '/v1/admin/alert-manager/webhook', {
+export default openApi(V1AdminAlertManagerWebhook.httpTrigger as AzureFunction, '/v1/alert-manager/webhook', {
   post: {
     description: 'Receive Azure Monitor manager alert webhook notifications.',
     operationId: 'v1-admin-alert-manager-webhook',
