@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { LoggerService } from '@admin/shared/services';
 
 import { AzureNamedKeyCredential, TableClient } from '@azure/data-tables';
 
@@ -46,6 +47,7 @@ type AlertManagerServiceOptions = {
   throttleMinutes?: number;
   retentionDays?: number;
   managerRecipients?: string[];
+  logger?: LoggerService;
   now?: () => Date;
   store?: AlertManagerThrottleStore;
   sendManagerEmail?: (alert: NormalizedAlertPayload, recipients: string[]) => Promise<void>;
@@ -77,13 +79,10 @@ export class AzureTableAlertManagerThrottleStore implements AlertManagerThrottle
   }
 
   async get(partitionKey: string, rowKey: string): Promise<AlertManagerThrottleEntity | null> {
-    console.log('[AlertManager] Reading throttle entity', { partitionKey, rowKey });
-
     try {
       return await this.tableClient.getEntity<AlertManagerThrottleEntity>(partitionKey, rowKey);
     } catch (error: any) {
       if (error.statusCode === 404) {
-        console.log('[AlertManager] No existing throttle entity found', { partitionKey, rowKey });
         return null;
       }
       throw error;
@@ -91,17 +90,11 @@ export class AzureTableAlertManagerThrottleStore implements AlertManagerThrottle
   }
 
   async upsert(entity: AlertManagerThrottleEntity): Promise<void> {
-    console.log('[AlertManager] Upserting throttle entity', {
-      partitionKey: entity.partitionKey,
-      rowKey: entity.rowKey,
-      currentMonitorCondition: entity.currentMonitorCondition
-    });
     await this.tableClient.upsertEntity(entity, 'Merge');
   }
 
   async deleteOldEntities(partitionKey: string, retentionDays: number): Promise<void> {
     const cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000).toISOString();
-    console.log('[AlertManager] Deleting entities older than', { cutoffDate });
 
     const entities = this.tableClient.listEntities<AlertManagerThrottleEntity>({
       queryOptions: { filter: `PartitionKey eq '${partitionKey}' and lastUpdatedAt lt '${cutoffDate}'` }
@@ -109,7 +102,6 @@ export class AzureTableAlertManagerThrottleStore implements AlertManagerThrottle
 
     for await (const entity of entities) {
       if (entity.rowKey !== '__cleanup__') {
-        console.log('[AlertManager] Deleting old throttle entity', { rowKey: entity.rowKey });
         await this.tableClient.deleteEntity(partitionKey, entity.rowKey);
       }
     }
@@ -121,6 +113,7 @@ export class AlertManagerService {
   private readonly throttleMinutes: number;
   private readonly retentionDays: number;
   private readonly managerRecipients: string[];
+  private readonly logger: LoggerService;
   private readonly now: () => Date;
   private readonly store: AlertManagerThrottleStore;
   private readonly sendManagerEmail: (alert: NormalizedAlertPayload, recipients: string[]) => Promise<void>;
@@ -135,14 +128,13 @@ export class AlertManagerService {
         .split(',')
         .map(email => email.trim())
         .filter(Boolean);
+    this.logger = options.logger ?? new LoggerService();
     this.now = options.now ?? (() => new Date());
     this.store = options.store ?? new AzureTableAlertManagerThrottleStore();
     this.sendManagerEmail = options.sendManagerEmail ?? this.logManagerEmail;
   }
 
   normalizePayload(payload: any): NormalizedAlertPayload {
-    console.log('[AlertManager] Normalizing Azure Monitor payload', { schemaId: payload?.schemaId });
-
     if (payload?.schemaId !== 'azureMonitorCommonAlertSchema') {
       throw new Error('Unsupported Azure Monitor alert schema');
     }
@@ -180,14 +172,13 @@ export class AlertManagerService {
 
   async handleAlert(payload: any): Promise<AlertManagerResult> {
     const alert = this.normalizePayload(payload);
-    console.log('[AlertManager] Handling alert', {
+    this.logger.log('[AlertManager] Handling alert', {
       alertRule: alert.alertRule,
       monitorCondition: alert.monitorCondition,
       resourceId: alert.resourceId
     });
 
     if (!MANAGER_ALERT_ALLOW_LIST.has(alert.alertRule)) {
-      console.log('[AlertManager] Alert ignored because it is not manager-approved', { alertRule: alert.alertRule });
       return { action: 'ignored', reason: 'Alert is not manager-approved' };
     }
 
@@ -215,24 +206,18 @@ export class AlertManagerService {
     };
 
     if (alert.monitorCondition === 'Resolved') {
-      console.log('[AlertManager] Resolved alert recorded without manager email', { rowKey });
       await this.store.upsert({ ...baseEntity, lastResolvedEmailAt: nowIso });
       await this.runOpportunisticCleanup(partitionKey);
       return { action: 'resolved_recorded', reason: 'Resolved alert recorded without manager email' };
     }
 
     if (this.shouldSuppress(existing?.lastFiredEmailAt)) {
-      console.log('[AlertManager] Fired alert suppressed by throttle window', {
-        rowKey,
-        lastFiredEmailAt: existing?.lastFiredEmailAt,
-        throttleMinutes: this.throttleMinutes
-      });
       await this.store.upsert(baseEntity);
       await this.runOpportunisticCleanup(partitionKey);
       return { action: 'suppressed', reason: 'Manager email suppressed by throttle window' };
     }
 
-    console.log('[AlertManager] Fired alert will send manager email', {
+    this.logger.log('[AlertManager] Fired alert will send manager email', {
       rowKey,
       recipients: this.managerRecipients,
       throttleMinutes: this.throttleMinutes
@@ -257,7 +242,6 @@ export class AlertManagerService {
         }
       }
 
-      console.log('[AlertManager] Running opportunistic cleanup for older entities');
       await this.store.deleteOldEntities(partitionKey, this.retentionDays);
 
       await this.store.upsert({
@@ -272,7 +256,7 @@ export class AlertManagerService {
         lastUpdatedAt: now.toISOString()
       });
     } catch (error) {
-      console.error('[AlertManager] Opportunistic cleanup failed', error);
+      this.logger.error('[AlertManager] Opportunistic cleanup failed', error);
     }
   }
 
@@ -286,7 +270,7 @@ export class AlertManagerService {
   }
 
   private async logManagerEmail(alert: NormalizedAlertPayload, recipients: string[]): Promise<void> {
-    console.log('[AlertManager] Manager email would be sent', {
+    this.logger.log('[AlertManager] Manager email would be sent', {
       recipients,
       subject: `[${this.environment.toUpperCase()} Alert] ${alert.alertRule}`,
       alertRule: alert.alertRule,
