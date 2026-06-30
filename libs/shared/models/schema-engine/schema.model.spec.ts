@@ -792,4 +792,87 @@ describe('models / schema-engine / schema.model.ts', () => {
       });
     });
   });
+
+  describe('getSubSectionPayloadValidation', () => {
+    it('should fail validation when fields-group is required but empty array is provided', () => {
+      const model = new SchemaModel({
+        sections: [{
+          id: 'TEST_SECTION',
+          title: 'Test Section',
+          subSections: [{
+            id: 'TEST_SUBSECTION',
+            title: 'Test Subsection',
+            steps: [{
+              questions: [{
+                id: 'userTests',
+                dataType: 'fields-group',
+                label: 'What kind of testing with users have you done?',
+                field: {
+                  id: 'kind',
+                  dataType: 'text',
+                  label: 'User test',
+                  validations: { isRequired: 'Required' }
+                },
+                addQuestion: {
+                  id: 'feedback',
+                  dataType: 'textarea',
+                  label: 'Describe testing',
+                  validations: { isRequired: 'Required' }
+                },
+                validations: { isRequired: 'At least one user test is required.' }
+              }]
+            }]
+          }]
+        }]
+      });
+      model.runRules();
+
+      const validationSchema = model.getSubSectionPayloadValidation('TEST_SUBSECTION', { userTests: [] });
+      const { error } = validationSchema.validate({ userTests: [] });
+      expect(error).toBeDefined();
+    });
+
+    it('should pass validation when fields-group is required and non-empty array is provided', () => {
+      const model = new SchemaModel({
+        sections: [{
+          id: 'TEST_SECTION',
+          title: 'Test Section',
+          subSections: [{
+            id: 'TEST_SUBSECTION',
+            title: 'Test Subsection',
+            steps: [{
+              questions: [{
+                id: 'userTests',
+                dataType: 'fields-group',
+                label: 'What kind of testing with users have you done?',
+                field: {
+                  id: 'kind',
+                  dataType: 'text',
+                  label: 'User test',
+                  validations: { isRequired: 'Required' }
+                },
+                addQuestion: {
+                  id: 'feedback',
+                  dataType: 'textarea',
+                  label: 'Describe testing',
+                  validations: { isRequired: 'Required' }
+                },
+                validations: { isRequired: 'At least one user test is required.' }
+              }]
+            }]
+          }]
+        }]
+      });
+      model.runRules();
+
+      const validationSchema = model.getSubSectionPayloadValidation('TEST_SUBSECTION', {
+        userTests: [{ kind: 'Beta', feedback: 'Good' }]
+      });
+      const { error } = validationSchema.validate({
+        userTests: [{ kind: 'Beta', feedback: 'Good' }]
+      });
+      expect(error).toBeUndefined();
+    });
+  });
 });
+

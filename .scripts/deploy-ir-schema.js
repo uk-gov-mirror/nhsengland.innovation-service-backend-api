@@ -2932,6 +2932,9 @@
                                  }
                               },
                               addNewLabel: 'Add new user test',
+                              validations: {
+                                 isRequired: 'At least one user test is required.'
+                              },
                               addQuestion: {
                                  id: 'feedback',
                                  dataType: 'textarea',
