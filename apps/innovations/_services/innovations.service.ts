@@ -135,7 +135,9 @@ export const InnovationListSelectType = [
   'statistics.tasks',
   'statistics.messages'
 ] as const;
+
 type InnovationListViewFields = Omit<InnovationListView, 'assessment' | 'supports' | 'ownerId'>;
+
 export type InnovationListSelectType =
   | keyof InnovationListViewFields
   | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id' | 'updatedAt' | 'finishedAt'>}`
@@ -191,6 +193,7 @@ export const DateFilterFieldsType = [
 export type DateFilterFieldsType = (typeof DateFilterFieldsType)[number];
 
 export const HasAccessThroughKeys = ['owner', 'collaborator'] as const;
+
 export type HasAccessThroughKeys = (typeof HasAccessThroughKeys)[number];
 
 export type InnovationListFilters = {
@@ -202,6 +205,7 @@ export type InnovationListFilters = {
   engagingOrganisations?: string[];
   engagingUnits?: string[];
   groupedStatuses: InnovationGroupedStatusEnum[];
+  archiveReason?: InnovationArchiveReasonEnum[];
   hasAccessThrough?: HasAccessThroughKeys[];
   involvedAACProgrammes?: CurrentCatalogTypes.catalogInvolvedAACProgrammes[];
   keyHealthInequalities?: CurrentCatalogTypes.catalogKeyHealthInequalities[];
@@ -761,7 +765,8 @@ export class InnovationsService extends BaseService {
     supportUnit: () => {}, // this is handled in the withSupport handler for admin users and forbidden otherwise
     areas: this.addJsonArrayInFilter('areas').bind(this),
     maturityLevels: this.addJsonArrayInFilter('maturityLevels').bind(this),
-    progressAreas: this.addJsonArrayInFilter('progressAreas').bind(this)
+    progressAreas: this.addJsonArrayInFilter('progressAreas').bind(this),
+    archiveReason: this.addJsonArrayInFilter('archiveReason').bind(this)
   };
 
   /**
