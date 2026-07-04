@@ -5,9 +5,10 @@ import { randomUUID } from 'crypto';
 import { Brackets, type EntityManager } from 'typeorm';
 
 import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
-import { InnovationFileEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
+import { InnovationFileEntity, InnovationSectionEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
 import {
   InnovationFileContextTypeEnum,
+  InnovationSectionStatusEnum,
   InnovationStatusEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
@@ -21,6 +22,7 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { TranslationHelper, type PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { DomainService, FileStorageService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import {
@@ -415,6 +417,8 @@ export class InnovationFileService extends BaseService {
       })
     );
 
+    await this.markMandatoryDocumentSectionAsDraft(domainContext, innovationId, data.context.type, connection);
+
     if (
       data.context.type === InnovationFileContextTypeEnum.INNOVATION &&
       domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR
@@ -467,10 +471,12 @@ export class InnovationFileService extends BaseService {
       .select([
         'file.id',
         'file.storageId',
+        'file.contextId',
         'file.contextType',
         'createdByRole.id',
         'createdByRole.role',
         'createdByUserOrgUnit.id',
+        'innovation.id',
         'innovation.status'
       ])
       .innerJoin('file.createdByUserRole', 'createdByRole')
@@ -507,6 +513,39 @@ export class InnovationFileService extends BaseService {
         updatedAt: now,
         deletedAt: now,
         updatedBy: domainContext.id
+      }
+    );
+
+    await this.markMandatoryDocumentSectionAsDraft(domainContext, file.innovation.id, file.contextType, connection);
+  }
+
+  private async markMandatoryDocumentSectionAsDraft(
+    domainContext: DomainContextType,
+    innovationId: string,
+    contextType: InnovationFileContextTypeEnum,
+    entityManager: EntityManager
+  ): Promise<void> {
+    if (domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
+      return;
+    }
+
+    const sectionByContext: Partial<Record<InnovationFileContextTypeEnum, CurrentCatalogTypes.InnovationSections>> = {
+      [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE]: 'EVIDENCE_OF_EFFECTIVENESS',
+      [InnovationFileContextTypeEnum.INNOVATION_REGULATIONS]: 'REGULATIONS_AND_STANDARDS'
+    };
+
+    const section = sectionByContext[contextType];
+    if (!section) {
+      return;
+    }
+
+    await entityManager.update(
+      InnovationSectionEntity,
+      { innovation: { id: innovationId }, section },
+      {
+        status: InnovationSectionStatusEnum.DRAFT,
+        updatedBy: domainContext.id,
+        updatedAt: new Date()
       }
     );
   }

@@ -1,9 +1,10 @@
 import { container } from '../_config';
 
 import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
-import { InnovationEntity, InnovationFileEntity } from '@innovations/shared/entities';
+import { InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
 import {
   InnovationFileContextTypeEnum,
+  InnovationSectionStatusEnum,
   InnovationStatusEnum,
   NotifierTypeEnum,
   ServiceRoleEnum
@@ -932,6 +933,56 @@ describe('Services / Innovation File service suite', () => {
           }
         );
       });
+
+      it.each([
+        [
+          InnovationFileContextTypeEnum.INNOVATION_EVIDENCE,
+          randUuid(),
+          'EVIDENCE_OF_EFFECTIVENESS'
+        ],
+        [
+          InnovationFileContextTypeEnum.INNOVATION_REGULATIONS,
+          'CE_UKCA_CLASS_I',
+          'REGULATIONS_AND_STANDARDS'
+        ]
+      ])(
+        'should mark section as draft when creating a mandatory document with context type %s',
+        async (contextType, contextId, section) => {
+          await em.query(
+            `IF EXISTS (SELECT 1 FROM innovation_section WHERE innovation_id = @0 AND section = @1)
+              UPDATE innovation_section SET status = @2 WHERE innovation_id = @0 AND section = @1
+            ELSE
+              INSERT INTO innovation_section (innovation_id, section, status, created_by, updated_by)
+              VALUES (@0, @1, @2, @3, @3)`,
+            [innovation.id, section, InnovationSectionStatusEnum.SUBMITTED, innovationOwner.id]
+          );
+
+          await sut.createFile(
+            DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
+            innovation.id,
+            {
+              context: { id: contextId, type: contextType },
+              name: randFileName(),
+              file: {
+                id: randFileName(),
+                name: randFileName(),
+                size: randNumber(),
+                extension: 'pdf'
+              }
+            },
+            innovation.status,
+            em
+          );
+
+          const dbSection = await em
+            .createQueryBuilder(InnovationSectionEntity, 'section')
+            .where('section.innovation_id = :innovationId', { innovationId: innovation.id })
+            .andWhere('section.section = :section', { section })
+            .getOne();
+
+          expect(dbSection?.status).toBe(InnovationSectionStatusEnum.DRAFT);
+        }
+      );
     });
 
     describe('When I create a file as an NA', () => {
@@ -1158,6 +1209,24 @@ describe('Services / Innovation File service suite', () => {
 
         expect(dbFile?.deletedAt).toBeTruthy();
         expect(deleteFileMock).toHaveBeenCalled();
+      });
+
+      it('should mark the evidence section as draft when deleting an evidence document', async () => {
+        await em.update(
+          InnovationSectionEntity,
+          { innovation: { id: innovation.id }, section: 'EVIDENCE_OF_EFFECTIVENESS' },
+          { status: InnovationSectionStatusEnum.SUBMITTED }
+        );
+
+        await sut.deleteFile(domainContext, innovation.files.evidenceFileByJohn.id, em);
+
+        const dbSection = await em
+          .createQueryBuilder(InnovationSectionEntity, 'section')
+          .where('section.innovation_id = :innovationId', { innovationId: innovation.id })
+          .andWhere('section.section = :section', { section: 'EVIDENCE_OF_EFFECTIVENESS' })
+          .getOne();
+
+        expect(dbSection?.status).toBe(InnovationSectionStatusEnum.DRAFT);
       });
 
       it.each([
