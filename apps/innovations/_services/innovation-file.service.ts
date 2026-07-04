@@ -41,6 +41,12 @@ import { BaseService } from './base.service';
 import type { InnovationDocumentService } from './innovation-document.service';
 import SYMBOLS from './symbols';
 
+const INNOVATOR_ONLY_FILE_CONTEXTS = [
+  InnovationFileContextTypeEnum.INNOVATION_SECTION,
+  InnovationFileContextTypeEnum.INNOVATION_EVIDENCE,
+  InnovationFileContextTypeEnum.INNOVATION_REGULATIONS
+];
+
 @injectable()
 export class InnovationFileService extends BaseService {
   constructor(
@@ -367,14 +373,14 @@ export class InnovationFileService extends BaseService {
     }
 
     if (domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
-      if (data.context.type === InnovationFileContextTypeEnum.INNOVATION_SECTION) {
-        throw new UnprocessableEntityError(
-          InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
-        );
-      }
       if (data.context.type === InnovationFileContextTypeEnum.INNOVATION_EVIDENCE) {
         throw new UnprocessableEntityError(
           InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
+        );
+      }
+      if (INNOVATOR_ONLY_FILE_CONTEXTS.includes(data.context.type)) {
+        throw new UnprocessableEntityError(
+          InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
         );
       }
     }

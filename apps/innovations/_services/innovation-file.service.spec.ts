@@ -1065,6 +1065,25 @@ describe('Services / Innovation File service suite', () => {
           )
         );
       });
+
+      it('should throw error when creating file with context type INNOVATION_REGULATIONS', async () => {
+        const data = {
+          context: { id: 'CE_UKCA_CLASS_I', type: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS },
+          name: randFileName(),
+          file: {
+            id: randFileName(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: 'pdf'
+          }
+        };
+
+        await expect(() => sut.createFile(naDomainContext, innovation.id, data, innovation.status, em)).rejects.toThrow(
+          new UnprocessableEntityError(
+            InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
+          )
+        );
+      });
     });
 
     describe('When I create a file as an QA/A', () => {
@@ -1145,6 +1164,25 @@ describe('Services / Innovation File service suite', () => {
         await expect(() => sut.createFile(qaDomainContext, innovation.id, data, innovation.status, em)).rejects.toThrow(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
+          )
+        );
+      });
+
+      it('should throw error when creating file with context type INNOVATION_REGULATIONS', async () => {
+        const data = {
+          context: { id: 'CE_UKCA_CLASS_I', type: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS },
+          name: randFileName(),
+          file: {
+            id: randFileName(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: 'pdf'
+          }
+        };
+
+        await expect(() => sut.createFile(qaDomainContext, innovation.id, data, innovation.status, em)).rejects.toThrow(
+          new UnprocessableEntityError(
+            InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
           )
         );
       });
