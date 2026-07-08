@@ -1428,12 +1428,28 @@ export const IR_SCHEMA = {
                   },
                   items: [
                     {
-                      id: 'YES',
-                      label: 'Yes'
+                      id: 'CONCEPT_STAGE',
+                      label: 'No working prototype (concept stage)'
                     },
                     {
-                      id: 'NO',
-                      label: 'No'
+                      id: 'PROOF_OF_CONCEPT',
+                      label: 'Proof of concept'
+                    },
+                    {
+                      id: 'MVP',
+                      label: 'Minimum viable product'
+                    },
+                    {
+                      id: 'PROTOTYPE',
+                      label: 'Prototype'
+                    },
+                    {
+                      id: 'WORKING_PRODUCT',
+                      label: 'Working product'
+                    },
+                    {
+                      id: 'SERVICE',
+                      label: 'Service'
                     }
                   ]
                 }
