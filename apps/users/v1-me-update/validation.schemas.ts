@@ -6,17 +6,21 @@ import type { HowDidYouFindUsAnswersType } from '@users/shared/entities/user/use
 import { JoiHelper } from '@users/shared/helpers';
 
 export type DefaultUserBodyType = {
-  displayName: string;
+  givenName: string;
+  surname: string;
   jobTitle?: string | null;
 };
 
 export const DefaultUserBodySchema = Joi.object<DefaultUserBodyType>({
-  displayName: JoiHelper.AppCustomJoi().string().required(),
+  givenName: JoiHelper.AppCustomJoi().string().required(),
+  surname: JoiHelper.AppCustomJoi().string().required(),
   jobTitle: JoiHelper.AppCustomJoi().string().optional().allow('', null)
 }).required();
 
 export type InnovatorBodyType = {
-  displayName: string;
+  givenName: string;
+  surname: string;
+  // displayName: string;
   contactByEmail: boolean;
   contactByPhone: boolean;
   contactDetails: string | null;
@@ -34,7 +38,9 @@ export type InnovatorBodyType = {
 };
 
 export const InnovatorBodySchema = Joi.object<InnovatorBodyType>({
-  displayName: JoiHelper.AppCustomJoi().string().required(),
+  givenName: JoiHelper.AppCustomJoi().string().required(),
+  surname: JoiHelper.AppCustomJoi().string().required(),
+  // displayName: JoiHelper.AppCustomJoi().string().required(),
   mobilePhone: JoiHelper.AppCustomJoi().string().max(20).optional().allow(null),
   contactByEmail: Joi.boolean().optional(),
   contactByPhone: Joi.boolean().optional(),

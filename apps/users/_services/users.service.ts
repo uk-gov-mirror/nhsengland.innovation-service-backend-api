@@ -173,6 +173,8 @@ export class UsersService extends BaseService {
     user: { id: string; identityId: string; firstTimeSignInAt?: null | Date },
     currentRole: ServiceRoleEnum | '',
     data: {
+      givenName: string;
+      surname: string;
       displayName: string;
       contactByEmail?: boolean;
       contactByPhone?: boolean;
@@ -194,6 +196,8 @@ export class UsersService extends BaseService {
   ): Promise<{ id: string }> {
     await this.identityProviderService.updateUser(user.identityId, {
       displayName: data.displayName,
+      givenName: data.givenName,
+      surname: data.surname,
       ...(data.mobilePhone !== undefined ? { mobilePhone: data.mobilePhone } : {})
     });
 

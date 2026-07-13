@@ -1,7 +1,14 @@
- 
 import { container } from '../_config';
 
-import { randAbbreviation, randFullName, randPhoneNumber, randText, randUuid } from '@ngneat/falso';
+import {
+  randAbbreviation,
+  randFirstName,
+  randFullName,
+  randLastName,
+  randPhoneNumber,
+  randText,
+  randUuid
+} from '@ngneat/falso';
 import {
   InnovationCollaboratorEntity,
   InnovationEntity,
@@ -132,7 +139,9 @@ describe('Users / _services / users service suite', () => {
   });
 
   describe('updateUserInfo', () => {
-    const newName = randFullName();
+    const givenName = randFirstName();
+    const surname = randLastName();
+    const displayName = `${givenName} ${surname}`;
     const newPhoneNumber = randPhoneNumber();
 
     const identityServiceSpy = jest.spyOn(IdentityProviderService.prototype, 'updateUser');
@@ -145,14 +154,16 @@ describe('Users / _services / users service suite', () => {
       [ServiceRoleEnum.ADMIN, scenario.users.allMighty]
     ])('should update %s identity info', async (userType, user) => {
       const result = await sut.updateUserInfo({ id: user.id, identityId: user.identityId }, userType, {
-        displayName: newName,
+        givenName: givenName,
+        surname: surname,
+        displayName: displayName,
         mobilePhone: newPhoneNumber,
         howDidYouFindUsAnswers: {}
       });
 
       expect(result).toMatchObject({ id: user.id });
       expect(identityServiceSpy).toHaveBeenCalledWith(user.identityId, {
-        displayName: newName,
+        displayName: displayName,
         mobilePhone: newPhoneNumber
       });
     });
@@ -164,7 +175,9 @@ describe('Users / _services / users service suite', () => {
       [ServiceRoleEnum.ADMIN, scenario.users.allMighty]
     ])('should not update %s non-identity info', async (userType, user) => {
       await sut.updateUserInfo({ id: user.id, identityId: user.identityId }, userType, {
-        displayName: newName,
+        givenName: givenName,
+        surname: surname,
+        displayName: displayName,
         mobilePhone: newPhoneNumber,
         contactByPhone: true,
         howDidYouFindUsAnswers: {}
@@ -176,7 +189,9 @@ describe('Users / _services / users service suite', () => {
     it('should update INNOVATOR entire info', async () => {
       const user = scenario.users.adamInnovator;
       const newData = {
-        displayName: newName,
+        givenName: givenName,
+        surname: surname,
+        displayName: displayName,
         contactByEmail: true,
         contactByPhone: true,
         contactByPhoneTimeframe: PhoneUserPreferenceEnum.AFTERNOON,
@@ -201,7 +216,7 @@ describe('Users / _services / users service suite', () => {
 
       expect(result).toMatchObject({ id: user.id });
       expect(identityServiceSpy).toHaveBeenCalledWith(user.identityId, {
-        displayName: newName,
+        displayName: displayName,
         mobilePhone: newPhoneNumber
       });
       expect(userPreferencesSpy).toHaveBeenCalledWith(
@@ -220,6 +235,8 @@ describe('Users / _services / users service suite', () => {
       const user = scenario.users.adamInnovator;
       const newJobTitle = 'Principal Consultant';
       const newData = {
+        givenName: givenName,
+        surname: surname,
         displayName: randFullName(),
         jobTitle: newJobTitle,
         howDidYouFindUsAnswers: {}

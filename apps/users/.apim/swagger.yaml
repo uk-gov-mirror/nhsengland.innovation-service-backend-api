@@ -415,6 +415,10 @@ paths:
                       format: uuid
                     email:
                       type: string
+                    givenName:
+                      type: string
+                    surname:
+                      type: string
                     displayName:
                       type: string
                     jobTitle:
@@ -557,6 +561,8 @@ paths:
                   required:
                     - id
                     - email
+                    - givenName
+                    - surname
                     - displayName
                     - jobTitle
                     - contactByEmail
@@ -592,7 +598,9 @@ paths:
             schema:
               type: object
               properties:
-                displayName:
+                givenName:
+                  type: string
+                surname:
                   type: string
                 mobilePhone:
                   type: string
@@ -675,7 +683,8 @@ paths:
                       type: string
                   additionalProperties: false
               required:
-                - displayName
+                - givenName
+                - surname
                 - organisation
                 - howDidYouFindUsAnswers
               additionalProperties: false

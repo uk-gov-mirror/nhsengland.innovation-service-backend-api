@@ -1,6 +1,6 @@
 import azureFunction from '.';
 
-import { randBoolean, randFullName, randText, randUuid } from '@ngneat/falso';
+import { randBoolean, randFirstName, randLastName, randText, randUuid } from '@ngneat/falso';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@users/shared/tests';
 import type { TestUserType } from '@users/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@users/shared/types';
@@ -34,11 +34,20 @@ afterEach(() => {
 });
 
 describe('v1-me-update Suite', () => {
+  const givenName = randFirstName();
+  const surname = randLastName();
+  const displayName = `${givenName} ${surname}`;
+
   const defaultBody = {
-    displayName: randFullName()
+    givenName: givenName,
+    surname: surname,
+    displayName: displayName
   };
+
   const innovatorBody = {
-    displayName: randFullName(),
+    givenName: givenName,
+    surname: surname,
+    displayName: displayName,
     contactByEmail: randBoolean(),
     contactByPhone: randBoolean(),
     contactDetails: randText(),
@@ -84,7 +93,9 @@ describe('v1-me-update Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
         .setBody<InnovatorBodyType>({
-          displayName: randFullName(),
+          givenName: givenName,
+          surname: surname,
+          // displayName: displayName,
           contactByEmail: randBoolean(),
           contactByPhone: randBoolean(),
           contactDetails: randText(),

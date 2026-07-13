@@ -324,6 +324,8 @@ export class IdentityProviderService {
     const odataFilter = `$filter=id in (${idsFilter})`;
     const fields = [
       'displayName',
+      'givenName',
+      'surname',
       'identities',
       'email',
       'mobilePhone',
@@ -337,6 +339,8 @@ export class IdentityProviderService {
   private mapB2CUsersToDomain(b2cUsers: b2cGetUsersListDTO['value']): IdentityUserInfo[] {
     return b2cUsers.map(u => ({
       identityId: u.id,
+      givenName: u.givenName ?? '',
+      surname: u.surname ?? '',
       displayName: u.displayName,
       email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
       mobilePhone: u.mobilePhone,
@@ -383,7 +387,13 @@ export class IdentityProviderService {
 
   async updateUser(
     identityId: string,
-    body: { displayName?: string; mobilePhone?: string | null; accountEnabled?: boolean }
+    body: {
+      givenName?: string;
+      surname?: string;
+      displayName?: string;
+      mobilePhone?: string | null;
+      accountEnabled?: boolean;
+    }
   ): Promise<void> {
     await this.verifyAccessToken();
 
@@ -430,6 +440,8 @@ export class IdentityProviderService {
   async updateUserAsync(
     identityId: string,
     body: {
+      givenName?: string;
+      surname?: string;
       displayName?: string;
       mobilePhone?: string | null;
       accountEnabled?: boolean;
