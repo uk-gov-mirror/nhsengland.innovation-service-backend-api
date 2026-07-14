@@ -5,9 +5,10 @@ import { randomUUID } from 'crypto';
 import { Brackets, type EntityManager } from 'typeorm';
 
 import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
-import { InnovationFileEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
+import { InnovationFileEntity, InnovationSectionEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
 import {
   InnovationFileContextTypeEnum,
+  InnovationSectionStatusEnum,
   InnovationStatusEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
@@ -21,6 +22,7 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { TranslationHelper, type PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { DomainService, FileStorageService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import {
@@ -38,6 +40,12 @@ import type {
 import { BaseService } from './base.service';
 import type { InnovationDocumentService } from './innovation-document.service';
 import SYMBOLS from './symbols';
+
+const INNOVATOR_ONLY_FILE_CONTEXTS = [
+  InnovationFileContextTypeEnum.INNOVATION_SECTION,
+  InnovationFileContextTypeEnum.INNOVATION_EVIDENCE,
+  InnovationFileContextTypeEnum.INNOVATION_REGULATIONS
+];
 
 @injectable()
 export class InnovationFileService extends BaseService {
@@ -365,14 +373,14 @@ export class InnovationFileService extends BaseService {
     }
 
     if (domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
-      if (data.context.type === InnovationFileContextTypeEnum.INNOVATION_SECTION) {
-        throw new UnprocessableEntityError(
-          InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
-        );
-      }
       if (data.context.type === InnovationFileContextTypeEnum.INNOVATION_EVIDENCE) {
         throw new UnprocessableEntityError(
           InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
+        );
+      }
+      if (INNOVATOR_ONLY_FILE_CONTEXTS.includes(data.context.type)) {
+        throw new UnprocessableEntityError(
+          InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
         );
       }
     }
@@ -414,6 +422,8 @@ export class InnovationFileService extends BaseService {
         updatedBy: domainContext.id
       })
     );
+
+    await this.markMandatoryDocumentSectionAsDraft(domainContext, innovationId, data.context.type, connection);
 
     if (
       data.context.type === InnovationFileContextTypeEnum.INNOVATION &&
@@ -467,10 +477,12 @@ export class InnovationFileService extends BaseService {
       .select([
         'file.id',
         'file.storageId',
+        'file.contextId',
         'file.contextType',
         'createdByRole.id',
         'createdByRole.role',
         'createdByUserOrgUnit.id',
+        'innovation.id',
         'innovation.status'
       ])
       .innerJoin('file.createdByUserRole', 'createdByRole')
@@ -507,6 +519,39 @@ export class InnovationFileService extends BaseService {
         updatedAt: now,
         deletedAt: now,
         updatedBy: domainContext.id
+      }
+    );
+
+    await this.markMandatoryDocumentSectionAsDraft(domainContext, file.innovation.id, file.contextType, connection);
+  }
+
+  private async markMandatoryDocumentSectionAsDraft(
+    domainContext: DomainContextType,
+    innovationId: string,
+    contextType: InnovationFileContextTypeEnum,
+    entityManager: EntityManager
+  ): Promise<void> {
+    if (domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
+      return;
+    }
+
+    const sectionByContext: Partial<Record<InnovationFileContextTypeEnum, CurrentCatalogTypes.InnovationSections>> = {
+      [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE]: 'EVIDENCE_OF_EFFECTIVENESS',
+      [InnovationFileContextTypeEnum.INNOVATION_REGULATIONS]: 'REGULATIONS_AND_STANDARDS'
+    };
+
+    const section = sectionByContext[contextType];
+    if (!section) {
+      return;
+    }
+
+    await entityManager.update(
+      InnovationSectionEntity,
+      { innovation: { id: innovationId }, section },
+      {
+        status: InnovationSectionStatusEnum.DRAFT,
+        updatedBy: domainContext.id,
+        updatedAt: new Date()
       }
     );
   }
@@ -669,6 +714,9 @@ export class InnovationFileService extends BaseService {
       InnovationFileContextTypeEnum.INNOVATION_SECTION
     ),
     [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE]: this.evidenceContextMapper,
-    [InnovationFileContextTypeEnum.INNOVATION_MESSAGE]: this.messageContextMapper
+    [InnovationFileContextTypeEnum.INNOVATION_MESSAGE]: this.messageContextMapper,
+    [InnovationFileContextTypeEnum.INNOVATION_REGULATIONS]: this.defaultContextMapper(
+      InnovationFileContextTypeEnum.INNOVATION_REGULATIONS
+    )
   };
 }
