@@ -794,6 +794,31 @@ describe('models / schema-engine / schema.model.ts', () => {
   });
 
   describe('getSubSectionPayloadValidation', () => {
+    it.each(['YES', 'CONCEPT_STAGE', 'PROOF_OF_CONCEPT', 'MVP', 'PROTOTYPE', 'WORKING_PRODUCT', 'SERVICE'])(
+      'accepts prototype answer %s',
+      answer => {
+        const model = new SchemaModel(IR_SCHEMA);
+        model.runRules();
+
+        const validationSchema = model.getSubSectionPayloadValidation('UNDERSTANDING_OF_NEEDS', {
+          hasProductServiceOrPrototype: answer
+        });
+
+        expect(validationSchema.validate({ hasProductServiceOrPrototype: answer }).error).toBeUndefined();
+      }
+    );
+
+    it('rejects the migrated prototype answer NO', () => {
+      const model = new SchemaModel(IR_SCHEMA);
+      model.runRules();
+
+      const validationSchema = model.getSubSectionPayloadValidation('UNDERSTANDING_OF_NEEDS', {
+        hasProductServiceOrPrototype: 'NO'
+      });
+
+      expect(validationSchema.validate({ hasProductServiceOrPrototype: 'NO' }).error).toBeDefined();
+    });
+
     it('should fail validation when fields-group is required but empty array is provided', () => {
       const model = new SchemaModel({
         sections: [

@@ -906,6 +906,7 @@ export const IR_SCHEMA = {
                     isRequired: 'Choose one option'
                   },
                   items: [
+                    // Remove once all legacy YES records have been replaced and compatibility is no longer required.
                     {
                       id: 'YES',
                       label: 'Yes',
@@ -1427,6 +1428,11 @@ export const IR_SCHEMA = {
                     isRequired: 'Choose one option'
                   },
                   items: [
+                    {
+                      id: 'YES',
+                      label: 'Yes',
+                      isLegacy: true
+                    },
                     {
                       id: 'CONCEPT_STAGE',
                       label: 'No working prototype (concept stage)'

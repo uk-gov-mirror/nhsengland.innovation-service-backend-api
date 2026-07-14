@@ -934,6 +934,7 @@
                       isRequired: "Choose one option"
                     },
                     items: [
+                      // Remove once all legacy YES records have been replaced and compatibility is no longer required.
                       {
                         id: "YES",
                         label: "Yes",
@@ -1455,6 +1456,11 @@
                       isRequired: "Choose one option"
                     },
                     items: [
+                      {
+                        id: "YES",
+                        label: "Yes",
+                        isLegacy: true
+                      },
                       {
                         id: "CONCEPT_STAGE",
                         label: "No working prototype (concept stage)"
