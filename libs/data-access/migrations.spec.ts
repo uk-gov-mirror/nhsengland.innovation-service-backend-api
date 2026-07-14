@@ -1,5 +1,5 @@
 import type { QueryRunner } from 'typeorm';
-import { migratePrototypeNoToConceptStage1784031519584 } from './1784031519584-migrate-prototype-no-to-concept-stage';
+import { migratePrototypeNoToConceptStage1784031519584 } from './migrations/1784031519584-migrate-prototype-no-to-concept-stage';
 
 describe('migratePrototypeNoToConceptStage1784031519584', () => {
   it('updates NO values in submitted and draft documents', async () => {
