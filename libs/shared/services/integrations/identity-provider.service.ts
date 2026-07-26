@@ -207,7 +207,11 @@ export class IdentityProviderService {
       await this.cache.deleteMany(uniqueUserIds);
     }
 
-    const res = await this.cache.getMany(uniqueUserIds);
+    const res = (await this.cache.getMany(uniqueUserIds)).map(user => ({
+      ...user,
+      givenName: user.givenName ?? '',
+      surname: user.surname ?? ''
+    }));
 
     if (res.length !== uniqueUserIds.length) {
       const cachedUserIds = new Set(res.map(user => user.identityId));
