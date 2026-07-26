@@ -355,12 +355,14 @@ export class IdentityProviderService {
     }));
   }
 
-  async createUser(data: { name: string; email: string; password: string }): Promise<string> {
+  async createUser(data: { givenName: string; surname: string; email: string; password: string }): Promise<string> {
     await this.verifyAccessToken();
 
     const body = {
       accountEnabled: true,
-      displayName: data.name,
+      givenName: data.givenName,
+      surname: data.surname,
+      displayName: `${data.givenName} ${data.surname}`,
       passwordPolicies: 'DisablePasswordExpiration',
       passwordProfile: { password: data.password, forceChangePasswordNextSignIn: false },
       identities: [
