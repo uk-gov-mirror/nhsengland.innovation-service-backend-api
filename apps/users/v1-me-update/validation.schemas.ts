@@ -5,6 +5,8 @@ import { PhoneUserPreferenceEnum } from '@users/shared/enums';
 import type { HowDidYouFindUsAnswersType } from '@users/shared/entities/user/user.entity';
 import { JoiHelper } from '@users/shared/helpers';
 
+const RequiredNameSchema = JoiHelper.AppCustomJoi().string().trim().min(1).max(64).required();
+
 export type DefaultUserBodyType = {
   givenName: string;
   surname: string;
@@ -12,15 +14,14 @@ export type DefaultUserBodyType = {
 };
 
 export const DefaultUserBodySchema = Joi.object<DefaultUserBodyType>({
-  givenName: JoiHelper.AppCustomJoi().string().required(),
-  surname: JoiHelper.AppCustomJoi().string().required(),
+  givenName: RequiredNameSchema,
+  surname: RequiredNameSchema,
   jobTitle: JoiHelper.AppCustomJoi().string().optional().allow('', null)
 }).required();
 
 export type InnovatorBodyType = {
   givenName: string;
   surname: string;
-  // displayName: string;
   contactByEmail: boolean;
   contactByPhone: boolean;
   contactDetails: string | null;
@@ -38,9 +39,8 @@ export type InnovatorBodyType = {
 };
 
 export const InnovatorBodySchema = Joi.object<InnovatorBodyType>({
-  givenName: JoiHelper.AppCustomJoi().string().required(),
-  surname: JoiHelper.AppCustomJoi().string().required(),
-  // displayName: JoiHelper.AppCustomJoi().string().required(),
+  givenName: RequiredNameSchema,
+  surname: RequiredNameSchema,
   mobilePhone: JoiHelper.AppCustomJoi().string().max(20).optional().allow(null),
   contactByEmail: Joi.boolean().optional(),
   contactByPhone: Joi.boolean().optional(),

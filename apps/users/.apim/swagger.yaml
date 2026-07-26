@@ -596,98 +596,120 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                givenName:
-                  type: string
-                surname:
-                  type: string
-                mobilePhone:
-                  type: string
-                  maxLength: 20
-                  nullable: true
-                contactByEmail:
-                  type: boolean
-                contactByPhone:
-                  type: boolean
-                contactByPhoneTimeframe:
-                  enum:
-                    - MORNING
-                    - AFTERNOON
-                    - DAILY
-                  nullable: true
-                contactDetails:
-                  type: string
-                  nullable: true
-                organisation:
-                  type: object
+              oneOf:
+                - type: object
                   properties:
-                    id:
+                    givenName:
                       type: string
-                      format: uuid
-                    isShadow:
-                      type: boolean
-                    name:
-                      anyOf:
-                        - type: string
-                          maxLength: 100
-                          x-required: true
-                        - type: string
-                          nullable: true
-                    size:
-                      anyOf:
-                        - type: string
-                          maxLength: 25
-                          x-required: true
-                        - type: string
-                          nullable: true
-                    description:
-                      anyOf:
-                        - type: string
-                          maxLength: 50
-                          x-required: true
-                        - type: string
-                          nullable: true
-                    registrationNumber:
+                      minLength: 1
+                      maxLength: 64
+                    surname:
                       type: string
-                      maxLength: 8
+                      minLength: 1
+                      maxLength: 64
+                    jobTitle:
+                      type: string
                       nullable: true
                   required:
-                    - id
-                    - isShadow
+                    - givenName
+                    - surname
                   additionalProperties: false
-                howDidYouFindUsAnswers:
-                  type: object
+                - type: object
                   properties:
-                    event:
-                      type: boolean
-                    eventComment:
+                    givenName:
                       type: string
-                    reading:
-                      type: boolean
-                    readingComment:
+                      minLength: 1
+                      maxLength: 64
+                    surname:
                       type: string
-                    recommendationColleague:
-                      type: boolean
-                    recommendationOrg:
-                      type: boolean
-                    recommendationOrgComment:
+                      minLength: 1
+                      maxLength: 64
+                    mobilePhone:
                       type: string
-                    searchEngine:
+                      maxLength: 20
+                      nullable: true
+                    contactByEmail:
                       type: boolean
-                    socialMedia:
+                    contactByPhone:
                       type: boolean
-                    other:
-                      type: boolean
-                    otherComment:
+                    contactByPhoneTimeframe:
+                      enum:
+                        - MORNING
+                        - AFTERNOON
+                        - DAILY
+                      nullable: true
+                    contactDetails:
                       type: string
+                      nullable: true
+                    organisation:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        isShadow:
+                          type: boolean
+                        name:
+                          anyOf:
+                            - type: string
+                              maxLength: 100
+                              x-required: true
+                            - type: string
+                              nullable: true
+                        size:
+                          anyOf:
+                            - type: string
+                              maxLength: 25
+                              x-required: true
+                            - type: string
+                              nullable: true
+                        description:
+                          anyOf:
+                            - type: string
+                              maxLength: 50
+                              x-required: true
+                            - type: string
+                              nullable: true
+                        registrationNumber:
+                          type: string
+                          maxLength: 8
+                          nullable: true
+                      required:
+                        - id
+                        - isShadow
+                      additionalProperties: false
+                    howDidYouFindUsAnswers:
+                      type: object
+                      properties:
+                        event:
+                          type: boolean
+                        eventComment:
+                          type: string
+                        reading:
+                          type: boolean
+                        readingComment:
+                          type: string
+                        recommendationColleague:
+                          type: boolean
+                        recommendationOrg:
+                          type: boolean
+                        recommendationOrgComment:
+                          type: string
+                        searchEngine:
+                          type: boolean
+                        socialMedia:
+                          type: boolean
+                        other:
+                          type: boolean
+                        otherComment:
+                          type: string
+                      additionalProperties: false
+                  required:
+                    - givenName
+                    - surname
+                    - organisation
+                    - howDidYouFindUsAnswers
                   additionalProperties: false
-              required:
-                - givenName
-                - surname
-                - organisation
-                - howDidYouFindUsAnswers
-              additionalProperties: false
       responses:
         "200":
           description: User information updated
