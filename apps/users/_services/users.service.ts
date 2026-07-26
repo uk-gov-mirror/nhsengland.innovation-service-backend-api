@@ -194,14 +194,18 @@ export class UsersService extends BaseService {
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
+    const previousIdentity = await this.identityProviderService.getUserInfo(user.identityId);
+    const displayName = `${data.givenName} ${data.surname}`;
+
     await this.identityProviderService.updateUser(user.identityId, {
-      displayName: data.displayName,
+      displayName,
       givenName: data.givenName,
       surname: data.surname,
       ...(data.mobilePhone !== undefined ? { mobilePhone: data.mobilePhone } : {})
     });
 
-    const em = entityManager ?? this.sqlConnection.manager;
+    try {
+      const em = entityManager ?? this.sqlConnection.manager;
 
     if (data.jobTitle !== undefined) {
       await em.getRepository(UserEntity).update(user.id, { jobTitle: data.jobTitle });
@@ -285,10 +289,24 @@ export class UsersService extends BaseService {
       });
     }
 
-    // Remove the cache entry on update
-    await this.cache.delete(user.identityId);
+      // Remove the cache entry on update
+      await this.cache.delete(user.identityId);
 
-    return { id: user.id };
+      return { id: user.id };
+    } catch (error) {
+      try {
+        await this.identityProviderService.updateUser(user.identityId, {
+          displayName: previousIdentity.displayName,
+          givenName: previousIdentity.givenName ?? '',
+          surname: previousIdentity.surname ?? '',
+          mobilePhone: previousIdentity.mobilePhone
+        });
+        await this.cache.delete(user.identityId);
+      } catch (rollbackError) {
+        this.logger.error('Failed to roll back B2C user name update', rollbackError);
+      }
+      throw error;
+    }
   }
 
   /**

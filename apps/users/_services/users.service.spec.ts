@@ -163,7 +163,9 @@ describe('Users / _services / users service suite', () => {
 
       expect(result).toMatchObject({ id: user.id });
       expect(identityServiceSpy).toHaveBeenCalledWith(user.identityId, {
-        displayName: displayName,
+        displayName: `${givenName} ${surname}`,
+        givenName: givenName,
+        surname: surname,
         mobilePhone: newPhoneNumber
       });
     });
@@ -216,7 +218,9 @@ describe('Users / _services / users service suite', () => {
 
       expect(result).toMatchObject({ id: user.id });
       expect(identityServiceSpy).toHaveBeenCalledWith(user.identityId, {
-        displayName: displayName,
+        displayName: `${givenName} ${surname}`,
+        givenName: givenName,
+        surname: surname,
         mobilePhone: newPhoneNumber
       });
       expect(userPreferencesSpy).toHaveBeenCalledWith(
@@ -251,6 +255,64 @@ describe('Users / _services / users service suite', () => {
 
       const dbUser = await em.findOneOrFail(UserEntity, { where: { id: user.id } });
       expect(dbUser.jobTitle).toBe(newJobTitle);
+    });
+
+    it('rolls back the B2C identity when later profile work fails', async () => {
+      const user = scenario.users.johnInnovator;
+      const previousIdentity = {
+        identityId: user.identityId,
+        givenName: 'Previous',
+        surname: 'Name',
+        displayName: 'Previous Name',
+        email: user.email,
+        mobilePhone: '0000000000',
+        isActive: true,
+        lastLoginAt: null,
+        passwordResetAt: null
+      };
+      const getIdentitySpy = jest
+        .spyOn(IdentityProviderService.prototype, 'getUserInfo')
+        .mockResolvedValue(previousIdentity);
+      const updatePreferencesSpy = jest
+        .spyOn(UsersService.prototype, 'upsertUserPreferences')
+        .mockRejectedValueOnce(new Error('profile persistence failed'));
+      identityServiceSpy.mockClear();
+
+      await expect(
+        sut.updateUserInfo(
+          { id: user.id, identityId: user.identityId, firstTimeSignInAt: new Date() },
+          ServiceRoleEnum.INNOVATOR,
+          {
+            givenName: 'New',
+            surname: 'Name',
+            displayName: 'ignored display name',
+            mobilePhone: '1111111111',
+            contactByEmail: true,
+            contactByPhone: false,
+            contactByPhoneTimeframe: null,
+            contactDetails: null,
+            organisation: { id: randUuid(), isShadow: true },
+            howDidYouFindUsAnswers: {}
+          },
+          em
+        )
+      ).rejects.toThrow('profile persistence failed');
+
+      expect(identityServiceSpy).toHaveBeenNthCalledWith(1, user.identityId, {
+        displayName: 'New Name',
+        givenName: 'New',
+        surname: 'Name',
+        mobilePhone: '1111111111'
+      });
+      expect(identityServiceSpy).toHaveBeenNthCalledWith(2, user.identityId, {
+        displayName: 'Previous Name',
+        givenName: 'Previous',
+        surname: 'Name',
+        mobilePhone: '0000000000'
+      });
+
+      updatePreferencesSpy.mockRestore();
+      getIdentitySpy.mockRestore();
     });
   });
 
