@@ -5,6 +5,8 @@ export type IdentityOperationType = {
   data: {
     identityId: string;
     body: {
+      givenName?: string;
+      surname?: string;
       displayName?: string;
       mobilePhone?: string | null;
       accountEnabled?: boolean;
