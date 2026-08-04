@@ -4,8 +4,12 @@ import { basename, extname } from "path";
 import { randomUUID } from "crypto";
 import { Brackets, type EntityManager } from "typeorm";
 
-import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
-import { InnovationFileEntity, InnovationSectionEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
+import { MAX_FILES_ALLOWED } from "@innovations/shared/constants";
+import {
+  InnovationFileEntity,
+  InnovationSectionEntity,
+  InnovationThreadMessageEntity
+} from "@innovations/shared/entities";
 import {
   InnovationFileContextTypeEnum,
   InnovationSectionStatusEnum,
@@ -20,11 +24,11 @@ import {
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError
-} from '@innovations/shared/errors';
-import { TranslationHelper, type PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import type { DomainService, FileStorageService, IRSchemaService, NotifierService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+} from "@innovations/shared/errors";
+import { TranslationHelper, type PaginationQueryParamsType } from "@innovations/shared/helpers";
+import { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
+import type { DomainService, FileStorageService, IRSchemaService, NotifierService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
 import {
   isAccessorDomainContextType,
   isAssessmentDomainContextType,
@@ -475,15 +479,15 @@ export class InnovationFileService extends BaseService {
     const file = await connection
       .createQueryBuilder(InnovationFileEntity, "file")
       .select([
-        'file.id',
-        'file.storageId',
-        'file.contextId',
-        'file.contextType',
-        'createdByRole.id',
-        'createdByRole.role',
-        'createdByUserOrgUnit.id',
-        'innovation.id',
-        'innovation.status'
+        "file.id",
+        "file.storageId",
+        "file.contextId",
+        "file.contextType",
+        "createdByRole.id",
+        "createdByRole.role",
+        "createdByUserOrgUnit.id",
+        "innovation.id",
+        "innovation.status"
       ])
       .innerJoin("file.createdByUserRole", "createdByRole")
       .innerJoin("file.innovation", "innovation")
@@ -536,8 +540,8 @@ export class InnovationFileService extends BaseService {
     }
 
     const sectionByContext: Partial<Record<InnovationFileContextTypeEnum, CurrentCatalogTypes.InnovationSections>> = {
-      [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE]: 'EVIDENCE_OF_EFFECTIVENESS',
-      [InnovationFileContextTypeEnum.INNOVATION_REGULATIONS]: 'REGULATIONS_AND_STANDARDS'
+      [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE]: "EVIDENCE_OF_EFFECTIVENESS",
+      [InnovationFileContextTypeEnum.INNOVATION_REGULATIONS]: "REGULATIONS_AND_STANDARDS"
     };
 
     const section = sectionByContext[contextType];

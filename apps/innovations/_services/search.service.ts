@@ -39,33 +39,33 @@ import type {
 
 type SearchInnovationListSelectType =
   // | keyof Omit<  ['areas', ['document', 'INNOVATION_DESCRIPTION', 'areas']]CurrentElasticSearchDocumentType, 'assessment' | 'supports'>
-  | keyof Omit<InnovationListView, 'assessment' | 'supports' | 'ownerId'> // TODO: should be changed in the future, keeping the same for simplification proccess
-  | 'careSettings'
-  | 'otherCareSetting'
-  | 'categories'
-  | 'countryName'
-  | 'diseasesAndConditions'
-  | 'mainCategory'
-  | 'otherCategoryDescription'
-  | 'postcode'
-  | 'areas'
-  | 'archiveReason'
-  | 'assessment.id'
-  | 'assessment.updatedAt'
-  | 'assessment.assignedTo'
-  | 'assessment.isExempt'
-  | 'assessment.maturityLevel'
-  | 'assessment.finishedAt'
-  | 'support.id'
-  | 'support.status'
-  | 'support.updatedAt'
-  | 'support.updatedBy'
-  | 'support.closeReason'
-  | 'owner.id'
-  | 'owner.name'
-  | 'owner.companyName'
-  | 'owner.email'
-  | 'suggestion.suggestedBy';
+  | keyof Omit<InnovationListView, "assessment" | "supports" | "ownerId"> // TODO: should be changed in the future, keeping the same for simplification proccess
+  | "careSettings"
+  | "otherCareSetting"
+  | "categories"
+  | "countryName"
+  | "diseasesAndConditions"
+  | "mainCategory"
+  | "otherCategoryDescription"
+  | "postcode"
+  | "areas"
+  | "archiveReason"
+  | "assessment.id"
+  | "assessment.updatedAt"
+  | "assessment.assignedTo"
+  | "assessment.isExempt"
+  | "assessment.maturityLevel"
+  | "assessment.finishedAt"
+  | "support.id"
+  | "support.status"
+  | "support.updatedAt"
+  | "support.updatedBy"
+  | "support.closeReason"
+  | "owner.id"
+  | "owner.name"
+  | "owner.companyName"
+  | "owner.email"
+  | "suggestion.suggestedBy";
 
 // In advanced search the suggestedOnly applies not to a state as the innovation list but to the suggestions as it
 // affects other innovations besides "UNASSIGNED". This should probably be changed in the future and removed and focus
@@ -522,11 +522,11 @@ export class SearchService extends BaseService {
     engagingOrganisations: this.addGenericFilter("engagingOrganisations", { fieldSelector: "organisationId" }).bind(
       this
     ),
-    engagingUnits: this.addGenericFilter('engagingUnits', { fieldSelector: 'unitId' }).bind(this),
-    groupedStatuses: this.addGenericFilter('groupedStatus').bind(this),
-    archiveReason: this.addGenericFilter('archiveReason').bind(this),
-    involvedAACProgrammes: this.addGenericFilter('filters.involvedAACProgrammes').bind(this),
-    keyHealthInequalities: this.addGenericFilter('filters.keyHealthInequalities').bind(this),
+    engagingUnits: this.addGenericFilter("engagingUnits", { fieldSelector: "unitId" }).bind(this),
+    groupedStatuses: this.addGenericFilter("groupedStatus").bind(this),
+    archiveReason: this.addGenericFilter("archiveReason").bind(this),
+    involvedAACProgrammes: this.addGenericFilter("filters.involvedAACProgrammes").bind(this),
+    keyHealthInequalities: this.addGenericFilter("filters.keyHealthInequalities").bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),

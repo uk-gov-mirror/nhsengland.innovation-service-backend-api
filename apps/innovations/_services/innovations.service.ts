@@ -136,7 +136,7 @@ export const InnovationListSelectType = [
   "statistics.messages"
 ] as const;
 
-type InnovationListViewFields = Omit<InnovationListView, 'assessment' | 'supports' | 'ownerId'>;
+type InnovationListViewFields = Omit<InnovationListView, "assessment" | "supports" | "ownerId">;
 
 export type InnovationListSelectType =
   | keyof InnovationListViewFields
@@ -192,7 +192,7 @@ export const DateFilterFieldsType = [
 ] as const;
 export type DateFilterFieldsType = (typeof DateFilterFieldsType)[number];
 
-export const HasAccessThroughKeys = ['owner', 'collaborator'] as const;
+export const HasAccessThroughKeys = ["owner", "collaborator"] as const;
 
 export type HasAccessThroughKeys = (typeof HasAccessThroughKeys)[number];
 
@@ -763,10 +763,10 @@ export class InnovationsService extends BaseService {
     search: this.addSearchFilter.bind(this),
     supportStatuses: this.addSupportFilter.bind(this),
     supportUnit: () => {}, // this is handled in the withSupport handler for admin users and forbidden otherwise
-    areas: this.addJsonArrayInFilter('areas').bind(this),
-    maturityLevels: this.addJsonArrayInFilter('maturityLevels').bind(this),
-    progressAreas: this.addJsonArrayInFilter('progressAreas').bind(this),
-    archiveReason: this.addJsonArrayInFilter('archiveReason').bind(this)
+    areas: this.addJsonArrayInFilter("areas").bind(this),
+    maturityLevels: this.addJsonArrayInFilter("maturityLevels").bind(this),
+    progressAreas: this.addJsonArrayInFilter("progressAreas").bind(this),
+    archiveReason: this.addJsonArrayInFilter("archiveReason").bind(this)
   };
 
   /**
