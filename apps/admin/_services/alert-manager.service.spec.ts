@@ -75,10 +75,7 @@ const createStore = (existingEntity?: Partial<AlertManagerThrottleEntity>): Aler
   };
 };
 
-const createService = (
-  store: AlertManagerThrottleStore = createStore(),
-  now = fixedNow
-) => {
+const createService = (store: AlertManagerThrottleStore = createStore(), now = fixedNow) => {
   const sendManagerEmail = jest.fn(async (_alert: NormalizedAlertPayload, _recipients: string[]) => undefined);
   const logger = { log: jest.fn(), error: jest.fn(), info: jest.fn() } as any;
   const storageQueue = { sendMessage: jest.fn(async () => ({})) } as any;
@@ -177,10 +174,9 @@ describe('AlertManagerService', () => {
       const result = await service.handleAlert(buildPayload());
 
       expect(result.action).toBe('sent');
-      expect(sendManagerEmail).toHaveBeenCalledWith(
-        expect.objectContaining({ alertRule, monitorCondition: 'Fired' }),
-        ['manager@example.com']
-      );
+      expect(sendManagerEmail).toHaveBeenCalledWith(expect.objectContaining({ alertRule, monitorCondition: 'Fired' }), [
+        'manager@example.com'
+      ]);
       expect(store.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           partitionKey: 'prd',
@@ -332,7 +328,9 @@ describe('AlertManagerService', () => {
 
       await service.handleAlert(buildPayload());
 
-      expect(store.upsert).toHaveBeenCalledWith(expect.objectContaining({ incidentStartedAt: '2026-06-04T09:59:00.000Z' }));
+      expect(store.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ incidentStartedAt: '2026-06-04T09:59:00.000Z' })
+      );
     });
 
     it('preserves the original incident start when updating existing state', async () => {
@@ -347,7 +345,9 @@ describe('AlertManagerService', () => {
 
       await service.handleAlert(buildPayload({ monitorCondition: 'Resolved' }));
 
-      expect(store.upsert).toHaveBeenCalledWith(expect.objectContaining({ incidentStartedAt: '2026-06-04T08:00:00.000Z' }));
+      expect(store.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ incidentStartedAt: '2026-06-04T08:00:00.000Z' })
+      );
     });
 
     it('ignores alerts that are not approved for managers', async () => {
@@ -371,7 +371,7 @@ describe('AzureTableAlertManagerThrottleStore', () => {
   describe('deleteOldEntities', () => {
     it('queries table for old entities and deletes them, excluding the cleanup marker', async () => {
       const store = new AzureTableAlertManagerThrottleStore();
-      
+
       const mockTableClient = (store as any).tableClient;
       mockTableClient.listEntities.mockReturnValue([
         { rowKey: 'old-record-1' },

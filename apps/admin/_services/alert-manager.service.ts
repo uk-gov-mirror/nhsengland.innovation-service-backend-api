@@ -59,12 +59,14 @@ type AlertManagerServiceOptions = {
   sendManagerEmail?: (alert: NormalizedAlertPayload, recipients: string[]) => Promise<void>;
 };
 
-const MANAGER_ALERT_ALLOW_LIST = new Set([
-  'Innovation Service Main Website',
-  'Innovation Service Informational CPU',
-  'Innovation Service Informational Memory',
-  'Innovation Service App Gateway Unhealthy Hosts'
-].map(s => s.toLowerCase()));
+const MANAGER_ALERT_ALLOW_LIST = new Set(
+  [
+    'Innovation Service Main Website',
+    'Innovation Service Informational CPU',
+    'Innovation Service Informational Memory',
+    'Innovation Service App Gateway Unhealthy Hosts'
+  ].map(s => s.toLowerCase())
+);
 
 export class AzureTableAlertManagerThrottleStore implements AlertManagerThrottleStore {
   private readonly tableClient: TableClient;

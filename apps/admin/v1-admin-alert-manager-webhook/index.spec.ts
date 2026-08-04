@@ -39,7 +39,9 @@ describe('v1-admin-alert-manager-webhook Suite', () => {
   });
 
   it('returns bad request when the alert manager service rejects the payload', async () => {
-    jest.spyOn(AlertManagerService.prototype, 'handleAlert').mockRejectedValue(new Error('Invalid Azure Monitor payload'));
+    jest
+      .spyOn(AlertManagerService.prototype, 'handleAlert')
+      .mockRejectedValue(new Error('Invalid Azure Monitor payload'));
 
     const result = await new AzureHttpTriggerBuilder()
       .setBody({ schemaId: 'legacyMetricAlert' })

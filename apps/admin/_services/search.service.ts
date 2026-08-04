@@ -32,7 +32,9 @@ export class SearchService extends BaseService {
       for (let offset = 0; offset < data.length; offset += batchSize) {
         const batch = data.slice(offset, offset + batchSize);
         const batchNumber = Math.floor(offset / batchSize) + 1;
-        this.logger.log(`Indexing Elasticsearch reindex batch ${batchNumber}/${totalBatches} (${batch.length} documents).`);
+        this.logger.log(
+          `Indexing Elasticsearch reindex batch ${batchNumber}/${totalBatches} (${batch.length} documents).`
+        );
         await this.esService.bulkInsert<CurrentElasticSearchDocumentType>(this.index, batch, { refresh: false });
       }
 
