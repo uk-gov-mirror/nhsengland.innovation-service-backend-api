@@ -906,6 +906,7 @@ export const IR_SCHEMA = {
                     isRequired: 'Choose one option'
                   },
                   items: [
+                    // Remove once all legacy YES records have been replaced and compatibility is no longer required.
                     {
                       id: 'YES',
                       label: 'Yes',
@@ -1429,11 +1430,32 @@ export const IR_SCHEMA = {
                   items: [
                     {
                       id: 'YES',
-                      label: 'Yes'
+                      label: 'Yes',
+                      isLegacy: true
                     },
                     {
-                      id: 'NO',
-                      label: 'No'
+                      id: 'CONCEPT_STAGE',
+                      label: 'No working prototype (concept stage)'
+                    },
+                    {
+                      id: 'PROOF_OF_CONCEPT',
+                      label: 'Proof of concept'
+                    },
+                    {
+                      id: 'MVP',
+                      label: 'Minimum viable product'
+                    },
+                    {
+                      id: 'PROTOTYPE',
+                      label: 'Prototype'
+                    },
+                    {
+                      id: 'WORKING_PRODUCT',
+                      label: 'Working product'
+                    },
+                    {
+                      id: 'SERVICE',
+                      label: 'Service'
                     }
                   ]
                 }
@@ -2904,6 +2926,9 @@ export const IR_SCHEMA = {
                     }
                   },
                   addNewLabel: 'Add new user test',
+                  validations: {
+                    isRequired: 'At least one user test is required.'
+                  },
                   addQuestion: {
                     id: 'feedback',
                     dataType: 'textarea',

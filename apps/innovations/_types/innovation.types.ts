@@ -215,7 +215,8 @@ export type InnovationFileOutputContextType =
       type:
         | InnovationFileContextTypeEnum.INNOVATION
         | InnovationFileContextTypeEnum.INNOVATION_SECTION
-        | InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE;
+        | InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
+        | InnovationFileContextTypeEnum.INNOVATION_REGULATIONS;
     }
   | {
       id: string;

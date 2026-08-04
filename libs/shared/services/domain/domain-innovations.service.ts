@@ -1292,6 +1292,7 @@ export class DomainInnovationsService {
         submittedAt: innovation.submittedAt,
         updatedAt: innovation.updatedAt,
         lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
+        archiveReason: innovation.archiveReason,
         document: schema.model.translateDocument(cloneDeep(document)),
         ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
         ...(innovation.engagingOrganisations && {

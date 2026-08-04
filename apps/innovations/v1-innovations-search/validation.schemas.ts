@@ -1,6 +1,7 @@
 import Joi from "joi";
 
 import {
+  InnovationArchiveReasonEnum,
   InnovationGroupedStatusEnum,
   InnovationSupportStatusEnum,
   MaturityLevelCatalogueType,
@@ -78,6 +79,14 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
           .string()
           .valid(...Object.values(InnovationGroupedStatusEnum).filter(v => v !== InnovationGroupedStatusEnum.WITHDRAWN))
       ) // withdrawn is not allowed filter except for admin
+      .optional(),
+    archiveReason: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...Object.values(InnovationArchiveReasonEnum))
+      )
       .optional(),
     involvedAACProgrammes: JoiHelper.AppCustomJoi()
       .stringArray()
@@ -189,6 +198,14 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
               JoiHelper.AppCustomJoi()
                 .string()
                 .valid(...Object.values(InnovationGroupedStatusEnum))
+            )
+            .optional(),
+          archiveReason: JoiHelper.AppCustomJoi()
+            .stringArray()
+            .items(
+              JoiHelper.AppCustomJoi()
+                .string()
+                .valid(...Object.values(InnovationArchiveReasonEnum))
             )
             .optional(),
           supportStatuses: JoiHelper.AppCustomJoi()

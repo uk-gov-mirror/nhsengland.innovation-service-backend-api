@@ -144,7 +144,7 @@ describe('Shared / services / innovations suite', () => {
       const innovations = await sut.getInnovationsFiltered(
         [
           { section: 'INNOVATION_DESCRIPTION', question: 'areas', answers: ['EMERGING_INFECTIOUS_DISEASES'] },
-          { section: 'UNDERSTANDING_OF_NEEDS', question: 'hasProductServiceOrPrototype', answers: ['NO'] }
+          { section: 'UNDERSTANDING_OF_NEEDS', question: 'hasProductServiceOrPrototype', answers: ['CONCEPT_STAGE'] }
         ],
         { onlySubmitted },
         em
@@ -153,7 +153,9 @@ describe('Shared / services / innovations suite', () => {
       const dbFilteredQuery = em
         .createQueryBuilder(InnovationDocumentEntity, 'document')
         .where(`JSON_QUERY(document.document, '$.INNOVATION_DESCRIPTION.areas') LIKE '%EMERGING_INFECTIOUS_DISEASES%'`)
-        .andWhere(`JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'NO'`);
+        .andWhere(
+          `JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'CONCEPT_STAGE'`
+        );
 
       if (onlySubmitted) {
         dbFilteredQuery.innerJoin('document.innovation', 'innovation').andWhere('innovation.submittedAt IS NOT NULL');
@@ -220,8 +222,8 @@ describe('Shared / services / innovations suite', () => {
             question: 'INVALID_QUESTION',
             answers: ['EMERGING_INFECTIOUS_DISEASES']
           },
-          { section: 'INVALID_SECTION', question: 'hasProductServiceOrPrototype', answers: ['NO'] },
-          { section: 'UNDERSTANDING_OF_NEEDS', question: 'hasProductServiceOrPrototype', answers: ['NO'] }
+          { section: 'INVALID_SECTION', question: 'hasProductServiceOrPrototype', answers: ['CONCEPT_STAGE'] },
+          { section: 'UNDERSTANDING_OF_NEEDS', question: 'hasProductServiceOrPrototype', answers: ['CONCEPT_STAGE'] }
         ],
         { onlySubmitted: false },
         em
@@ -229,7 +231,9 @@ describe('Shared / services / innovations suite', () => {
 
       const dbFilteredCount = await em
         .createQueryBuilder(InnovationDocumentEntity, 'document')
-        .where(`JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'NO'`)
+        .where(
+          `JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'CONCEPT_STAGE'`
+        )
         .getCount();
 
       expect(innovations.length).toBe(dbFilteredCount);
@@ -244,7 +248,7 @@ describe('Shared / services / innovations suite', () => {
               question: 'INVALID_QUESTION',
               answers: ['EMERGING_INFECTIOUS_DISEASES']
             },
-            { section: 'INVALID_SECTION', question: 'hasProductServiceOrPrototype', answers: ['NO'] }
+            { section: 'INVALID_SECTION', question: 'hasProductServiceOrPrototype', answers: ['CONCEPT_STAGE'] }
           ],
           {},
           em
