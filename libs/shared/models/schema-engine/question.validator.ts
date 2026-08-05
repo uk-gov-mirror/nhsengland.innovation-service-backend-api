@@ -180,7 +180,7 @@ export class FieldGroupValidator implements QuestionTypeValidator<FieldsGroup> {
     }
     // Add min validation
     if (question.validations?.isRequired) {
-      validation = validation.required();
+      validation = validation.min(1).required();
     }
     return validation;
   }
