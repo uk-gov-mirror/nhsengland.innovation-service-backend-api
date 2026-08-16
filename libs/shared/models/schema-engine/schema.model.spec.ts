@@ -654,7 +654,7 @@ describe('models / schema-engine / schema.model.ts', () => {
               certifications: {
                 GMDN: '12345',
                 UDI: null,
-                UDI_DI: null
+                'UDI-DI': null
               }
             },
             {
@@ -714,25 +714,25 @@ describe('models / schema-engine / schema.model.ts', () => {
       expect(schema.translateDocument(document)).toStrictEqual({
         INNOVATION_DESCRIPTION: {
           name: 'New innovationasasdasdadasda',
-          hasWebsite: 'No',
+          hasWebsite: 'NO',
           countryName: 'Northern Ireland',
           otherCareSetting: 'I want another',
-          areas: ['Data, analytics and research', 'Digitalising the system', 'Improving system flow'],
-          mainCategory: 'In vitro diagnostic',
-          categories: ['In vitro diagnostic'],
+          areas: ['DATA_ANALYTICS_AND_RESEARCH', 'DIGITALISING_SYSTEM', 'IMPROVING_SYSTEM_FLOW'],
+          mainCategory: 'IN_VITRO_DIAGNOSTIC',
+          categories: ['IN_VITRO_DIAGNOSTIC'],
           involvedAACProgrammes: [
             'Health Innovation Network',
             'Artificial Intelligence in Health and Care Award',
             'Innovation for Healthcare Inequalities Programme'
           ],
-          mainPurpose: 'Enabling care, services or communication',
-          careSettings: ['End of life care (EOLC)', 'Industry', 'Local authority - education', 'Other']
+          mainPurpose: 'ENABLING_CARE',
+          careSettings: ['END_LIFE_CARE', 'INDUSTRY', 'LOCAL_AUTHORITY_EDUCATION', 'OTHER']
         },
         UNDERSTANDING_OF_NEEDS: {
-          diseasesConditionsImpact: ['Blood and immune system conditions - Allergies'],
-          hasProductServiceOrPrototype: 'Yes',
-          carbonReductionPlan: 'I am working on one',
-          completedHealthInequalitiesImpactAssessment: 'Yes',
+          diseasesConditionsImpact: ['BLOOD_AND_IMMUNE_SYSTEM_CONDITIONS_ALLERGIES'],
+          hasProductServiceOrPrototype: 'YES',
+          carbonReductionPlan: 'WORKING_ON',
+          completedHealthInequalitiesImpactAssessment: 'YES',
           benefitsOrImpact: [
             'Increases self-management',
             'Increases quality of life',
@@ -740,98 +740,95 @@ describe('models / schema-engine / schema.model.ts', () => {
             'Changes delivery of care from secondary care(for example hospitals) to primary care(for example GP or community services)',
             'Change in delivery of care from inpatient to day case'
           ],
-          impactDiseaseCondition: 'Yes',
+          impactDiseaseCondition: 'YES',
           howInnovationWork: 'daasdadsa',
-          keyHealthInequalities: ['Severe mental illness', 'Early cancer diagnosis']
+          keyHealthInequalities: ['SEVER_MENTAL_ILLNESS', 'EARLY_CANCER_DIAGNOSIS']
         },
         EVIDENCE_OF_EFFECTIVENESS: {
-          currentlyCollectingEvidence: 'Yes',
-          needsSupportAnyArea: [
-            'Understanding the laws that regulate the use of health and care data',
-            'Approval of data studies'
-          ],
+          currentlyCollectingEvidence: 'YES',
+          needsSupportAnyArea: ['UNDERSTANDING_LAWS', 'APPROVAL_DATA_STUDIES'],
           summaryOngoingEvidenceGathering: 'asda',
-          hasEvidence: 'Yes'
+          hasEvidence: 'YES'
         },
         MARKET_RESEARCH: {
-          hasMarketResearch: "I'm currently doing market research",
+          hasMarketResearch: 'IN_PROGRESS',
           marketResearch: 'asdqw',
-          optionBestDescribesInnovation: 'A more cost-effect alternative to those that already exist',
+          optionBestDescribesInnovation: 'COST_EFFECT_ALTERNATIVE',
           whatCompetitorsAlternativesExist: 'qwe'
         },
         CURRENT_CARE_PATHWAY: {
-          innovationPathwayKnowledge: 'There is a pathway, and my innovation changes it',
+          innovationPathwayKnowledge: 'PATHWAY_EXISTS_AND_CHANGED',
           potentialPathway: 'qweqasd\nasd\nasd'
         },
         TESTING_WITH_USERS: {
-          involvedUsersDesignProcess: 'Yes',
+          involvedUsersDesignProcess: 'YES',
           intendedUserGroupsEngaged: [
-            'Clinical or social care professionals working in the UK health and social care system',
-            'Clinical or social care professionals working outside the UK'
+            'CLINICAL_SOCIAL_CARE_WORKING_INSIDE_UK',
+            'CLINICAL_SOCIAL_CARE_WORKING_OUTSIDE_UK'
           ],
           userTests: [
             { feedback: 'Adasqweasd', kind: 'First type' },
             { feedback: 'qweqwq', kind: 'Second type' }
           ],
-          testedWithIntendedUsers: 'Yes'
+          testedWithIntendedUsers: 'YES'
         },
         REGULATIONS_AND_STANDARDS: {
           standards: [
             {
-              hasMet: 'Yes',
-              type: 'UK MDR General IVD (Great Britain)',
+              hasMet: 'YES',
+              type: 'UKR_MDR_GENERAL_IVD',
               certifications: {
                 GMDN: '12345',
-                'Basic UDI': null,
+                UDI: null,
                 'UDI-DI': null
               }
             },
             {
-              hasMet: 'Yes',
-              type: 'UK MDR Class I (Great Britain)',
+              hasMet: 'YES',
+              type: 'UK_MDR_CLASS_I',
               certifications: {
                 GMDN: '12345',
-                'Basic UDI': null,
+                UDI: null,
                 'UDI-DI': null
               }
             },
             {
-              hasMet: 'I am actively working towards it',
-              type: 'Care Quality Commission (CQC) registration, as I am providing a regulated activity',
+              hasMet: 'IN_PROGRESS',
+              type: 'CQC',
               certifications: {
-                'CQC registration number': null
+                CQC: null
               }
             },
             {
-              hasMet: 'I am actively working towards it',
-              type: 'UK MDR IVD for self test (Great Britain)',
+              hasMet: 'IN_PROGRESS',
+              type: 'UKR_MDR_IVD_SELF_TEST',
               certifications: {
                 GMDN: null,
-                'Basic UDI': null,
-                'UDI-DI': null
+                UDI: null,
+                UDI_DI: null
               }
             }
           ],
-          hasRegulationKnowledge: 'Yes, I know all of them'
+          hasRegulationKnowledge: 'YES_ALL'
         },
         INTELLECTUAL_PROPERTY: {
           otherIntellectual: 'Asda',
-          hasPatents: 'I have applied for one or more patents',
-          hasOtherIntellectual: 'Yes'
+          hasPatents: 'APPLIED_AT_LEAST_ONE',
+          hasOtherIntellectual: 'YES'
         },
         REVENUE_MODEL: {
           payingOrganisations: 'qwqewqweq',
-          hasFunding: 'Yes',
+          hasFunding: 'YES',
           benefittingOrganisations: 'qweqw',
-          revenues: ['Direct product sales', 'Lease', 'Sales of consumables or accessories'],
+          revenues: ['DIRECT_PRODUCT_SALES', 'LEASE', 'SALES_OF_CONSUMABLES_OR_ACCESSORIES'],
           fundingDescription: 'qweqwq',
-          hasRevenueModel: 'Yes'
+          hasRevenueModel: 'YES'
         },
         COST_OF_INNOVATION: {
-          hasCostKnowledge: 'Yes, I have a detailed estimate',
+          hasCostKnowledge: 'DETAILED_ESTIMATE',
           costComparison:
-            'My innovation costs more to purchase, but has greater benefits that will lead to overall cost savings',
-          patientsRange: 'More than half a million per year'
+            'COSTS_MORE_WITH_SAVINGS',
+          patientsRange: 'MORE_THAN_500000'
         },
         DEPLOYMENT: {},
         version: '6',

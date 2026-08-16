@@ -9,7 +9,8 @@ import type {
   RadioGroup,
   Textarea,
   Text,
-  InputArray
+  InputArray,
+  ConditionGroupType
 } from './question.types';
 import { cloneDeep } from 'lodash';
 
@@ -116,6 +117,54 @@ export class AutocompleteArrayValidator implements QuestionTypeValidator<Autocom
   }
 }
 
+/**
+ * Finds the first missing certification that is conditionally required.
+ * It checks the selected standard as the parent answer and `hasMet` as its sibling answer.
+ * Example: `type = UK_MDR_CLASS_I` and `hasMet = YES` makes `GMDN` mandatory.
+ * Returns the missing certification ID, or `undefined` when all required values exist.
+ */
+function findMissingMandatoryCertification(
+  question: CheckboxArray,
+  answer: Record<string, unknown>,
+  parentAnswerId: string
+): string | undefined {
+  for (const addQuestion of question.addQuestions ?? []) {
+    if (addQuestion.dataType !== 'input-array') continue;
+
+    for (const item of addQuestion.items ?? []) {
+      const mandatoryIf = item.itemConditionOptions?.mandatoryIf;
+      const groups = Array.isArray(mandatoryIf) ? mandatoryIf : mandatoryIf ? [mandatoryIf as ConditionGroupType] : [];
+      const isMandatory = groups.some(group => {
+        const results = group.conditions.map(condition => {
+          const conditionAnswer =
+            condition.relation === 'sibling'
+              ? answer[condition.id ?? '']
+              : condition.relation === 'parent'
+                ? answer[parentAnswerId]
+                : answer[condition.id ?? ''];
+          const answerValue = typeof conditionAnswer === 'string' ? conditionAnswer : '';
+
+          return condition.logic === 'exclusive'
+            ? !condition.list.includes(answerValue)
+            : condition.list.includes(answerValue);
+        });
+
+        return group.groupLogic === 'OR' ? results.some(Boolean) : results.every(Boolean);
+      });
+
+      const certificationValues = answer[addQuestion.id];
+      const value =
+        certificationValues && typeof certificationValues === 'object'
+          ? (certificationValues as Record<string, unknown>)[item.id]
+          : undefined;
+
+      if (isMandatory && (value === undefined || value === null || value === '')) return item.id;
+    }
+  }
+
+  return undefined;
+}
+
 export class CheckboxArrayValidator implements QuestionTypeValidator<CheckboxArray> {
   validate(question: CheckboxArray): Joi.Schema {
     const validItems = [];
@@ -137,7 +186,23 @@ export class CheckboxArrayValidator implements QuestionTypeValidator<CheckboxArr
         objectSchemaDefinition[aq.id] = QuestionValidatorFactory.validate(aq).optional();
       });
 
-      return Joi.array().items(Joi.object(objectSchemaDefinition)).min(1);
+      return Joi.array()
+        .items(Joi.object(objectSchemaDefinition))
+        .min(1)
+        .custom((answers, helpers) => {
+          const parentAnswerId = question.checkboxAnswerId ?? question.id;
+
+          for (const answer of answers) {
+            const missingCertification = findMissingMandatoryCertification(question, answer, parentAnswerId);
+            if (missingCertification) {
+              return helpers.message({
+                custom: `${missingCertification} is required when the certification status is Yes.`
+              });
+            }
+          }
+
+          return answers;
+        });
     }
 
     let checkboxValidation = JoiHelper.AppCustomJoi().stringArray();
@@ -179,6 +244,12 @@ export class InputArrayValidator implements QuestionTypeValidator<InputArray> {
         itemValidation = itemValidation.min(item.validations.minLength);
       }
 
+      if (item.validations?.equalToLength) {
+        itemValidation = itemValidation
+          .length(item.validations.equalToLength.length)
+          .messages({ 'string.length': item.validations.equalToLength.errorMessage ?? 'Invalid length' });
+      }
+
       if (item.validations?.isRequired) {
         itemValidation = itemValidation.required();
         // itemValidation = itemValidation.optional();
@@ -189,7 +260,7 @@ export class InputArrayValidator implements QuestionTypeValidator<InputArray> {
       objectSchemaDefinition[item.id] = itemValidation;
     }
 
-    let inputArrayValidation = Joi.object(objectSchemaDefinition);
+    const inputArrayValidation = Joi.object(objectSchemaDefinition);
 
     return inputArrayValidation;
   }
