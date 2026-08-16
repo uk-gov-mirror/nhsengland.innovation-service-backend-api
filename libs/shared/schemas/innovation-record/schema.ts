@@ -1361,7 +1361,19 @@ export const IR_SCHEMA = {
                     }
                   ]
                 }
-              ]
+              ],
+              calculatedFields: {
+                countryName: [
+                  {
+                    id: 'officeLocation',
+                    options: ['England', 'Scotland', 'Wales', 'Northern Ireland']
+                  },
+                  {
+                    id: 'countryLocation',
+                    options: []
+                  }
+                ]
+              }
             }
           ]
         }

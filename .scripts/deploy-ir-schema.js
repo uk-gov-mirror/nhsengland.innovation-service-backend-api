@@ -1391,7 +1391,19 @@
                   }
                 ]
               }
-            ]
+            ],
+            calculatedFields: {
+              countryName: [
+                {
+                  id: "officeLocation",
+                  options: ["England", "Scotland", "Wales", "Northern Ireland"]
+                },
+                {
+                  id: "countryLocation",
+                  options: []
+                }
+              ]
+            }
           }
         ]
       },
