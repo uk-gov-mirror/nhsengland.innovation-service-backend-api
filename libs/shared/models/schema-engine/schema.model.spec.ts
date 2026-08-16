@@ -19,6 +19,40 @@ describe('models / schema-engine / schema.model.ts', () => {
     expect(errors).toStrictEqual([{ context: undefined, message: '"sections[0].title" is required' }]);
   });
 
+  it('should normalize a legacy addQuestion into addQuestions', () => {
+    const legacyChild = { id: 'child', dataType: 'text', label: 'Child question' } as const;
+    const schema = new SchemaModel({
+      sections: [
+        {
+          id: 'section',
+          title: 'Section',
+          subSections: [
+            {
+              id: 'subSection',
+              title: 'Subsection',
+              steps: [
+                {
+                  questions: [
+                    {
+                      id: 'group',
+                      dataType: 'fields-group',
+                      label: 'Group',
+                      field: { id: 'field', dataType: 'text', label: 'Field' },
+                      addQuestion: legacyChild
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+    expect(schema.runRules().errors).toHaveLength(0);
+    expect(schema.getQuestion('group')).toMatchObject({ addQuestions: [legacyChild] });
+  });
+
   it('should give an error when two sections have the same id', () => {
     const body: IRSchemaType = {
       sections: [

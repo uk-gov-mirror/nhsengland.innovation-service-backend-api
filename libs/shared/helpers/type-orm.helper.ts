@@ -14,7 +14,7 @@ export class TypeORMHelper {
 
   //   }
 
-  static addLastSupportGivenAtSubquery(query: SelectQueryBuilder<any>, organisationUnitID: string) {
+  static addLastSupportGivenAtSubquery(query: SelectQueryBuilder<any>, organisationUnitID: string): void {
     // Subquery for latest message
     const lastMsgSubquery = query
       .subQuery()

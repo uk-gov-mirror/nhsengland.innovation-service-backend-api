@@ -31,6 +31,30 @@ export type InnovationRecordStepType = {
 
 type Condition = { id: string; options: string[] };
 
+function normalizeLegacyAddQuestions(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(normalizeLegacyAddQuestions);
+  }
+
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  const source = value as Record<string, unknown>;
+  const normalized = Object.fromEntries(
+    Object.entries(source).map(([key, entry]) => [key, normalizeLegacyAddQuestions(entry)])
+  ) as Record<string, unknown>;
+
+  if (source['addQuestion'] !== undefined) {
+    if (source['addQuestions'] === undefined) {
+      normalized['addQuestions'] = [normalizeLegacyAddQuestions(source['addQuestion'])];
+    }
+    delete normalized['addQuestion'];
+  }
+
+  return normalized;
+}
+
 export type SchemaValidationError = {
   message: string;
   context: any;
@@ -53,7 +77,7 @@ export class SchemaModel {
 
   constructor(schema: any) {
     this.errorList = [];
-    this.schema = schema;
+    this.schema = normalizeLegacyAddQuestions(schema) as IRSchemaType;
   }
 
   /**
@@ -134,24 +158,24 @@ export class SchemaModel {
 
         const question = config.question;
         if (question.dataType === 'checkbox-array' && question.addQuestions) {
-          let toReturn: Record<string, any>[] = [];
+          const toReturn: Record<string, any>[] = [];
 
           if (Array.isArray(value)) {
             const fieldKey = question.checkboxAnswerId ?? question.id;
             value.forEach(v => {
-              let translatedAnswer: Record<string, string> = {};
+              const translatedAnswer: Record<string, string> = {};
               // add parent value
               translatedAnswer[fieldKey] = config.translations.get(v[fieldKey]) ?? v[fieldKey];
 
               // add addQuestions values
-              question.addQuestions &&
-                question.addQuestions!.forEach(aq => {
+              if (question.addQuestions) {
+                question.addQuestions.forEach(aq => {
                   const addQuestion = this.getQuestionAndItemTranslations(aq.id);
                   if (!addQuestion) return;
 
                   const addQuestionKey = addQuestion?.question.id;
 
-                  let addQuestionAnswer = v[addQuestionKey];
+                  const addQuestionAnswer = v[addQuestionKey];
                   let addQuestionTranslatedAnswer: any;
 
                   // check if answer is a single item or an object, and parse value appropriately
@@ -168,6 +192,7 @@ export class SchemaModel {
 
                   translatedAnswer[addQuestionKey] = addQuestionTranslatedAnswer;
                 });
+              }
               toReturn.push(translatedAnswer);
             });
 

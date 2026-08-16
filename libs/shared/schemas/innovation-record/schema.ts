@@ -3229,7 +3229,7 @@ export const IR_SCHEMA = {
                           id: 'PRODUCT_LICENSE',
                           label: 'Product License number',
                           description:
-                            "Up to 15 characters in the format \'PL 12345/0001\', \'PLGB 12345/0002\' or \'PLNI 12345/0003\'",
+                            "Up to 15 characters in the format 'PL 12345/0001', 'PLGB 12345/0002' or 'PLNI 12345/0003'",
                           itemConditionOptions: {
                             mandatoryIf: {
                               groupLogic: 'AND',
