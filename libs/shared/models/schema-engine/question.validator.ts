@@ -234,7 +234,7 @@ export class InputArrayValidator implements QuestionTypeValidator<InputArray> {
     for (const item of question.items ?? []) {
       if (!item.id) continue;
 
-      let itemValidation = JoiHelper.AppCustomJoi().string().allow(null);
+      let itemValidation = JoiHelper.AppCustomJoi().string();
 
       if (item.validations?.maxLength) {
         itemValidation = itemValidation.max(item.validations.maxLength);
@@ -248,6 +248,18 @@ export class InputArrayValidator implements QuestionTypeValidator<InputArray> {
         itemValidation = itemValidation
           .length(item.validations.equalToLength.length)
           .messages({ 'string.length': item.validations.equalToLength.errorMessage ?? 'Invalid length' });
+      }
+
+      if (item.validations?.min) {
+        itemValidation = itemValidation
+          .min(item.validations.min.length)
+          .messages({ 'string.min': item.validations.min.errorMessage ?? 'Invalid length' });
+      }
+
+      if (item.validations?.max) {
+        itemValidation = itemValidation
+          .max(item.validations.max.length)
+          .messages({ 'string.max': item.validations.max.errorMessage ?? 'Invalid length' });
       }
 
       if (item.validations?.isRequired) {
