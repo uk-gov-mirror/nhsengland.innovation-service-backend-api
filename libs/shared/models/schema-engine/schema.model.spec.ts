@@ -5,6 +5,41 @@ import { randCountry, randText } from '@ngneat/falso';
 import { IR_SCHEMA } from '../../schemas/innovation-record/schema';
 
 describe('models / schema-engine / schema.model.ts', () => {
+  const checkboxTranslationSchema: any = {
+    sections: [
+      {
+        id: 'section',
+        title: 'Section',
+        subSections: [
+          {
+            id: 'REGULATIONS_AND_STANDARDS',
+            title: 'Regulations and standards',
+            steps: [
+              {
+                questions: [
+                  {
+                    id: 'standards',
+                    dataType: 'checkbox-array',
+                    label: 'Standards',
+                    items: [{ id: 'STANDARD_A', label: 'Standard A' }],
+                    addQuestions: [
+                      {
+                        id: 'certifications',
+                        dataType: 'input-array',
+                        label: 'Certifications',
+                        items: [{ id: 'GMDN', label: 'GMDN' }]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  };
+
   beforeAll(() => {
     requiredSectionsAndQuestions.clear();
   });
@@ -605,6 +640,30 @@ describe('models / schema-engine / schema.model.ts', () => {
   });
 
   describe('translateDocument', () => {
+    it('preserves a non-array checkbox answer value', () => {
+      const schema = new SchemaModel(checkboxTranslationSchema);
+      expect(schema.runRules().errors).toHaveLength(0);
+      const document = {
+        REGULATIONS_AND_STANDARDS: {
+          standards: 'legacy-standard'
+        }
+      };
+
+      expect(schema.translateDocument(document)['REGULATIONS_AND_STANDARDS'].standards).toBe('legacy-standard');
+    });
+
+    it('preserves a null checkbox answer value', () => {
+      const schema = new SchemaModel(checkboxTranslationSchema);
+      expect(schema.runRules().errors).toHaveLength(0);
+      const document = {
+        REGULATIONS_AND_STANDARDS: {
+          standards: null
+        }
+      };
+
+      expect(schema.translateDocument(document)['REGULATIONS_AND_STANDARDS'].standards).toBeNull();
+    });
+
     it('should translate document info', () => {
       const schema = new SchemaModel(IR_SCHEMA);
       schema.runRules();

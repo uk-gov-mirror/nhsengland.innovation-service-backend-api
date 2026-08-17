@@ -198,13 +198,10 @@ export class SchemaModel {
 
             document[subSection][questionId] = toReturn;
           } else {
-            if (Array.isArray(value)) {
-              document[subSection][questionId] = value.map(v => config.translations.get(v) ?? v);
-            } else if (typeof value === 'string') {
+            if (typeof value === 'string') {
               document[subSection][questionId] = config.translations.get(value) ?? value;
             }
           }
-          document[subSection][questionId] = toReturn;
         } else {
           if (Array.isArray(value)) {
             document[subSection][questionId] = value.map(v => config.translations.get(v) ?? v);
