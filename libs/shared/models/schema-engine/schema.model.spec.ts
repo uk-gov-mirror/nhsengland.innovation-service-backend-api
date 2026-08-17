@@ -21,6 +21,7 @@ describe('models / schema-engine / schema.model.ts', () => {
                     id: 'standards',
                     dataType: 'checkbox-array',
                     label: 'Standards',
+                    checkboxAnswerId: 'type',
                     items: [{ id: 'STANDARD_A', label: 'Standard A' }],
                     addQuestions: [
                       {
@@ -662,6 +663,30 @@ describe('models / schema-engine / schema.model.ts', () => {
       };
 
       expect(schema.translateDocument(document)['REGULATIONS_AND_STANDARDS'].standards).toBeNull();
+    });
+
+    it('preserves unknown fields on checkbox answer rows', () => {
+      const schema = new SchemaModel(checkboxTranslationSchema);
+      expect(schema.runRules().errors).toHaveLength(0);
+      const document = {
+        REGULATIONS_AND_STANDARDS: {
+          standards: [
+            {
+              type: 'STANDARD_A',
+              legacyField: 'preserve-me',
+              certifications: { GMDN: '12345' }
+            }
+          ]
+        }
+      };
+
+      expect(schema.translateDocument(document)['REGULATIONS_AND_STANDARDS'].standards).toEqual([
+        {
+          type: 'Standard A',
+          legacyField: 'preserve-me',
+          certifications: { GMDN: '12345' }
+        }
+      ]);
     });
 
     it('should translate document info', () => {

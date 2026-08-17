@@ -163,7 +163,7 @@ export class SchemaModel {
           if (Array.isArray(value)) {
             const fieldKey = question.checkboxAnswerId ?? question.id;
             value.forEach(v => {
-              const translatedAnswer: Record<string, string> = {};
+              const translatedAnswer: Record<string, any> = { ...v };
               // add parent value
               translatedAnswer[fieldKey] = config.translations.get(v[fieldKey]) ?? v[fieldKey];
 
