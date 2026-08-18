@@ -162,7 +162,6 @@ export const catalogStandardsType = [
   'EU_IVDR_IVD_CLASS_C',
   'EU_IVDR_IVD_CLASS_D',
   'IONISING_RADIATION',
-  'MARKETING_AUTHORISATION',
-
+  'MARKETING_AUTHORISATION'
 ] as const;
 export type catalogStandardsType = (typeof catalogStandardsType)[number];

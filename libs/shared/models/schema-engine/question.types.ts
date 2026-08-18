@@ -34,6 +34,7 @@ export type RadioGroup = Base & {
     | {
         id: string;
         label?: string;
+        isLegacy?: boolean;
         conditional?: Question;
       }
     | { type: 'separator' }

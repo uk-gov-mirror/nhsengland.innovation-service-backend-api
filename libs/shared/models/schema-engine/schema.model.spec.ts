@@ -713,7 +713,7 @@ describe('models / schema-engine / schema.model.ts', () => {
         },
         UNDERSTANDING_OF_NEEDS: {
           howInnovationWork: 'daasdadsa',
-          hasProductServiceOrPrototype: 'YES',
+          hasProductServiceOrPrototype: 'WORKING_PRODUCT',
           benefitsOrImpact: [
             'Increases self-management',
             'Increases quality of life',
@@ -944,8 +944,7 @@ describe('models / schema-engine / schema.model.ts', () => {
         },
         COST_OF_INNOVATION: {
           hasCostKnowledge: 'DETAILED_ESTIMATE',
-          costComparison:
-            'COSTS_MORE_WITH_SAVINGS',
+          costComparison: 'COSTS_MORE_WITH_SAVINGS',
           patientsRange: 'MORE_THAN_500000'
         },
         DEPLOYMENT: {},
@@ -965,6 +964,145 @@ describe('models / schema-engine / schema.model.ts', () => {
           }
         ]
       });
+    });
+  });
+
+  describe('getSubSectionPayloadValidation', () => {
+    it('shows the other registration field for OTHER and IONISING_RADIATION', () => {
+      const standardsQuestion = (IR_SCHEMA as any).sections
+        .flatMap((section: any) => section.subSections)
+        .flatMap((subSection: any) => subSection.steps)
+        .flatMap((step: any) => step.questions)
+        .find((question: any) => question.id === 'standards');
+      const certificationsQuestion = standardsQuestion?.addQuestions?.find(
+        (question: any) => question.id === 'certifications'
+      );
+      const otherRegistrationItem = certificationsQuestion?.items?.find((item: any) => item.id === 'OTHER_REG');
+
+      expect(otherRegistrationItem?.itemConditionOptions?.displayIf?.conditions[0]?.list).toEqual(
+        expect.arrayContaining(['OTHER', 'IONISING_RADIATION'])
+      );
+    });
+
+    it.each(['YES', 'CONCEPT_STAGE', 'PROOF_OF_CONCEPT', 'MVP', 'PROTOTYPE', 'WORKING_PRODUCT', 'SERVICE'])(
+      'accepts prototype answer %s',
+      answer => {
+        const model = new SchemaModel(IR_SCHEMA);
+        model.runRules();
+
+        const validationSchema = model.getSubSectionPayloadValidation('UNDERSTANDING_OF_NEEDS', {
+          hasProductServiceOrPrototype: answer
+        });
+
+        expect(validationSchema.validate({ hasProductServiceOrPrototype: answer }).error).toBeUndefined();
+      }
+    );
+
+    it('rejects the migrated prototype answer NO', () => {
+      const model = new SchemaModel(IR_SCHEMA);
+      model.runRules();
+
+      const validationSchema = model.getSubSectionPayloadValidation('UNDERSTANDING_OF_NEEDS', {
+        hasProductServiceOrPrototype: 'NO'
+      });
+
+      expect(validationSchema.validate({ hasProductServiceOrPrototype: 'NO' }).error).toBeDefined();
+    });
+
+    it('should fail validation when fields-group is required but empty array is provided', () => {
+      const model = new SchemaModel({
+        sections: [
+          {
+            id: 'TEST_SECTION',
+            title: 'Test Section',
+            subSections: [
+              {
+                id: 'TEST_SUBSECTION',
+                title: 'Test Subsection',
+                steps: [
+                  {
+                    questions: [
+                      {
+                        id: 'userTests',
+                        dataType: 'fields-group',
+                        label: 'What kind of testing with users have you done?',
+                        field: {
+                          id: 'kind',
+                          dataType: 'text',
+                          label: 'User test',
+                          validations: { isRequired: 'Required' }
+                        },
+                        addQuestion: {
+                          id: 'feedback',
+                          dataType: 'textarea',
+                          label: 'Describe testing',
+                          validations: { isRequired: 'Required' }
+                        },
+                        validations: { isRequired: 'At least one user test is required.' }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      });
+      model.runRules();
+
+      const validationSchema = model.getSubSectionPayloadValidation('TEST_SUBSECTION', { userTests: [] });
+      const { error } = validationSchema.validate({ userTests: [] });
+      expect(error).toBeDefined();
+    });
+
+    it('should pass validation when fields-group is required and non-empty array is provided', () => {
+      const model = new SchemaModel({
+        sections: [
+          {
+            id: 'TEST_SECTION',
+            title: 'Test Section',
+            subSections: [
+              {
+                id: 'TEST_SUBSECTION',
+                title: 'Test Subsection',
+                steps: [
+                  {
+                    questions: [
+                      {
+                        id: 'userTests',
+                        dataType: 'fields-group',
+                        label: 'What kind of testing with users have you done?',
+                        field: {
+                          id: 'kind',
+                          dataType: 'text',
+                          label: 'User test',
+                          validations: { isRequired: 'Required' }
+                        },
+                        addQuestion: {
+                          id: 'feedback',
+                          dataType: 'textarea',
+                          label: 'Describe testing',
+                          validations: { isRequired: 'Required' }
+                        },
+                        validations: { isRequired: 'At least one user test is required.' }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      });
+      model.runRules();
+
+      const validationSchema = model.getSubSectionPayloadValidation('TEST_SUBSECTION', {
+        userTests: [{ kind: 'Beta', feedback: 'Good' }]
+      });
+      const { error } = validationSchema.validate({
+        userTests: [{ kind: 'Beta', feedback: 'Good' }]
+      });
+      expect(error).toBeUndefined();
     });
   });
 });

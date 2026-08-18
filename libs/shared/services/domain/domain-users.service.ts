@@ -233,7 +233,9 @@ export class DomainUsersService {
       passwordResetAt: user.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
       jobTitle: dbUser.jobTitle,
-      strategicRoles: dbUser.strategicRoles ? dbUser.strategicRoles.map(sr => ({ id: sr.id, strategicRole: sr.strategicRole })) : [],
+      strategicRoles: dbUser.strategicRoles
+        ? dbUser.strategicRoles.map(sr => ({ id: sr.id, strategicRole: sr.strategicRole }))
+        : [],
       ...(filters?.organisations && { organisations: [...organisationsMap.values()] })
     };
   }

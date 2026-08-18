@@ -70,6 +70,7 @@ const radioGroup = Joi.object({
       Joi.object({
         id,
         label: JoiHelper.AppCustomJoi().string().min(1),
+        isLegacy: Joi.boolean().valid(true).optional(),
         conditional: Joi.alternatives(text, textArea).optional()
       })
     )

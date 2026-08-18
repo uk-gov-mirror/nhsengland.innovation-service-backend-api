@@ -477,7 +477,7 @@ export function generateDocumentContent(schema: IRSchemaType): Paragraph[] {
             with the same text used on store.ctx.schema.getIrSchemaSectionAllStepsList() on the frontend
             for the non-started section questions' list */
 
-            question.addQuestions.forEach(aq=>{
+            question.addQuestions.forEach(aq => {
               let textToReplaceLabelVariable = '';
               switch (aq.id) {
                 case 'hasMet':
@@ -487,7 +487,7 @@ export function generateDocumentContent(schema: IRSchemaType): Paragraph[] {
                   textToReplaceLabelVariable = 'each testing type';
                   break;
               }
-  
+
               paragraphs.push(
                 new Paragraph({
                   children: [
@@ -501,16 +501,17 @@ export function generateDocumentContent(schema: IRSchemaType): Paragraph[] {
                   spacing: { before: 400 }
                 })
               );
-            })
+            });
 
             // Format the answer based on data type
             switch (question.dataType) {
-              case 'checkbox-array':
-                question.addQuestions?.forEach(aq=>{
+              case 'checkbox-array': {
+                question.addQuestions?.forEach(aq => {
                   const items = processQuestionItems(aq);
                   paragraphs.push(...items);
-                })
+                });
                 break;
+              }
               case 'fields-group':
               default:
                 paragraphs.push(basicParagraph('[Write your answer here]'));
@@ -533,6 +534,31 @@ export function processQuestionItems(question: Question): Paragraph[] {
   }
 
   const items = question.items || [];
+
+  const processConditionalQuestion = (conditional: Question): void => {
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: conditional.label,
+            bold: true,
+            size: 24,
+            font: DOCUMENT_FONT
+          })
+        ],
+        spacing: { before: 400 }
+      })
+    );
+
+    switch (conditional.dataType) {
+      case 'radio-group':
+      case 'checkbox-array':
+        paragraphs.push(...processQuestionItems(conditional));
+        break;
+      default:
+        paragraphs.push(basicParagraph('[Write your answer here]'));
+    }
+  };
 
   items.forEach(item => {
     if ('type' in item && item.type === 'separator') {
@@ -558,6 +584,10 @@ export function processQuestionItems(question: Question): Paragraph[] {
             spacing: { before: 100, after: 200 }
           })
         );
+      }
+
+      if ('conditional' in item && item.conditional && typeof item.conditional !== 'string') {
+        processConditionalQuestion(item.conditional);
       }
     } else {
       paragraphs.push(basicParagraph('[Write your answer here]'));

@@ -67,9 +67,9 @@ describe('QuestionValidatorFactory input-array rules', () => {
   });
 
   it('enforces equalToLength', () => {
-    expect(
-      validate([{ type: 'UK_MDR_CLASS_I', hasMet: 'YES', certifications: { GMDN: '1234' } }])
-    ).toMatchObject({ error: expect.anything() });
+    expect(validate([{ type: 'UK_MDR_CLASS_I', hasMet: 'YES', certifications: { GMDN: '1234' } }])).toMatchObject({
+      error: expect.anything()
+    });
   });
 
   it('allows a missing certification when hasMet is IN_PROGRESS', () => {
@@ -85,15 +85,15 @@ describe('QuestionValidatorFactory input-array rules', () => {
   });
 
   it('rejects null for a required input-array item', () => {
-    expect(
-      QuestionValidatorFactory.validate(requiredInputArrayQuestion).validate({ GMDN: null })
-    ).toMatchObject({ error: expect.anything() });
+    expect(QuestionValidatorFactory.validate(requiredInputArrayQuestion).validate({ GMDN: null })).toMatchObject({
+      error: expect.anything()
+    });
   });
 
   it('allows null for an optional input-array item', () => {
-    expect(
-      QuestionValidatorFactory.validate(boundedInputArrayQuestion).validate({ GMDN: null })
-    ).toEqual({ value: { GMDN: null } });
+    expect(QuestionValidatorFactory.validate(boundedInputArrayQuestion).validate({ GMDN: null })).toEqual({
+      value: { GMDN: null }
+    });
   });
 
   it('enforces minimum and maximum lengths for input-array items', () => {
