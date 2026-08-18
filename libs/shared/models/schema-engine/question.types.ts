@@ -79,8 +79,8 @@ export type FieldsGroup = Base & {
 export type Question = Text | Textarea | RadioGroup | CheckboxArray | AutocompleteArray | FieldsGroup | InputArray;
 
 export type ItemConditionOptionsType = {
-  mandatoryIf?: ConditionGroupType[] /* mark as mandatory if on list */;
-  displayIf?: ConditionGroupType[] /* show item depending on previous answer */;
+  mandatoryIf?: ConditionGroupType /* mark as mandatory if on list */;
+  displayIf?: ConditionGroupType /* show item depending on previous answer */;
 };
 
 export type ConditionType = {

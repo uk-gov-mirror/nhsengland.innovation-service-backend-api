@@ -133,7 +133,11 @@ function findMissingMandatoryCertification(
 
     for (const item of addQuestion.items ?? []) {
       const mandatoryIf = item.itemConditionOptions?.mandatoryIf;
-      const groups = Array.isArray(mandatoryIf) ? mandatoryIf : mandatoryIf ? [mandatoryIf as ConditionGroupType] : [];
+      const groups: ConditionGroupType[] = Array.isArray(mandatoryIf)
+        ? (mandatoryIf as ConditionGroupType[])
+        : mandatoryIf
+          ? [mandatoryIf]
+          : [];
       const isMandatory = groups.some(group => {
         const results = group.conditions.map(condition => {
           const conditionAnswer =
