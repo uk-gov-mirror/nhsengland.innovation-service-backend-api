@@ -31,7 +31,6 @@
   },
   "dependencies": {
     "@aaronpowell/azure-functions-nodejs-openapi": "^0.4.0",
-    "@azure/data-tables": "^13.3.2",
     "@azure/storage-blob": "^12.27.0",
     "@azure/storage-queue": "^12.26.0",
     "@elastic/elasticsearch": "^8.17.1",
@@ -39,6 +38,7 @@
     "axios": "^1.8.4",
     "docx": "^9.5.0",
     "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
     "geoip-lite": "^1.4.10",
     "htmlparser2": "^10.0.0",
     "inversify": "^6.2.2",
@@ -63,6 +63,7 @@
     "@eslint/js": "^9.10.0",
     "@ngneat/falso": "^6.4.0",
     "@types/eslint__js": "^8.42.3",
+    "@types/exceljs": "^0.5.3",
     "@types/geoip-lite": "^1.4.4",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.9",
