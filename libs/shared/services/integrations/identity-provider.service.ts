@@ -65,6 +65,14 @@ type b2cGetUsersListDTO = {
   }[];
 };
 
+type IdentityUpdateBody = {
+  givenName?: string;
+  surname?: string;
+  displayName?: string;
+  mobilePhone?: string | null;
+  accountEnabled?: boolean;
+};
+
 @injectable()
 export class IdentityProviderService {
   private tenantName = process.env['AD_TENANT_NAME'] || '';
@@ -207,7 +215,11 @@ export class IdentityProviderService {
       await this.cache.deleteMany(uniqueUserIds);
     }
 
-    const res = await this.cache.getMany(uniqueUserIds);
+    const res = (await this.cache.getMany(uniqueUserIds)).map(user => ({
+      ...user,
+      givenName: user.givenName ?? '',
+      surname: user.surname ?? ''
+    }));
 
     if (res.length !== uniqueUserIds.length) {
       const cachedUserIds = new Set(res.map(user => user.identityId));
@@ -324,6 +336,8 @@ export class IdentityProviderService {
     const odataFilter = `$filter=id in (${idsFilter})`;
     const fields = [
       'displayName',
+      'givenName',
+      'surname',
       'identities',
       'email',
       'mobilePhone',
@@ -337,6 +351,8 @@ export class IdentityProviderService {
   private mapB2CUsersToDomain(b2cUsers: b2cGetUsersListDTO['value']): IdentityUserInfo[] {
     return b2cUsers.map(u => ({
       identityId: u.id,
+      givenName: u.givenName ?? '',
+      surname: u.surname ?? '',
       displayName: u.displayName,
       email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
       mobilePhone: u.mobilePhone,
@@ -347,12 +363,14 @@ export class IdentityProviderService {
     }));
   }
 
-  async createUser(data: { name: string; email: string; password: string }): Promise<string> {
+  async createUser(data: { givenName: string; surname: string; email: string; password: string }): Promise<string> {
     await this.verifyAccessToken();
 
     const body = {
       accountEnabled: true,
-      displayName: data.name,
+      givenName: data.givenName,
+      surname: data.surname,
+      displayName: `${data.givenName} ${data.surname}`,
       passwordPolicies: 'DisablePasswordExpiration',
       passwordProfile: { password: data.password, forceChangePasswordNextSignIn: false },
       identities: [
@@ -381,10 +399,7 @@ export class IdentityProviderService {
     return response.data.id;
   }
 
-  async updateUser(
-    identityId: string,
-    body: { displayName?: string; mobilePhone?: string | null; accountEnabled?: boolean }
-  ): Promise<void> {
+  async updateUser(identityId: string, body: IdentityUpdateBody): Promise<void> {
     await this.verifyAccessToken();
 
     // DOCS: https://docs.microsoft.com/pt-PT/graph/api/user-update?view=graph-rest-1.0&tabs=http
@@ -396,6 +411,31 @@ export class IdentityProviderService {
       .catch(error => {
         throw this.getError(error.response.status, error.response.data.message);
       });
+
+    await this.refreshUserCacheAfterUpdate(identityId, body);
+  }
+
+  private async refreshUserCacheAfterUpdate(identityId: string, body: IdentityUpdateBody): Promise<void> {
+    // Allow Microsoft Graph time to expose the update before refreshing the cache.
+    await sleep(700);
+
+    for (let attempt = 0; attempt < 7; attempt += 1) {
+      const updatedUser = await this.getUserInfo(identityId, true);
+      const isConfirmed = Object.entries(body).every(([field, value]) => {
+        if (value === undefined) return true;
+        return updatedUser[field as keyof typeof updatedUser] === value;
+      });
+
+      if (isConfirmed) return;
+
+      // Do not leave a stale Graph response in the cache while propagation catches up.
+      await this.cache.delete(identityId);
+      if (attempt < 6) await sleep(700);
+    }
+
+    throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
+      details: { message: 'B2C user update was not visible after cache refresh attempts' }
+    });
   }
 
   async updateUserEmail(identityId: string, email: string): Promise<void> {
@@ -430,6 +470,8 @@ export class IdentityProviderService {
   async updateUserAsync(
     identityId: string,
     body: {
+      givenName?: string;
+      surname?: string;
       displayName?: string;
       mobilePhone?: string | null;
       accountEnabled?: boolean;
